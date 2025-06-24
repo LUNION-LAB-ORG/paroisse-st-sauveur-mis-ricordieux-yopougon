@@ -99,7 +99,7 @@ export const NavbarCommon = () => {
       <NavbarContent className="" justify="end">
         <NavbarItem className="hidden lg:flex">
           <Link href="/faire-don">
-            <Button color="primary" className="p-8">
+            <Button color="primary">
               Faire un don
             </Button>
           </Link>

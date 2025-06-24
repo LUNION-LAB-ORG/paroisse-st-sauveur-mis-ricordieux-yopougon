@@ -152,7 +152,7 @@ export default function Content({ data }: Props) {
             <div className="flex space-y-4 sm:space-y-0 flex-wrap justify-between">
               <div className="flex gap-4">
                 {/* img */}
-                <div className="p-5 bg-blue-100 rounded-xl">
+                <div className="p-5 flex items-center justify-center flex-shrink-0 bg-blue-100 rounded-xl">
                   <FileText className="w-8 h-8" />
                 </div>
                 {/* text */}
@@ -162,18 +162,13 @@ export default function Content({ data }: Props) {
                 </div>
               </div>
               {/* button */}
-              <Button
-                className="text-md lg:text-xl px-10 py-8 lg:px-20 lg:py-8"
-                color="primary"
-              >
-                Télécharger
-              </Button>
+              <Button color="primary" size="lg">Télécharger</Button>
             </div>
             {/* Document-2 */}
             <div className="flex space-y-4 sm:space-y-0 flex-wrap justify-between">
               <div className="flex gap-4">
                 {/* img */}
-                <div className="p-5 bg-blue-100 rounded-xl">
+                <div className="p-5 flex items-center justify-center flex-shrink-0 bg-blue-100 rounded-xl">
                   <FileText className="w-8 h-8" />
                 </div>
                 {/* text */}
@@ -183,12 +178,7 @@ export default function Content({ data }: Props) {
                 </div>
               </div>
               {/* button */}
-              <Button
-                className="text-md lg:text-xl px-10 py-8 lg:px-20 lg:py-8"
-                color="primary"
-              >
-                Télécharger
-              </Button>
+              <Button color="primary" size="lg">Télécharger</Button>
             </div>
           </div>
         </section>
