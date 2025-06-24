@@ -11,6 +11,7 @@ export const siteConfig = {
     {
       href: "/mouvement",
       label: "Mouvement",
+      
     },
     {
       href: "/meditations",
