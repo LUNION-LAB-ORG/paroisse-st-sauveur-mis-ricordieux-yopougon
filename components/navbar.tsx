@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import Image from "next/image";
 import {
@@ -34,10 +35,7 @@ export const AcmeLogo = () => {
 export const NavbarCommon = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
-  // Fonction pour fermer le menu après avoir cliqué sur un lien
-  const handleLinkClick = () => {
-    setIsMenuOpen(false);
-  };
+  const handleLinkClick = () => setIsMenuOpen(false);
 
   return (
     <Navbar
@@ -47,24 +45,31 @@ export const NavbarCommon = () => {
       maxWidth="xl"
       onMenuOpenChange={setIsMenuOpen}
     >
-      <NavbarContent className="sm:hidden" justify="start">
-        <NavbarMenuToggle
-          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-        />
-      </NavbarContent>
-
-      <NavbarContent className="ssm:hidden pr-3" justify="start">
+      {/* Logo + bouton "Faire un don" visible à gauche sur mobile et tablette */}
+      <NavbarContent justify="start">
         <NavbarBrand>
           <AcmeLogo />
         </NavbarBrand>
+
+        {/* Faire un don visible sur mobile/tablette (caché sur lg+) */}
+        <div className="lg:hidden ml-2">
+          <Link href="/faire-don">
+            <Button color="primary" size="sm">
+              Faire un don
+            </Button>
+          </Link>
+        </div>
       </NavbarContent>
 
-      <NavbarContent className=" hidden sm:flex gap-4" justify="center">
-        {/* <NavbarBrand>
-        <AcmeLogo />
-        <p className="font-bold text-inherit">ACME</p>
-      </NavbarBrand> */}
+      {/* Menu burger visible uniquement sur mobile/tablette */}
+      <NavbarContent className="lg:hidden" justify="end">
+        <NavbarMenuToggle
+          aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+        />
+      </NavbarContent>
 
+      {/* Menu horizontal visible uniquement sur desktop */}
+      <NavbarContent className="hidden lg:flex gap-4" justify="center">
         {siteConfig.navItems.map((item) => (
           <NavbarItem key={item.href}>
             <Link
@@ -79,54 +84,40 @@ export const NavbarCommon = () => {
             </Link>
           </NavbarItem>
         ))}
-        {/* <NavbarItem>
-        <Link color="foreground" href="#">
-          Features
-        </Link>
-      </NavbarItem> */}
-        {/* <NavbarItem isActive>
-        <Link aria-current="page" href="#">
-          Customers
-        </Link>
-      </NavbarItem>
-      <NavbarItem>
-        <Link color="foreground" href="#">
-          Integrations
-        </Link>
-      </NavbarItem> */}
       </NavbarContent>
 
-      <NavbarContent className="" justify="end">
-        <NavbarItem className="hidden lg:flex">
+      {/* Bouton "Faire un don" visible uniquement sur desktop */}
+      <NavbarContent className="hidden lg:flex" justify="end">
+        <NavbarItem>
           <Link href="/faire-don">
-            <Button color="primary">
-              Faire un don
-            </Button>
+            <Button color="primary">Faire un don</Button>
           </Link>
         </NavbarItem>
       </NavbarContent>
 
+      {/* Menu mobile/tablette */}
       <NavbarMenu className="pt-16">
         {siteConfig.navItems.map((item, index) => (
-          <NavbarMenuItem key={`${item}-${index}`}>
+          <NavbarMenuItem key={`${item.href}-${index}`}>
             <Link
               className="w-full"
               color="foreground"
-              // color={
-              //   index === 2
-              //     ? "warning"
-              //     : index === menuItems.length - 1
-              //       ? "danger"
-              //       : "foreground"
-              // }
               href={item.href}
               size="lg"
-              onClick={handleLinkClick} // Ajout du gestionnaire de clic
+              onClick={handleLinkClick}
             >
               {item.label}
             </Link>
           </NavbarMenuItem>
         ))}
+        {/* Ajouter aussi "Faire un don" dans le menu mobile
+        <NavbarMenuItem>
+          <Link href="/faire-don" onClick={handleLinkClick}>
+            <Button color="primary" fullWidth>
+              Faire un don
+            </Button>
+          </Link>
+        </NavbarMenuItem> */}
       </NavbarMenu>
     </Navbar>
   );

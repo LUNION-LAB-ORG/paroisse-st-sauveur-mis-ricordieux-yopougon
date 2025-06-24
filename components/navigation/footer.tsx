@@ -1,103 +1,107 @@
+"use client";
 import Link from "next/link";
+import {
+  MapPin,
+  Phone,
+  Mail,
+  ArrowRight,
+  Clock3,
+  ChevronRight,
+  House,
+  Newspaper,
+  BookX,
+  Church,
+} from "lucide-react";
+
 export function Footer() {
   return (
-    <footer className="bg-[#2D2D83] text-secondary w-full  mx-auto pb-6 pt-10">
-      <div className="container px-4  max-w-7xl text-lg mx-auto">
-        <div className=" grid grid-cols-1 gap-8 md:grid-cols-3">
-          {/* horaires */}
+    <footer className="bg-[#2D2D83] text-white w-full pt-16 pb-10">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+
+          {/* Section 1 : Horaires */}
           <div>
-            <h3 className="font-cinzel text-secondary text-xl lg:text-2xl font-bold mb-4">
-              Horaires
+            <h3 className="font-cinzel text-2xl font-bold mb-4 flex items-center gap-2">
+               Horaires
             </h3>
-            <div className="space-y-2">
-              <p>
-                La Paroisse Saint Sauveur Miséricordieux est une communauté
-                catholique située à Yopougon Millionnaire.
-              </p>
-            </div>
+            <p className="text-sm text-gray-200 leading-relaxed">
+              La Paroisse Saint Sauveur Miséricordieux est une communauté
+              catholique située à Yopougon Millionnaire. Messe tous les jours à
+              partir de 6h.
+            </p>
           </div>
-          {/* liens rapides */}
+
+          {/* Section 2 : Liens rapides */}
           <div>
-            <h3 className="font-cinzel text-secondary text-xl lg:text-2xl font-bold mb-4">
+            <h3 className="font-cinzel text-2xl font-bold mb-4 flex items-center gap-2">
               Liens rapides
             </h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/"
-                  className=" w-fit flex items-center hover:underline hover:text-primary transition-colors"
-                >
-                  Accueil
-                </Link>
+            <ul className="space-y-2 text-gray-200 text-sm">
+              {[
+                { label: "Accueil", href: "/" , icon: House },
+                { label: "Actualités", href: "/actualites", icon: Newspaper },
+                { label: "Méditations", href: "/meditations", icon: Church },
+                { label: "Historique", href: "/historique", icon: BookX },
+              ].map(({label, href, icon: Icon}, index) => (
+                <li key={index}>
+                  <Link
+                    href={href}
+                    className="flex items-center gap-2 hover:underline hover:text-primary transition-colors"
+                  >
+                    <Icon className="w-4 h-4" /> {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Section 3 : Contact */}
+          <div>
+            <h3 className="font-cinzel text-2xl font-bold mb-4 flex items-center gap-2">
+              Contact
+            </h3>
+            <ul className="space-y-3 text-sm text-gray-200">
+              <li className="flex items-start gap-2">
+                <MapPin className="w-5 h-5 mt-1 text-gray-200" />
+                <span>
+                  Paroisse Saint Sauveur Miséricordieux,
+                  <br />
+                  Yopougon Millionnaire
+                </span>
               </li>
-              <li>
-                <Link
-                  href="/actualites"
-                  className="w-fit flex items-center hover:underline hover:text-primary transition-colors"
-                >
-                  Actualités
-                </Link>
+              <li className="flex items-center gap-2">
+                <Phone className="w-5 h-5 text-gray-200" />
+                <span>+225 XX XX XX XX</span>
               </li>
-              <li>
-                <Link
-                  href="/meditations"
-                  className="w-fit flex items-center hover:underline hover:text-primary transition-colors"
-                >
-                  Méditations
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/historique"
-                  className="w-fit flex items-center hover:underline hover:text-primary transition-colors"
-                >
-                  Historique
-                </Link>
+              <li className="flex items-center gap-2">
+                <Mail className="w-5 h-5 text-gray-200" />
+                <span>contact@saintsauveur.org</span>
               </li>
             </ul>
           </div>
-          {/* contact */}
-          <div>
-            <h3 className="font-cinzel text-secondary  text-xl lg:text-2xl font-bold mb-4">
-              Contact
-            </h3>
-            <div className="space-y-3">
-              <div className="lflex items-start">
-                <span>Adresse : </span>
-                <span className="text-sm">
-                  {" "}
-                  Paroisse Saint Sauveur Miséricordieux, Yopougon Millionnaire
-                </span>
-              </div>
-              <div className="flex items-center">
-                <span>Téléphone : </span>
-                <span className="text-sm">+225 XX XX XX XX</span>
-              </div>
-              <div className="flex items-center flex-wrap">
-                <span>Email : </span>
-                <span className="text-sm text-wrap">
-                  contact@saintsauveur.org
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* <Separator className="my-6" /> */}
-
-        {/* <div className="flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Paroisse Saint Michel. Tous droits réservés.
+        {/* Ligne en bas */}
+        <div className="mt-10 border-t border-white/20 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-300">
+          <p>
+            © {new Date().getFullYear()} Paroisse Saint Sauveur Miséricordieux.
+            Tous droits réservés.
           </p>
-          <div className="flex space-x-4 mt-4 md:mt-0">
-            <Link href="/mentions-legales" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+          <div className="flex gap-4 mt-4 md:mt-0">
+            <Link
+              href="/mentions-legales"
+              className="hover:text-primary underline transition"
+            >
               Mentions légales
             </Link>
-            <Link href="/politique-confidentialite" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+            <Link
+              href="/politique-confidentialite"
+              className="hover:text-primary underline transition"
+            >
               Politique de confidentialité
             </Link>
           </div>
-        </div> */}
+        </div>
       </div>
     </footer>
   );

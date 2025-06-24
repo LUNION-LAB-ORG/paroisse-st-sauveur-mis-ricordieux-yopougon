@@ -4,45 +4,44 @@ import Link from "next/link";
 
 export function Hero() {
   return (
-    <div className="relative h-screen">
+    <section className="relative h-[60vh] sm:h-[100vh] md:h-[50vh] lg:h-screen overflow-hidden">
+      {/* Image de fond */}
       <div className="absolute inset-0 z-0">
-        <div className="relative hh-screen h-full w-full">
-          <Image
-            fill
-            priority
-            alt="Église Saint Michel"
-            className="object-cover brightness-[0.4]"
-            src="https://images.pexels.com/photos/1837592/pexels-photo-1837592.jpeg"
-          />
-          <div className="absolute bottom-0 w-full flex justify-center">
-            <div className="text-3xl lg:text-4xl xl:text-5xl font-semibold text-blue-900 mb-1 px-10 lg:px-44 py-10 rounded-t-xl bg-white ">
-              Progamme du jour
-            </div>
-          </div>
-        </div>
+        <Image
+          src="https://images.pexels.com/photos/1837592/pexels-photo-1837592.jpeg"
+          alt="Église Saint Michel"
+          fill
+          priority
+          className="object-cover brightness-[0.5]"
+        />
       </div>
 
-      <div className="px-4 max-w-7xl mx-auto relative mt-[100px] z-10 py-20 md:py-32 text-white">
-        <div className="max-w-5xl">
-          <h1 className="font-cinzel text-white text-3xl md:text-4xl lg:text-5xl font-bold mb-6 !leading-relaxed ">
+      {/* Contenu superposé centré */}
+      <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-6 lg:px-10">
+        <div className="text-white text-center max-w-3xl">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-snug mb-6 font-cinzel">
             Bienvenue à la Paroisse Saint Sauveur Miséricordieux
           </h1>
-
-          <p className="text-xl md:text-2xl opacity-90 mb-8 leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl font-light opacity-90 mb-8 leading-relaxed">
             Une communauté vivante et accueillante à Yopougon Millionnaire.
           </p>
-
-          <div className="flex flex-col sm:flex-row gap-4">
+          <Link href="/faire-don" className="font-medium">
             <Button
-              className="border-white w-fit text-2xl border px-10 py-8 sm:py-10 sm:px-14 text-white hover:bg-white/20"
-              size="lg"
+              className="text-sm sm:text-base md:text-lg px-6 sm:px-10 py-3 sm:py-4 border-white text-white hover:bg-white hover:text-blue-900 rounded-full transition-all shadow-lg"
               variant="bordered"
             >
-              <Link href="#horaires">Faire un don</Link>
+              Faire un don
             </Button>
-          </div>
+          </Link>
         </div>
       </div>
-    </div>
+
+      {/* Bandeau bas visible en permanence */}
+      <div className="absolute bottom-0 w-full flex justify-center z-20">
+        <div className="text-xl sm:text-2xl md:text-3xl font-semibold text-blue-900 px-6 md:px-16 py-4 bg-white bg-opacity-90 rounded-t-xl shadow-xl">
+          Programme du jour
+        </div>
+      </div>
+    </section>
   );
 }
