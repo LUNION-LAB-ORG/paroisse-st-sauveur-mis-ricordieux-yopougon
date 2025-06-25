@@ -5,23 +5,29 @@ import SelectDon from "./selectDon";
 
 export default function AffectationDon() {
   return (
-    <div className="text-stone-700">
-      <h2 className="text-blue-900 text-xl font-semibold sm:text-2xl lg:text-4xl mb-6 lg:mb-10">
-        Affectation du don
-      </h2>
-      <SelectDon />
+    <section className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-blue-50 px-6 py-12">
+      <div className="bg-white max-w-4xl w-full rounded-3xl shadow-xl p-14 md:p-20 text-stone-700">
+        <h2 className="text-blue-900 uppercase font-serif font-semibold text-3xl md:text-4xl mb-8 tracking-wide text-center">
+          Affectation du Don
+        </h2>
 
-      <p className="lg:text-2xl mb-6 lg:mb-10">{`Projet de restauration du clocher de notre église historique.`}</p>
-      <div className="full flex justify-center">
-        <Link className="w-fit" href="/faire-don/paiement">
-          <Button
-            className=" text-md lg:text-xl py-4 lg:py-8 lg:px-44"
-            color="primary"
-          >
-            Continuer
-          </Button>
-        </Link>
+        <SelectDon />
+
+        <p className="text-center italic text-gray-500 text-lg md:text-xl mb-12 max-w-lg mx-auto leading-relaxed">
+          Projet de restauration du clocher de notre église historique.
+        </p>
+
+        <div className="flex justify-center">
+          <Link href="/faire-don/paiement" className="w-full md:w-auto">
+            <Button
+              color="primary"
+              className="w-full md:w-auto py-5 px-20 rounded-full text-lg font-semibold shadow-md transition duration-300 hover:shadow-lg hover:bg-blue-700"
+            >
+              Continuer
+            </Button>
+          </Link>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

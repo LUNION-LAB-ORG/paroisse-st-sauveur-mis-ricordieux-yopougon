@@ -1,28 +1,34 @@
+"use client";
+
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 
 export default function Abonnement() {
   return (
-    <section className="w-full px-4 max-w-7xl mx-auto mb-8 lg:mb-16">
-      <div className="border rounded-xl py-6 px-2 sm:px-4">
-        <div className="max-w-5xl mx-auto ">
-          <h2 className="text-blue-900 text-xl md:text-2xl lg:text-3xl font-bold mb-8 lg:mb-14">
+    <section className="w-full px-4 max-w-7xl mx-auto my-1">
+      <div className="rounded-2xl border border-gray-200 shadow-sm py-10 px-6 bg-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-blue-900 text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
             Restez informé
           </h2>
-
-          <p className="mb-8">
-            {`
-        Recevez les actualités de la paroisse directement dans votre boîte mail
-        `}
+          <p className="text-gray-600 text-base sm:text-lg mb-8">
+            Recevez les actualités de la paroisse directement dans votre boîte mail.
           </p>
-          <div className="flex flex-col lg:flex-row gap-4">
-            <Input label="Email" size="lg" type="email" variant="bordered" />
 
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-xl mx-auto">
+            <Input
+              placeholder="Entrez votre adresse email"
+              type="email"
+              variant="bordered"
+              size="lg"
+              className="w-full sm:flex-1"
+            />
             <Button
-              className="text-md lg:text-xl w-fit px-16 py-8  lg:px-28 lg:py-8"
               color="primary"
+              size="lg"
+              className="w-full sm:w-auto px-8 py-3 text-base font-semibold"
             >
-              {`S'abonner`}{" "}
+              S'abonner
             </Button>
           </div>
         </div>

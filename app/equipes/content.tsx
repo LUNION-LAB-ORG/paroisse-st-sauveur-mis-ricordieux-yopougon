@@ -10,10 +10,10 @@ const img = "/assets/images/hero-equipe.jpg";
 
 export default function Content() {
   return (
-    <div className="w-full flex flex-col gap-8 lg:gap-16">
+    <div className="w-full flex flex-col gap-6 sm:gap-8 lg:gap-16">
       <HeroCommon img={img} txt1={txt1} txt2={txt2} />
-      <div className="overflow-hidden max-w-7xl mx-auto flex flex-col gap-8 lg:gap-14 text-xl lg:text-2xl text-stone-600">
-        <Organisation />
+      <div className="overflow-hidden max-w-7xl mx-auto flex flex-col gap-6 sm:gap-8 lg:gap-14 text-base sm:text-lg lg:text-xl text-stone-600">
+        /<Organisation />
         <TabsProgrammes />
         <LastSection />
       </div>

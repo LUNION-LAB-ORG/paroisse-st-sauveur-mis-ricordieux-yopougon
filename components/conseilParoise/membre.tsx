@@ -6,47 +6,55 @@ const data = [
       "Responsable de coordonner l'ensemble des activités pastorales et de veiller à l'unité de la communauté paroissiale.",
   },
   {
-    name: "Père Jean Dupont",
-    role: "Curé, Président du Conseil",
+    name: "Sœur Marie Claire",
+    role: "Responsable de la catéchèse",
     description:
-      "Responsable de coordonner l'ensemble des activités pastorales et de veiller à l'unité de la communauté paroissiale.",
+      "Accompagne les enfants dans leur parcours de foi et coordonne les programmes catéchétiques de la paroisse.",
   },
   {
-    name: "Père Jean Dupont",
-    role: "Curé, Président du Conseil",
+    name: "Jean-Baptiste Martin",
+    role: "Diacre permanent",
     description:
-      "Responsable de coordonner l'ensemble des activités pastorales et de veiller à l'unité de la communauté paroissiale.",
+      "Participe à l'animation liturgique et à l'accompagnement spirituel des familles et des malades.",
   },
   {
-    name: "Père Jean Dupont",
-    role: "Curé, Président du Conseil",
+    name: "Anne Dupuis",
+    role: "Coordinatrice des bénévoles",
     description:
-      "Responsable de coordonner l'ensemble des activités pastorales et de veiller à l'unité de la communauté paroissiale.",
+      "Organise et soutient les actions des bénévoles impliqués dans les services paroissiaux.",
   },
 ];
 
 export default function Membres() {
   return (
-    <div>
-      <h2 className="text-blue-900 text-3xl md:text-4xl lg:text-5xl font-bold mb-8 lg:mb-14">
-        Membres du Conseil Paroissial
-      </h2>
+    <section className="py-12 sm:py-16 lg:py-20">
+      <div className="max-w-6xl mx-auto px-4">
+        <h2 className="text-blue-900 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-12 text-center">
+          Membres du Conseil Paroissial
+        </h2>
 
-      <div className="grid lg:grid-cols-2 gap-10 ">
-        {data.map((item, index) => {
-          return (
-            <div key={index}>
-              <div className="mb-4 lg:mb-8 bg-red-800 rounded-t-[50px] text-center py-6 lg:py-8 text-white text-xl md:text-2xl lg:text-3xl xl:text-4xl">
+        <div className="grid gap-10 sm:gap-12 md:grid-cols-2">
+          {data.map((item, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col h-full"
+            >
+              <div className="bg-red-800 text-white text-center px-6 py-6 sm:py-8 rounded-t-xl text-lg sm:text-xl md:text-2xl font-semibold">
                 {item.name}
               </div>
-              <h3 className="mb-6 lg:mb-10 text-xl md:text-xl lg:text-2xl xl:text-3xl">
-                {item.role}
-              </h3>
-              <p>{item.description}</p>
+
+              <div className="p-6 sm:p-8 flex flex-col gap-4 text-gray-700">
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-red-800">
+                  {item.role}
+                </h3>
+                <p className="text-sm sm:text-base leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -10,10 +10,10 @@ export const animals = [
 
 export default function SelectDon() {
   return (
-    <div className="w-full mb-4">
-      <Select className="w-full " label="Renovation de clocher" size="lg">
+    <div className="w-md mb-4">
+      <Select className="w-full " label="Renovation de clocher" size="md">
         {animals.map((animal) => (
-          <SelectItem key={animal.key} className="text-xl">{animal.label}</SelectItem>
+          <SelectItem key={animal.key} className="text-lg">{animal.label}</SelectItem>
         ))}
       </Select>
     </div>

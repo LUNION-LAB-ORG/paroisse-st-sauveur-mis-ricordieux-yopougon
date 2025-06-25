@@ -7,54 +7,63 @@ const data = [
       "Définir les orientations pastorales de la paroisse en cohérence avec les directives diocésaines et les besoins de la communauté.",
   },
   {
-    title: "Orientation pastorale",
+    title: "Accompagnement des fidèles",
     description:
-      "Définir les orientations pastorales de la paroisse en cohérence avec les directives diocésaines et les besoins de la communauté.",
+      "Mettre en place des actions concrètes pour soutenir les familles, les jeunes, les personnes âgées et les plus démunis.",
   },
   {
-    title: "Orientation pastorale",
+    title: "Vie liturgique",
     description:
-      "Définir les orientations pastorales de la paroisse en cohérence avec les directives diocésaines et les besoins de la communauté.",
+      "Encourager la participation active des fidèles aux célébrations et valoriser les temps forts liturgiques de l’année.",
   },
   {
-    title: "Orientation pastorale",
+    title: "Communication",
     description:
-      "Définir les orientations pastorales de la paroisse en cohérence avec les directives diocésaines et les besoins de la communauté.",
+      "Favoriser la communication interne et externe à travers des outils modernes et accessibles.",
   },
   {
-    title: "Orientation pastorale",
+    title: "Formation chrétienne",
     description:
-      "Définir les orientations pastorales de la paroisse en cohérence avec les directives diocésaines et les besoins de la communauté.",
+      "Proposer des parcours de catéchèse et de formation pour tous les âges afin de grandir dans la foi.",
   },
 ];
 
 export default function Missions() {
   return (
-    <div>
-      <h2 className="text-blue-900 text-3xl md:text-4xl lg:text-5xl font-bold mb-8 lg:mb-14">
-        Missions du Conseil Paroissial
-      </h2>
-      <div className="bg-blue-50 rounded-xl p-4 lg:p-16 flex flex-col gap-8">
-        {data.map((item, index) => {
-          return (
-            <div key={index} className="flex flex-col lg:flex-row gap-5">
-              <div className="bg-blue-100 p-5 w-fit h-fit rounded-xl">
+    <section className="py-12 sm:py-16 lg:py-20">
+      <div className="max-w-5xl mx-auto px-4">
+        <h2 className="text-blue-900 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-10 text-center">
+          Missions du Conseil Paroissial
+        </h2>
+
+        <div className="bg-blue-50 rounded-xl p-6 sm:p-8 lg:p-12 flex flex-col gap-8">
+          {data.map((item, index) => (
+            <div
+              key={index}
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6"
+            >
+              <div className="bg-blue-100 p-3 sm:p-4 rounded-xl flex-shrink-0">
                 <Image
                   alt="Document"
-                  className="w-6 h-6 lg:w-14 lg:h-10"
-                  height={10}
                   src="/assets/icons/Document.png"
-                  width={10}
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 sm:w-10 sm:h-10"
                 />
               </div>
+
               <div>
-                <h3 className="text-red-800 font-bold mb-4">{item.title}</h3>
-                <p>{item.description}</p>
+                <h3 className="text-red-800 text-lg sm:text-xl font-semibold mb-1">
+                  {item.title}
+                </h3>
+                <p className="text-gray-700 text-sm sm:text-base leading-relaxed max-w-3xl">
+                  {item.description}
+                </p>
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

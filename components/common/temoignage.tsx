@@ -16,14 +16,14 @@ const data = [
   },
   {
     message:
-      "Participer aux mouvements paroissiaux m’a permis de grandir spirituellement.",
+      "Participer aux mouvements paroissiaux m'a permis de grandir spirituellement.",
     name: "Jean-Luc B.",
     role: "Animateur catéchèse",
     image: "/assets/images/avatar-temoin.jpg",
   },
   {
     message:
-      "Grâce à l’équipe liturgique, j’ai redécouvert la prière communautaire.",
+      "Grâce à l'équipe liturgique, j'ai redécouvert la prière communautaire.",
     name: "Claire T.",
     role: "Responsable liturgie",
     image: "/assets/images/avatar-temoin.jpg",
