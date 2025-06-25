@@ -12,7 +12,7 @@ interface Props {
 
 export function HeroCommon({ txt1, txt2, img, btnRetour = false }: Props) {
   return (
-    <div className="relative h-screen">
+    <div className="relative h-[60vh] sm:h-[100vh] md:h-[50vh] lg:h-screen overflow-hidden">
       <div className="absolute inset-0 z-0">
         <div className="relative hh-screen h-full w-full">
           <Image

@@ -9,7 +9,7 @@ const img = "/assets/images/hero-paroise.jpg";
 
 export default function MouvementPage() {
   return (
-    <div className="flex flex-col gap-12 lg:gap-36 pb-16">
+    <div className="flex flex-col gap-12 lg:gap-20 pb-10">
       <HeroCommon img={img} txt1={txt1} txt2={txt2} />
       <Paroisse />
       <Temoignage />

@@ -5,100 +5,72 @@ import Link from "next/link";
 const data = [
   {
     title: "Mouvement de la Paroisse",
-    description: `Prépare et anime les célébrations eucharistiques et autres temps de prière de la paroisse.
-     Veille à la beauté et à la profondeur spirituelle des liturgies. `,
+    description: `Anime les célébrations eucharistiques et les temps de prière avec ferveur.`,
     image: "/assets/images/mvt-paroise.jpg",
-    link: "",
+    link: "/mouvement/1",
   },
   {
     title: "Équipe Liturgique",
-    description: `Prépare et anime les célébrations eucharistiques et autres temps de prière de la paroisse.
-     Veille à la beauté et à la profondeur spirituelle des liturgies. `,
+    description: `Assure la beauté spirituelle des liturgies et accompagne la prière de la communauté.`,
     image: "/assets/images/mvt-paroise.jpg",
-    link: "",
+    link: "/mouvement/2",
   },
   {
     title: "Catéchèse",
-    description: `Accompagne les enfants dans leur découverte de la foi et leur préparation aux sacrements.
-     Propose des rencontres régulières et des temps forts au cours de l'année. `,
+    description: `Accompagne les enfants dans la foi et la préparation aux sacrements.`,
     image: "/assets/images/mvt-paroise.jpg",
-    link: "",
+    link: "/mouvement/3",
   },
   {
     title: "Secours Catholique",
-    description: `Porte assistance aux personnes en difficulté à travers diverses actions de solidarité.
-     Accompagnement social, aide alimentaire, vestiaire et moments de convivialité.`,
+    description: `Offre un soutien concret aux plus démunis à travers la solidarité chrétienne.`,
     image: "/assets/images/mvt-paroise.jpg",
-    link: "",
-  },
-  {
-    title: "Catéchèse",
-    description: `Accompagne les enfants dans leur découverte de la foi et leur préparation aux sacrements.
-     Propose des rencontres régulières et des temps forts au cours de l'année. `,
-    image: "/assets/images/mvt-paroise.jpg",
-    link: "",
-  },
-  {
-    title: "Secours Catholique",
-    description: `Porte assistance aux personnes en difficulté à travers diverses actions de solidarité.
-     Accompagnement social, aide alimentaire, vestiaire et moments de convivialité.`,
-    image: "/assets/images/mvt-paroise.jpg",
-    link: "",
+    link: "/mouvement/4",
   },
 ];
 
 export default function Paroisse() {
   return (
-    <section>
-      <div className="px-4 max-w-7xl mx-auto">
-        <h2 className="text-blue-900 text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-center font-bold mb-10">
-          Mouvements de la Paroisse
-        </h2>
-        <p className="mb-10 lg:mb-28 text-center max-w-4xl mx-auto text-xl  lg:text-2xl text-muted-foreground ">
-          {` Découvrez les différents groupes et associations qui animent notre communauté paroissiale.
-           Chacun de ces mouvements participe à la vie et à la mission de notre paroisse, offrant des opportunités d'engagement,
-            de service et de croissance spirituelle. N'hésitez pas à contacter 
-            les responsables pour plus d'informations ou pour rejoindre un mouvement.`}
-        </p>
+    <section className="px-4 max-w-7xl mx-auto">
+      <h2 className="text-blue-900 text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-3">
+        Mouvements de la Paroisse
+      </h2>
+      <p className="text-center max-w-3xl mx-auto text-gray-600 text-lg md:text-xl mb-6">
+        Découvrez les groupes dynamiques qui animent notre paroisse. Engagement,
+        prière, solidarité… chaque mouvement est un chemin vers le Christ.
+      </p>
 
-        <div className="grid  lg:grid-cols-2 gap-10 lg:gap-20">
-          {data.map((item, index) => {
-            return (
-              <div key={index} className="flex flex-col ">
-                <div className="mb-2 lg:mb-4">
-                  <Image
-                    alt={item.title}
-                    className="w-full h-[300px] sm:h-[350px] lg:h-[450px] object-cover ]"
-                    height={300}
-                    src={item.image}
-                    width={500}
-                  />
-                </div>
-                <div className="">
-                  <h3 className="text-xl lg:text-4xl font-bold mb-3 lg:mb-10 text-blue-900 ">
-                    {item.title}
-                  </h3>
-
-                  <p className="text-gray-600 text-xl lg:text-2xl mb-4 lg:mb-8 max-w-[90%]">
-                    {item.description}
-                  </p>
-                  <Link
-                    href="/mouvement/1"
-                    // href={item.link}
-                    className="text-blue-500 hover:underline"
-                  >
-                    <Button
-                      color="primary"
-                      className="text-md lg:text-xl  rounded-full py-4 lg:py-8 lg:px-16 "
-                    >
-                      {`En savoir plus`}
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 justify-center">
+        {data.map((item, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-2xl shadow-md overflow-hidden transition hover:shadow-lg"
+          >
+            <Image
+              src={item.image}
+              alt={item.title}
+              width={600}
+              height={400}
+              className="w-full h-56 object-cover"
+            />
+            <div className="p-6">
+              <h3 className="text-blue-800 text-xl font-semibold mb-3">
+                {item.title}
+              </h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                {item.description}
+              </p>
+              <Link href={item.link}>
+                <Button
+                  color="primary"
+                  className="rounded-full text-sm px-6 py-2 font-medium"
+                >
+                  En savoir plus
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );
