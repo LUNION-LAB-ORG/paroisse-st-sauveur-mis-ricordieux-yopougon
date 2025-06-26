@@ -26,12 +26,12 @@ const data = [
   },
 ];
 
-// const btnsFilter = [
-//   { id: 1, title: "Tous", value: "all" },
-//   { id: 2, title: "Prêtres", value: "pretres" },
-//   { id: 3, title: "Diacres", value: "diacres" },
-//   { id: 4, title: "Administration", value: "administration" },
-// ];
+const btnsFilter = [
+  { id: 1, title: "Tous", value: "all" },
+  { id: 2, title: "Prêtres", value: "pretres" },
+  { id: 3, title: "Diacres", value: "diacres" },
+  { id: 4, title: "Administration", value: "administration" },
+];
 
 export default function TabsProgrammes() {
   const router = useRouter();
@@ -46,19 +46,19 @@ export default function TabsProgrammes() {
     <section className="py-16 bg-slate-50">
       <div className="max-w-7xl mx-auto px-4">
         {/* Filtres */}
-        {/* <div className="overflow-x-auto mb-12">
+        <div className="overflow-x-auto mb-12 ">
           <div className="flex gap-4 w-fit mx-auto">
             {btnsFilter.map((btn) => (
               <Button
                 key={btn.id}
                 onClick={() => handleFilterClick(btn.value)}
-                className="text-md md:text-lg font-semibold border-2 border-blue-900 rounded-full px-6 py-3 hover:bg-blue-900 hover:text-white transition-colors"
+                className="text-sm md:text-md font-semibold border-2 border-blue-900 rounded-full px-6 py-3 hidden hover:bg-blue-900 hover:text-white transition-colors"
               >
                 {btn.title}
               </Button>
             ))}
           </div>
-        </div> */}
+        </div>
 
         {/* Cartes */}
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

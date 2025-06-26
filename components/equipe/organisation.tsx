@@ -51,7 +51,7 @@ export default function Organisation() {
           {[
             {
               title: "Mission",
-              text: "Annoncer l’Évangile et faire grandir la foi des fidèles.",
+              text: "Annoncer l'Évangile et faire grandir la foi des fidèles.",
             },
             {
               title: "Fraternité",
@@ -59,7 +59,7 @@ export default function Organisation() {
             },
             {
               title: "Engagement",
-              text: "Mettre ses dons au service de Dieu et de l’Église locale.",
+              text: "Mettre ses dons au service de Dieu et de l'Église locale.",
             },
           ].map((item, i) => (
             <div key={i} className="bg-white p-4 rounded-lg shadow-sm border">
