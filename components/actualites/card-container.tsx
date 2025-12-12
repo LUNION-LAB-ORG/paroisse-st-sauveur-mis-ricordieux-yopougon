@@ -65,7 +65,7 @@ export default function CardContainer({ txt1, dataContainer }: Props) {
                   color="primary"
                   className="w-full text-base py-4 font-semibold"
                 >
-                  Plus d'info
+                  Plus d&apos;info
                 </Button>
               </Link>
             </div>

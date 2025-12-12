@@ -25,7 +25,7 @@ export default function Cure() {
               <span className="block font-medium mb-2">Chers frères et sœurs en Christ,</span>
 
               <span className="block mb-4">
-                C'est avec une immense joie que je vous accueille sur le site
+                C&apos;est avec une immense joie que je vous accueille sur le site
                 internet de notre paroisse <strong>Saint Sauveur Miséricordieux</strong>.
                 Ce nouvel outil de communication nous permettra de renforcer les
                 liens qui nous unissent et de partager plus facilement les informations
@@ -34,14 +34,14 @@ export default function Cure() {
 
               <span className="block mb-4">
                 Notre communauté se veut <strong>fraternelle et ouverte à tous</strong>.
-                Chacun y a sa place et peut apporter sa pierre à l'édifice que nous
-                construisons ensemble, à l'image de notre église dont les travaux
+                Chacun y a sa place et peut apporter sa pierre à l&apos;édifice que nous
+                construisons ensemble, à l&apos;image de notre église dont les travaux
                 avancent grâce à votre <em>générosité</em> et votre <em>engagement</em>.
               </span>
 
               <span className="block mb-4">
                 En ces temps parfois difficiles, notre paroisse se veut un lieu
-                d'<strong>espérance</strong>, de réconfort et de partage.
+                d&apos;<strong>espérance</strong>, de réconfort et de partage.
               </span>
 
               <span className="block font-semibold text-blue-900 mt-6">
