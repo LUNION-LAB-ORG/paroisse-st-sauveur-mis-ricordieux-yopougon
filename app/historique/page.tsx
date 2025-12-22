@@ -7,9 +7,7 @@ export default async function HistoriquePage() {
   if (result.error) {
     return <div className="text-red-600">Erreur : {result.error}</div>;
   }
-
   const cure = result.data?.data ?? []; // Toujours un tableau
-
   return (
     <>
       <Content cure={cure} />

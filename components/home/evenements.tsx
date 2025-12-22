@@ -36,7 +36,7 @@ export default function Evenements({ event }: { event: Event[] }) {
           >
             <div className="w-full h-[200px] relative">
               <Image
-                src={`/uploads/events/${item.image}`}
+                src={`${item.image}`}
                 alt={item.title}
                 fill
                 className="object-cover"
@@ -50,17 +50,17 @@ export default function Evenements({ event }: { event: Event[] }) {
             <div className="pb-2 flex gap-4 justify-center">
               <div className="flex items-center gap-1 text-[10px] text-gray-700">
                 <CalendarDays className="w-5 h-5" />
-                <span>{item.date ?? "Date à venir"}</span>
+                <span>{item.date_at ?? "Date à venir"}</span>
               </div>
 
               <div className="flex items-center gap-1 text-[10px] text-gray-700">
                 <CalendarClock className="w-5 h-5" />
-                <span>{item.start_time ?? "—"}</span>
+                <span>{item.time_at ?? "—"}</span>
               </div>
 
               <div className="flex items-center gap-1 text-[10px] text-gray-700">
                 <MapPinHouse className="w-5 h-5" />
-                <span>{item.location ?? "À préciser"}</span>
+                <span>{item.location_at ?? "À préciser"}</span>
               </div>
             </div>
 
