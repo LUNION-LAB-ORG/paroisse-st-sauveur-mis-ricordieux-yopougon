@@ -1,5 +1,7 @@
+import { NewsType } from "@/services/news/news.schema";
 import CardContainer from "./card-container";
 import FilterActualites from "./filterActualites";
+import { NewsItemType } from "@/services/news/types/cure.type";
 
 export interface EvenementType {
   title: string;
@@ -47,7 +49,10 @@ const data: EvenementType[] = [
 const txt1 = "Annonces importantes";
 const txt2 = "Toutes les actualités";
 
-export default function BodyActualites() {
+export default function BodyActualites({ news }: { news: NewsItemType[] }) {
+  const important:NewsType[]=news.filter((items)=>items.status=='draft')
+  console.log('les données imaportates sont',important)
+  
   return (
     <section className="bg-white py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-24">
@@ -61,7 +66,7 @@ export default function BodyActualites() {
           <h2 className="text-blue-900 text-3xl lg:text-4xl font-bold mb-8">
             {txt1}
           </h2>
-          <CardContainer dataContainer={data} txt1={""} />
+          <CardContainer dataContainer={important} txt1={""} />
         </div>
 
         {/* Section 2 : Toutes les actualités */}
@@ -69,7 +74,7 @@ export default function BodyActualites() {
           <h2 className="text-blue-900 text-3xl lg:text-4xl font-bold mb-8">
             {txt2}
           </h2>
-          <CardContainer dataContainer={data} txt1={""} />
+          <CardContainer dataContainer={news} txt1={""} />
         </div>
       </div>
     </section>

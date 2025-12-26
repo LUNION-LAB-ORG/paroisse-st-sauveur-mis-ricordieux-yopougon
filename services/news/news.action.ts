@@ -1,127 +1,231 @@
-
 "use server";
 
-
 import { NewsAPI } from "./api/news.api";
-import { NewsItemType, NewsSchema } from "./news.schema";
+import {
+  NewsSchema,
+  NewsType,
+  UpdateNewsSchema,
+  UpdateNewsType,
+} from "./news.schema";
+
+/* ---------------- UTILS ---------------- */
+
+// function buildNewsFormData(data: Partial<NewsType>) {
+//   const formData = new FormData();
+
+//   if (data.title) formData.append("title", data.title);
+//   if (data.new_resume) formData.append("new_resume", data.new_resume);
+//   if (data.location) formData.append("location", data.location);
+//   if (data.content) formData.append("content", data.content);
+//   if (data.new_status) formData.append("new_status", data.new_status);
+//  if (data.published_at) {
+//     formData.append("published_at", data.published_at);
+//   } else {
+//     // fallback intelligent
+//     formData.append(
+//       "published_at",
+//       new Date().toISOString().split("T")[0]
+//     );
+//   }
+
+//   // image uniquement si File (upload)
+//   if (data.image instanceof File) {
+//     formData.append("image", data.image);
+//   }
+
+//   return formData;
+// }
+
+/* ---------------- CREATE ---------------- */
+
+// export async function createNews(body: NewsType, token: string) {
+//   try {
+//     const parsed = NewsSchema.safeParse(body);
+//     if (!parsed.success) {
+//       return {
+//         success: false,
+//         error: "Erreur de validation du formulaire",
+//       };
+//     }
+
+//     const formData = buildNewsFormData(parsed.data);
+
+//     /* 🔍 LOG FORM DATA (lisible) */
+//     console.log("📦 FormData envoyé au backend :");
+//     for (const [key, value] of formData.entries()) {
+//       if (value instanceof File) {
+//         console.log(`- ${key}: File(${value.name}, ${value.type}, ${value.size} bytes)`);
+//       } else {
+//         console.log(`- ${key}:`, value);
+//       }
+//     }
+
+//     /* 🔍 LOG REQUÊTE */
+//     console.log("🚀 Requête createNews", {
+//       url: NewsAPI.create.endpoint(),
+//       method: NewsAPI.create.method,
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//          Accept: "application/json",
+//       },
+//     });
+
+//   const response = await fetch(NewsAPI.create.endpoint(), {
+//   method: NewsAPI.create.method,
+//   headers: {
+//     Authorization: `Bearer ${token}`,
+//     Accept: "application/json",
+//   },
+//   body: formData,
+// });
 
 
-// -----------------------------
-// CREATE EVENT
-// -----------------------------
-export async function createEvent(data: NewsItemType) {
-  // 1. Validation des données du front avec Zod
-  const parsed = NewsSchema.safeParse(data);
-  if (!parsed.success) {
-    return { error: "Validation échouée", details: parsed.error.flatten() };
-  }
+//     /* 🔍 LOG RÉPONSE BRUTE */
+//     console.log("📥 Réponse brute", {
+//       ok: response.ok,
+//       status: response.status,
+//       statusText: response.statusText,
+//       redirected: response.redirected,
+//       url: response.url,
+//       headers: Object.fromEntries(response.headers.entries()),
+//     });
 
-  try {
-    // 2. Requête API POST vers ton backend
-    const res = await fetch(NewsAPI.create.endpoint, {
-      method: NewsAPI.create.method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(parsed.data),
-    });
+//     if (!response.ok) {
+//       const errorText = await response.text();
+//       console.error("❌ Erreur backend (raw):", errorText);
 
-    // 3. Gestion des erreurs HTTP
-    if (!res.ok) {
-      const msg = await res.text();
-      return { error: "Erreur API", details: msg };
-    }
+//       try {
+//         const errorData = JSON.parse(errorText);
+//         return {
+//           success: false,
+//           error:
+//             typeof errorData.message === "string"
+//               ? errorData.message
+//               : errorData.message?.[0] || `Erreur ${response.status}`,
+//         };
+//       } catch {
+//         return {
+//           success: false,
+//           error: errorText || `Erreur ${response.status}`,
+//         };
+//       }
+//     }
 
-    // 4. Retour du résultat
-    return { data: await res.json() };
-  } catch (err) {
-    return { error: "Erreur serveur", details: err };
-  }
-}
+//     const data = await response.json();
+//     console.log("✅ Réponse JSON backend :", data);
 
-// -----------------------------
-// GET ALL EVENTS
-// -----------------------------
+//     return { success: true, data };
+//   } catch (error) {
+//     console.error("🔥 Erreur createNews :", error);
+//     return {
+//       success: false,
+//       error: error instanceof Error ? error.message : "Erreur inconnue",
+//     };
+//   }
+// }
+
+
+/* ---------------- GET ALL ---------------- */
+
 export async function getAllNews() {
   try {
-    const res = await fetch(NewsAPI.getAll.endpoint(), {
+    const response = await fetch(NewsAPI.getAll.endpoint(), {
       method: NewsAPI.getAll.method,
+      headers: {
+      
+         Accept: "application/json",
+      },
+      cache: "no-store",
     });
-    
-    if (!res.ok) {
-      const msg = await res.text();
-      return { error: "Erreur API", details: msg };
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        success: false,
+        error: errorText || "Erreur lors du chargement",
+      };
     }
 
-    return { data: await res.json() };
-  } catch (err) {
-    return { error: "Erreur serveur", details: err };
+    const data = await response.json();
+    return { success: true, data: data.data ?? data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur inconnue",
+    };
   }
 }
 
-// -----------------------------
-// GET ONE EVENT
-// -----------------------------
-export async function getOneNews(id: string) {
+/* ---------------- DELETE ---------------- */
+
+export async function deleteNews(id: number, token: string) {
   try {
-    const res = await fetch(NewsAPI.getOne.endpoint(id), {
-      method: NewsAPI.getOne.method,
-    });
-
-    if (!res.ok) {
-      const msg = await res.text();
-      return { error: "Erreur API", details: msg };
-    }
-
-    return { data: await res.json() };
-  } catch (err) {
-    return { error: "Erreur serveur", details: err };
-  }
-}
-
-// -----------------------------
-// UPDATE EVENT
-// -----------------------------
-export async function updateNews(id: string, data: Partial<NewsItemType>) {
-  // 1. Validation partielle des données
-  const parsed = NewsSchema.partial().safeParse(data);
-
-  if (!parsed.success) {
-    return { error: "Validation échouée", details: parsed.error.flatten() };
-  }
-
-  try {
-    const res = await fetch(NewsAPI.update.endpoint(id), {
-      method: NewsAPI.update.method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(parsed.data),
-    });
-
-    if (!res.ok) {
-      const msg = await res.text();
-      return { error: "Erreur API", details: msg };
-    }
-
-    return { data: await res.json() };
-  } catch (err) {
-    return { error: "Erreur serveur", details: err };
-  }
-}
-
-// -----------------------------
-// DELETE EVENT
-// -----------------------------
-export async function deleteNews(id: string) {
-  try {
-    const res = await fetch(NewsAPI.delete.endpoint(id), {
+    const response = await fetch(NewsAPI.delete.endpoint(String(id)), {
       method: NewsAPI.delete.method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
 
-    if (!res.ok) {
-      const msg = await res.text();
-      return { error: "Erreur API", details: msg };
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        success: false,
+        error: errorText || "Erreur lors de la suppression",
+      };
     }
 
-    return { data: "Événement supprimé avec succès" };
-  } catch (err) {
-    return { error: "Erreur serveur", details: err };
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur deleteNews :", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur inconnue",
+    };
   }
 }
+
+/* ---------------- UPDATE ---------------- */
+
+// export async function updateNews(
+//   id: number,
+//   body: UpdateNewsType,
+//   token: string
+// ) {
+//   try {
+//     const parsed = UpdateNewsSchema.safeParse(body);
+//     if (!parsed.success) {
+//       return { success: false, error: "Validation échouée" };
+//     }
+
+//     const hasFile = parsed.data.image instanceof File;
+
+//     const response = await fetch(NewsAPI.update.endpoint(String(id)), {
+//       method: NewsAPI.update.method,
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//         ...(hasFile ? {} : { "Content-Type": "application/json" }),
+//       },
+//       body: hasFile
+//         ? buildNewsFormData(parsed.data)
+//         : JSON.stringify(parsed.data),
+//     });
+
+//     if (!response.ok) {
+//       const errorText = await response.text();
+//       return {
+//         success: false,
+//         error: errorText || `Erreur ${response.status}`,
+//       };
+//     }
+
+//     const data = await response.json();
+//     return { success: true, data };
+//   } catch (error) {
+//     console.error("Erreur updateNews :", error);
+//     return {
+//       success: false,
+//       error: error instanceof Error ? error.message : "Erreur inconnue",
+//     };
+//   }
+// }

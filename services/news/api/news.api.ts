@@ -1,22 +1,20 @@
 export const NewsAPI = {
   create: {
-    endpoint: `${process.env.NEXT_PUBLIC_BASE_URL}/events`,
+    endpoint: () => `${process.env.NEXT_PUBLIC_BASE_URL}/news`,
     method: "POST",
   },
   getAll: {
-    endpoint: () => `${process.env.NEXT_PUBLIC_BASE_URL}/news`,
+    endpoint: () => `http://st-sauveur.lunion-lab.com/api/news`,
     method: "GET",
-  },
-  getOne: {
-    endpoint: (id: string) => `${process.env.NEXT_PUBLIC_BASE_URL}/events/${id}`,
-    method: "GET",
-  },
-  update: {
-    endpoint: (id: string) => `${process.env.NEXT_PUBLIC_BASE_URL}/events/${id}`,
-    method: "PATCH",
   },
   delete: {
-    endpoint: (id: string) => `${process.env.NEXT_PUBLIC_BASE_URL}/events/${id}`,
+    endpoint: (id: string) =>
+      `${process.env.NEXT_PUBLIC_BASE_URL}/news/${id}`,
     method: "DELETE",
+  },
+  update: {
+    endpoint: (id: string) =>
+      `${process.env.NEXT_PUBLIC_BASE_URL}/news/${id}`,
+    method: "PUT", // ou PATCH selon ton backend
   },
 };

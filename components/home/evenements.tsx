@@ -32,7 +32,7 @@ export default function Evenements({ event }: { event: Event[] }) {
         {paginatedEvents.map((item) => (
           <div
             key={item.id}
-            className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl overflow-hidden p-6 flex flex-col"
+            className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl overflow-hidden  flex flex-col"
           >
             <div className="w-full h-[200px] relative">
               <Image
@@ -43,7 +43,8 @@ export default function Evenements({ event }: { event: Event[] }) {
               />
             </div>
 
-            <h3 className="text-md font-semibold mb-4 text-blue-800 mt-5 text-center">
+        <div className="p-8">
+              <h3 className="text-md font-semibold  mb-4 text-blue-800 mt-2 text-center">
               {item.title}
             </h3>
 
@@ -73,6 +74,7 @@ export default function Evenements({ event }: { event: Event[] }) {
                 Plus d&apos;infos
               </Button>
             </Link>
+        </div>
           </div>
         ))}
       </div>
