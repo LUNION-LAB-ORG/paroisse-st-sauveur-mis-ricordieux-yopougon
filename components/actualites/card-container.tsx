@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function CardContainer({ txt1, dataContainer }: Props) {
-  console.log('les données de data',dataContainer)
+
   return (
     <section className="px-4 max-w-7xl mx-auto ">
       <h2 className="text-blue-900 text-center text-3xl sm:text-4xl lg:text-5xl font-bold mb-16">
