@@ -8,6 +8,7 @@ import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
 import { NavbarCommon } from "@/components/navbar";
 import { Footer } from "@/components/navigation/footer";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: {
@@ -38,13 +39,17 @@ export default function RootLayout({
       <body
         className={clsx(
           "min-h-screen text-foreground bg-background font-sans antialiased",
-          fontSans.variable,
+          fontSans.variable
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
           <div className="relative flex flex-col h-screen">
             <NavbarCommon />
-            <main className="flex-grow">{children}</main>
+            <main className="flex-grow">
+              {children}
+              <Toaster/>
+            </main>
+
             <Footer />
           </div>
         </Providers>
