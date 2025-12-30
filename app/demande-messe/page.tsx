@@ -1,12 +1,11 @@
-import MassRequestForm from '@/components/demande-messe/mass-request-form';
-import React from 'react';
+import MesseForm from "@/components/demande-messe/messe-form";
 
 const Page = () => {
-    return (
-        <div>
-            <MassRequestForm/>
-        </div>
-    );
-}
+  return (
+    <div>
+      <MesseForm />
+    </div>
+  );
+};
 
 export default Page;
