@@ -41,6 +41,7 @@
     "intl-messageformat": "10.7.16",
     "keen-slider": "^6.8.6",
     "lucide-react": "^0.511.0",
+    "motion": "^12.23.26",
     "next": "15.3.6",
     "next-themes": "0.4.6",
     "react": "18.3.1",
