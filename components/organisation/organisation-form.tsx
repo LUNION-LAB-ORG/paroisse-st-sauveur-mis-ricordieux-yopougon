@@ -2,8 +2,13 @@
 import { ChangeEvent, useState } from 'react';
 import { ArrowLeft, CheckCircle, X } from 'lucide-react';
 import { Label } from '../ui/label';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createOrganisation } from '@/services/organisation/organisation.action';
+import { OrganisationType } from '@/services/organisation/organisation.schema';
+import { toast } from 'sonner';
 
 export default function OrganisationForm() {
+  const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     isParishMember: 'yes',
@@ -17,13 +22,13 @@ export default function OrganisationForm() {
     estimatedParticipants: ''
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
-console.log(formData);
- const handleInputChange = (
-  e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-) => {
-  const { name, value } = e.target;
-  setFormData(prev => ({ ...prev, [name]: value }));
-};
+  console.log(formData);
+  const handleInputChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleRadioChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -62,7 +67,29 @@ console.log(formData);
     setCurrentStep(1);
     setIsSubmitted(false);
   };
-
+  const mutation = useMutation({
+    mutationFn: (data: OrganisationType) => createOrganisation(data),
+    onSuccess: () => {
+      toast.success('✅ Organisation créée !');
+      queryClient.invalidateQueries({ queryKey: ['organisations'] });
+      // reset formulaire si besoin
+      setFormData({
+        isParishMember: 'yes',
+        movement: '',
+        email: '',
+        eventType: '',
+        date: '',
+        startTime: '',
+        endTime: '',
+        description: '',
+        estimatedParticipants: '',
+      });
+      setCurrentStep(1);
+    },
+    onError: (error: any) => {
+      toast.error('❌ Erreur création organisation :', error.message);
+    },
+  });
   const steps = [
     { title: "Organisateur", description: "Votre mouvement ou groupe fait-il déjà partie de la paroisse ?" },
     { title: "Type d'événement", description: "Sélectionnez le type d'activité" },
@@ -75,7 +102,7 @@ console.log(formData);
       <div className="min-h-screen bg-purple-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
           <div className="flex justify-end">
-            <button 
+            <button
               onClick={resetForm}
               className="text-gray-500 hover:text-gray-700"
             >
@@ -100,12 +127,12 @@ console.log(formData);
   }
 
   return (
-    <div className="min-h-screen bg-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen flex bg-cover bg-center items-center justify-center p-4 bg-red-900" style={{ backgroundImage: "url('/assets/images/avatar-temoin.jpg')" }}>
       <div className="bg-white rounded-lg shadow-xl overflow-hidden max-w-md w-full">
         {/* Header */}
-        <div className="relative h-48 bg-cover bg-center" style={{ backgroundImage: "url('https://placehold.co/600x300?text=Church+Background')" }}>
+        <div className="relative h-48 " >
           <div className="absolute top-4 left-4">
-            <button 
+            <button
               onClick={handlePrevStep}
               className="flex items-center text-white bg-black bg-opacity-30 px-3 py-2 rounded-md hover:bg-opacity-50 transition"
             >
@@ -114,7 +141,7 @@ console.log(formData);
             </button>
           </div>
           <div className="absolute top-4 right-4">
-            <span className="text-white text-sm">Organiser un Événement Paroissial</span>
+            <span className="text-white text-sm bg-red-700">Organiser un Événement Paroissial</span>
           </div>
         </div>
 
@@ -314,11 +341,13 @@ console.log(formData);
                   Précédent
                 </button>
                 <button
-                  onClick={handleSubmit}
+                  type="submit"
                   className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800 transition-colors"
                 >
                   Soumettre la demande
+                  {mutation.isPending ? 'Envoi...' : ''}
                 </button>
+
               </div>
             </div>
           )}
