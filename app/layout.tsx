@@ -1,14 +1,15 @@
 import "@/styles/globals.css";
-import { Metadata, Viewport } from "next";
 import clsx from "clsx";
+import { Metadata, Viewport } from "next";
 
 import { Providers } from "./providers";
 
-import { siteConfig } from "@/config/site";
-import { fontSans } from "@/config/fonts";
+import { NetworkToastTrigger } from "@/components/common/NetworkToastTrigger";
 import { NavbarCommon } from "@/components/navbar";
 import { Footer } from "@/components/navigation/footer";
 import { Toaster } from "@/components/ui/sonner";
+import { fontSans } from "@/config/fonts";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: {
@@ -28,6 +29,7 @@ export const viewport: Viewport = {
   ],
 };
 
+
 export default function RootLayout({
   children,
 }: {
@@ -46,6 +48,7 @@ export default function RootLayout({
           <div className="relative flex flex-col h-screen">
             <NavbarCommon />
             <main className="flex-grow">
+                  <NetworkToastTrigger />
               {children}
               <Toaster/>
             </main>
