@@ -178,10 +178,21 @@ export default function MesseForm() {
         backgroundImage: "url('/assets/images/hero-histoire.jpg')",
       }}
     >
-      <div className="bg-white rounded-lg shadow-xl overflow-hidden max-w-md w-full">
+      <div className="">
+        <div className="relative lg:-top-80 lg:-left-80 hidden lg:block">
+          <Button
+            onClick={handlePrevStep}
+            className="flex items-center text-white  bg-opacity-30 px-3 py-2 rounded-md hover:bg-opacity-50 transition"
+          >
+            <ArrowLeft size={16} className="mr-1" />
+            Retour
+          </Button>
+        </div>
+      </div>
+      <div className=" rounded-lg shadow-xl overflow-hidden max-w-md w-full">
         {/* Header */}
-        <div className="relative h-20 bg-[#8e0b10] ">
-          <div className="absolute top-4 left-4">
+        <div className=" sm:bg-[#8e0b10] lg:bg-transparent relative h-20 lg:flex lg:justify-center  ">
+          <div className="absolute top-4 left-4 lg:hidden md:block">
             <Button
               onClick={handlePrevStep}
               className="flex items-center text-white bg-black bg-opacity-30 px-3 py-2 rounded-md hover:bg-opacity-50 transition"
@@ -190,13 +201,13 @@ export default function MesseForm() {
               Retour
             </Button>
           </div>
-          <div className="absolute top-4 right-4">
-            <span className="text-white text-sm">Demande de Messe</span>
+          <div className="absolute  lg:w-full lg:text-center  top-4 right-4">
+            <span className="lg:text-[#8e0b10] sm:text-white md:text-white font-bold lg:font-extrabold md:text-lg text-sm  lg:text-2xl">Demande de Messe</span>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-6 bg-white">
           {/* Step indicator */}
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-[#8e0b10]">

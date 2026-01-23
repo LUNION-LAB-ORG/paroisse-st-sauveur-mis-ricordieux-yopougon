@@ -127,11 +127,22 @@ export default function OrganisationForm() {
   }
 
   return (
-    <div className="min-h-screen flex bg-cover bg-center items-center justify-center p-4 bg-red-900" style={{ backgroundImage: "url('/assets/images/avatar-temoin.jpg')" }}>
-      <div className="bg-white rounded-lg shadow-xl overflow-hidden max-w-md w-full">
+    <div className="min-h-screen bg-purple-50 flex items-center bg-cover bg-center justify-center p-4" style={{ backgroundImage: "url('/assets/images/mvt-id.jpg')" }}>
+      <div className="">
+        <div className="relative lg:-top-80 lg:-left-80 hidden lg:block">
+          <button
+            onClick={handlePrevStep}
+            className="flex items-center text-white bg-opacity-30 px-3 py-2 rounded-md hover:bg-opacity-50 transition"
+          >
+            <ArrowLeft size={16} className="mr-1" />
+            Retour
+          </button>
+        </div>
+      </div>
+      <div className=" rounded-lg shadow-xl overflow-hidden max-w-md w-full">
         {/* Header */}
-        <div className="relative h-48 " >
-          <div className="absolute top-4 left-4">
+        <div className=" sm:bg-red-700 lg:bg-transparent relative h-20 lg:flex lg:justify-center  ">
+          <div className="absolute top-4 left-4 lg:hidden md:block">
             <button
               onClick={handlePrevStep}
               className="flex items-center text-white bg-black bg-opacity-30 px-3 py-2 rounded-md hover:bg-opacity-50 transition"
@@ -140,16 +151,16 @@ export default function OrganisationForm() {
               Retour
             </button>
           </div>
-          <div className="absolute top-4 right-4">
-            <span className="text-white text-sm bg-red-700">Organiser un Événement Paroissial</span>
+          <div className="absolute  lg:w-full lg:text-center  top-4 right-4">
+            <span className="lg:text-red-700 sm:text-white md:text-white font-bold lg:font-extrabold md:text-lg text-sm  lg:text-2xl">Organiser un Événement Paroissial</span>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-6 bg-white">
           {/* Step indicator */}
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">{steps[currentStep - 1].title}</h2>
+            <h2 className="text-xl font-semibold text-red-700">{steps[currentStep - 1].title}</h2>
             <p className="text-gray-600 text-sm">{steps[currentStep - 1].description}</p>
           </div>
 
