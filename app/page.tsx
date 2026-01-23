@@ -5,13 +5,14 @@ import Evenements from "@/components/home/evenements";
 import SelectProgramme from "@/components/home/selectProgramme";
 import { getAllEvents } from "@/services/Events/events.action";
 import { MorphingSquare } from "@/components/morphing-square";
+import CustomSpinner from "@/components/common/custom-spinner";
 
 export default async function  Home() {
   const result=await getAllEvents()
     
 
   if (result.error) {
-    return <div className="text-red-600 h-screen flex items-center justify-center"><MorphingSquare message='Chargement des données...' /></div>;
+    return <div className=" h-screen flex items-center justify-center"><MorphingSquare /></div>;
   }
   const events=result.data.data
 

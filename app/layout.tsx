@@ -4,7 +4,6 @@ import { Metadata, Viewport } from "next";
 
 import { Providers } from "./providers";
 
-import { NetworkToastTrigger } from "@/components/common/NetworkToastTrigger";
 import { NavbarCommon } from "@/components/navbar";
 import { Footer } from "@/components/navigation/footer";
 import { Toaster } from "@/components/ui/sonner";
@@ -48,7 +47,6 @@ export default function RootLayout({
           <div className="relative flex flex-col h-screen">
             <NavbarCommon />
             <main className="flex-grow">
-                  <NetworkToastTrigger />
               {children}
               <Toaster/>
             </main>
