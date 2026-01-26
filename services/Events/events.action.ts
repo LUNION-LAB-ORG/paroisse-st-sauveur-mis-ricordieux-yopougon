@@ -18,3 +18,25 @@ export async function getAllEvents() {
     return { error: "Erreur serveur", details: err };
   }
 }
+
+export async function getEventById(id: number) {
+  try {
+    // Récupérer tous les événements et filtrer par ID
+    const result = await getAllEvents();
+    
+    if (result.error) {
+      return { error: result.error, details: result.details };
+    }
+
+    const events = result.data?.data || [];
+    const event = events.find((e: any) => e.id === id);
+
+    if (!event) {
+      return { error: "Événement non trouvé" };
+    }
+
+    return { data: event };
+  } catch (err) {
+    return { error: "Erreur serveur", details: err };
+  }
+}

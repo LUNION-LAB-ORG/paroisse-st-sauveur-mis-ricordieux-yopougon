@@ -1,7 +1,6 @@
-import { NewsType } from "@/services/news/news.schema";
+import { NewsItemType } from "@/services/news/types/cure.type";
 import CardContainer from "./card-container";
 import FilterActualites from "./filterActualites";
-import { NewsItemType } from "@/services/news/types/cure.type";
 
 export interface EvenementType {
   title: string;
@@ -50,7 +49,7 @@ const txt1 = "Annonces importantes";
 const txt2 = "Toutes les actualités";
 
 export default function BodyActualites({ news }: { news: NewsItemType[] }) {
-  const important:NewsType[]=news.filter((items)=>items.status=='draft')
+  const important:NewsItemType[]=news.filter((items)=>items.status=='draft')
   console.log('les données imaportates sont',important)
   
   return (

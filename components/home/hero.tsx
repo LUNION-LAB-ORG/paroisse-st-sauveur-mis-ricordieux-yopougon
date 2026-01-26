@@ -12,7 +12,7 @@ export function Hero() {
           alt="Église Saint Michel"
           fill
           priority
-          className="object-cover brightness-[0.5]"
+          className="object-cover brightness-[0.8]"
         />
       </div>
 

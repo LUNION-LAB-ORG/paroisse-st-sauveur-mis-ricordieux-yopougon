@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { notFound } from "next/navigation";
-import ActualiteDetail from "./actualite-detail";
-import { NewsItemType } from "@/services/news/types/cure.type";
-import { getAllNews } from "@/services/news/news.action";
+import EventRegistration from "./event-registration";
+import { Event } from "@/services/Events/types/events.type";
+import { getAllEvents } from "@/services/Events/events.action";
 
 interface PageProps {
   params: Promise<{
@@ -13,45 +13,45 @@ interface PageProps {
 }
 
 export default function Page({ params }: PageProps) {
-  const [actualite, setActualite] = useState<NewsItemType | null>(null);
+  const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchActualite = async () => {
+    const fetchEvent = async () => {
       try {
         const { id } = await params;
-        const actualiteId = parseInt(id);
+        const eventId = parseInt(id);
         
-        console.log('Recherche de l\'actualité ID:', actualiteId);
+        console.log('Recherche de l\'événement ID:', eventId);
         
-        // Utiliser votre getAllNews existant
-        const result = await getAllNews();
+        // Utiliser votre getAllEvents existant
+        const result = await getAllEvents();
         
         if (result.error) {
           setError(result.error);
           return;
         }
 
-        const news = result.data ?? [];
-        const foundActualite = news.find((item: NewsItemType) => item.id === actualiteId);
+        const events = result.data?.data || [];
+        const foundEvent = events.find((e: any) => e.id === eventId);
 
-        if (!foundActualite) {
-          setError(`Actualité avec ID ${actualiteId} non trouvée`);
+        if (!foundEvent) {
+          setError(`Événement avec ID ${eventId} non trouvé`);
           return;
         }
 
-        console.log('Actualité trouvée:', foundActualite);
-        setActualite(foundActualite);
+        console.log('Événement trouvé:', foundEvent);
+        setEvent(foundEvent);
       } catch (err) {
         console.error('Erreur lors du chargement:', err);
-        setError('Erreur lors du chargement de l\'actualité');
+        setError('Erreur lors du chargement de l\'événement');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchActualite();
+    fetchEvent();
   }, [params]);
 
   const handleBack = () => {
@@ -63,19 +63,19 @@ export default function Page({ params }: PageProps) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-700 mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement de l'actualité...</p>
+          <p className="text-gray-600">Chargement de l'événement...</p>
         </div>
       </div>
     );
   }
 
-  if (error || !actualite) {
+  if (error || !event) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Actualité non trouvée</h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Événement non trouvé</h1>
           <p className="text-gray-600 mb-6">
-            {error || "L'actualité que vous recherchez n'existe pas."}
+            {error || "L'événement que vous recherchez n'existe pas."}
           </p>
           <button
             onClick={handleBack}
@@ -88,5 +88,5 @@ export default function Page({ params }: PageProps) {
     );
   }
 
-  return <ActualiteDetail actualite={actualite} onBack={handleBack} />;
+  return <EventRegistration event={event} onBack={handleBack} />;
 }

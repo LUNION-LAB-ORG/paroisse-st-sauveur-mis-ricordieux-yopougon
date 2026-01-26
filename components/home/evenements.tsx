@@ -28,7 +28,7 @@ export default function Evenements({ event }: { event: Event[] }) {
       </h2>
 
       {/* GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-10 max-w-6xl mx-auto">
         {paginatedEvents.map((item) => (
           <div
             key={item.id}
@@ -49,18 +49,18 @@ export default function Evenements({ event }: { event: Event[] }) {
             </h3>
 
             <div className="pb-2 flex gap-4 justify-center">
-              <div className="flex items-center gap-1 text-[10px] text-gray-700">
-                <CalendarDays className="w-5 h-5" />
+              <div className="flex items-center gap-1 text-sm text-gray-700">
+                <CalendarDays className="w-5 h-5 text-blue-600" />
                 <span>{item.date_at ?? "Date à venir"}</span>
               </div>
 
-              <div className="flex items-center gap-1 text-[10px] text-gray-700">
-                <CalendarClock className="w-5 h-5" />
+              <div className="flex items-center gap-1 text-sm text-gray-700">
+                <CalendarClock className="w-5 h-5 text-blue-600" />
                 <span>{item.time_at ?? "—"}</span>
               </div>
 
-              <div className="flex items-center gap-1 text-[10px] text-gray-700">
-                <MapPinHouse className="w-5 h-5" />
+              <div className="flex items-center gap-1 text-sm text-gray-700">
+                <MapPinHouse className="w-5 h-5 text-blue-600" />
                 <span>{item.location_at ?? "À préciser"}</span>
               </div>
             </div>
@@ -69,7 +69,7 @@ export default function Evenements({ event }: { event: Event[] }) {
               {item.description}
             </p>
 
-            <Link href={`/actualites/${item.id}`} className="w-full">
+            <Link href={`/evenement/${item.id}`} className="w-full">
               <Button color="primary" className="text-md w-full py-2">
                 Plus d&apos;infos
               </Button>
