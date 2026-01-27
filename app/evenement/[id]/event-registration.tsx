@@ -8,6 +8,7 @@ import { ArrowLeft, CheckCircle, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Event } from "@/services/Events/types/events.type";
 import { toast } from "sonner";
+import { createParticipant } from "@/services/participants/participants.action";
 
 interface EventRegistrationData {
   fullname: string;
@@ -80,13 +81,28 @@ export default function EventRegistration({ event, onBack }: EventRegistrationPr
     const toastId = toast.loading("Envoi de votre inscription...");
 
     try {
-      // Simuler l'envoi des données (remplacer par un vrai appel API)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Préparer les données pour l'API
+      const participantData = {
+        fullname: formData.fullname,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
+        event_id: event.id,
+      };
+
+      // Appeler l'API pour créer le participant
+      const result = await createParticipant(participantData);
+
+      if (result.error) {
+        console.error("Erreur API:", result.error);
+        toast.error(result.error || "Erreur lors de l'inscription", { id: toastId });
+        return;
+      }
 
       toast.success("Inscription envoyée avec succès 🎉", { id: toastId });
       setShowSuccess(true);
     } catch (err) {
-      console.error(err);
+      console.error("Erreur lors de l'inscription:", err);
       toast.error("Erreur lors de l'inscription", { id: toastId });
     } finally {
       setLoading(false);

@@ -36,7 +36,7 @@ export default function Cures({ cure }: { cure: Pastor[] }) {
       </section>
     );
   }
-
+  console.log('les données des curés sont',cure)
   return (
     <section className="py-14 px-4 max-w-7xl mx-auto relative">
       <h2 className="text-center text-blue-900 uppercase font-bold text-3xl mb-8">
@@ -71,7 +71,7 @@ export default function Cures({ cure }: { cure: Pastor[] }) {
             >
               <div className="relative h-48">
                 <Image
-                  src={item.image || "/assets/images/service-2.jpg"} // ✅ Image par défaut si item.image est manquant
+                  src={item.image || "/assets/images/cure.jpg"} // ✅ Image par défaut corrigée
                   alt={item.fullname}
                   fill
                   className="object-cover rounded-t-lg"

@@ -58,7 +58,7 @@ export default function ActualiteDetail({ actualite, onBack }: ActualiteDetailPr
       {/* Contenu principal */}
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Image principale */}
-        <div className="relative w-full h-[300px] md:h-[400px] lg:h-[500px] rounded-xl overflow-hidden mb-8">
+        <div className="relative w-full h-[300px] md:h-[400px] lg:h-[500px] -mx-4 md:-mx-8 lg:-mx-12 rounded-none overflow-hidden mb-8">
           <Image
             src={actualite.image || "/assets/images/default-actualite.jpg"}
             alt={actualite.title}

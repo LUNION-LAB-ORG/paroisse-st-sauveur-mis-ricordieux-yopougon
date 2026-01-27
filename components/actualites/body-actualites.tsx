@@ -50,7 +50,7 @@ const txt2 = "Toutes les actualités";
 
 export default function BodyActualites({ news }: { news: NewsItemType[] }) {
   const important:NewsItemType[]=news.filter((items)=>items.status=='draft')
-  console.log('les données imaportates sont',important)
+
   
   return (
     <section className="bg-white py-16">
