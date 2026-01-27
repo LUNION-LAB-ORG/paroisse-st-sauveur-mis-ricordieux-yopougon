@@ -20,7 +20,7 @@ export default function ActualiteDetail({ actualite, onBack }: ActualiteDetailPr
           url: window.location.href,
         });
       } catch (err) {
-        console.log('Erreur lors du partage:', err);
+      
       }
     } else {
       // Fallback pour les navigateurs qui ne supportent pas l'API Web Share

@@ -23,8 +23,6 @@ export default function Page({ params }: PageProps) {
         const { id } = await params;
         const eventId = parseInt(id);
         
-        console.log('Recherche de l\'événement ID:', eventId);
-        
         // Utiliser votre getAllEvents existant
         const result = await getAllEvents();
         
@@ -41,7 +39,6 @@ export default function Page({ params }: PageProps) {
           return;
         }
 
-        console.log('Événement trouvé:', foundEvent);
         setEvent(foundEvent);
       } catch (err) {
         console.error('Erreur lors du chargement:', err);

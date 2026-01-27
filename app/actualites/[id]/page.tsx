@@ -23,7 +23,7 @@ export default function Page({ params }: PageProps) {
         const { id } = await params;
         const actualiteId = parseInt(id);
         
-        console.log('Recherche de l\'actualité ID:', actualiteId);
+      
         
         // Utiliser votre getAllNews existant
         const result = await getAllNews();
@@ -41,7 +41,7 @@ export default function Page({ params }: PageProps) {
           return;
         }
 
-        console.log('Actualité trouvée:', foundActualite);
+ 
         setActualite(foundActualite);
       } catch (err) {
         console.error('Erreur lors du chargement:', err);

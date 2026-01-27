@@ -56,7 +56,7 @@ export default function Content() {
       return;
     }
 
-    console.log("Formulaire validé :", formData);
+
     // Ici, on envoie les données
   };
 

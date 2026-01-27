@@ -24,18 +24,13 @@ export async function createParticipant(data: ParticipantType) {
       body: JSON.stringify(validatedData),
     });
 
-    console.log('Status response:', res.status);
-    console.log('Response ok:', res.ok);
+
 
     if (!res.ok) {
       const msg = await res.text();
-      console.error('Erreur response:', msg);
       return { error: "Erreur API lors de la création du participant", details: msg };
     }
-
     const json = await res.json();
-    console.log('Response JSON:', json);
-
     const parsed = ParticipantResponseSchema.safeParse(json);
 
     if (!parsed.success) {
