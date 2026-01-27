@@ -5,13 +5,14 @@ import Cures from "./cures";
 import CardHistoire from "./cardHistoire";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { Pastor } from "@/services/cure/types/cure.type";
 
 const listButton = [
   { label: "Notre Histoire", value: "NotreHistoire" },
   { label: "Nos Curés", value: "NosCurés" },
 ];
 
-export default function ToggleBody() {
+export default function ToggleBody({cure}:{cure:Pastor[]} ) {
   const [table, setTable] = useState("NotreHistoire");
   const isMobile = useMediaQuery("(max-width: 767px)"); // mobile < 768px
 
@@ -67,7 +68,7 @@ export default function ToggleBody() {
             variants={isMobile ? slideVariants : fadeVariants}
             transition={{ duration: 0.3 }}
           >
-            {table === "NotreHistoire" ? <CardHistoire /> : <Cures />}
+            {table === "NotreHistoire" ? <CardHistoire /> : <Cures cure={cure} />}
           </motion.div>
         </AnimatePresence>
       </div>

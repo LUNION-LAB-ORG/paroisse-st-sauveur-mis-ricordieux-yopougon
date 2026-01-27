@@ -1,75 +1,10 @@
-// app/mouvement/[id]/page.tsx
+"use client";
 
+import { useState, useEffect } from "react";
 import { notFound } from "next/navigation";
-
-import Content from "./content";
-
-type ActualitésId = {
-  id: string;
-  header: {
-    image: string;
-    title: string;
-    description: string;
-  };
-  nosobjectifs: {
-    title: string;
-    content: string[];
-  };
-  nosActivités: {
-    title: string;
-    content: string[];
-  };
-  CalendrierEtRéunions: {
-    title: string;
-    content: string[];
-  };
-};
-
-// Données fictives
-
-const fakeMouvements: ActualitésId[] = [
-  {
-    id: "1",
-    header: {
-      image: `/assets/images/mvt-id.jpg`,
-      title: `Inscription au pèlerinage paroissial à Notre-Dame de Lourdes`,
-      description: `Les inscriptions pour le pèlerinage à Notre-Dame de Lourdes sont désormais ouvertes à tous les paroissiens.
-       Ce temps fort de notre année paroissiale nous permettra de nous rassembler autour de Marie et de vivre ensemble des moments
-        de prière, de partage et de fraternité. Informations pratiquesLe pèlerinage aura lieu du 12 au 16 juin 2025.
-         Le départ se fera en car depuis le parvis de l'église à 6h00 le matin du 12 juin.`,
-    },
-    nosobjectifs: {
-      title: `Le programme comprendra :`,
-      content: [
-        "Participation aux processions mariales",
-        "Messes quotidiennes",
-        "Temps de confession",
-        "Chemin de croix",
-        "Visite des lieux importants de Lourdes",
-        "Temps libre pour la prière personnelle aux grottes",
-      ],
-    },
-    nosActivités: {
-      title: `Modalités d'inscription`,
-      content: [
-        "Préparation des célébrations dominicales et des temps forts liturgiques",
-        "Animation musicale des messes et offices",
-        "Sessions de formation liturgique pour les paroissiens",
-        "Accompagnement des servants d'autel",
-        "Organisation des répétitions de la chorale paroissiale",
-        "Préparation du matériel et des livrets pour les célébrations spéciales",
-      ],
-    },
-    CalendrierEtRéunions: {
-      title: `Calendrier et réunions`,
-      content: [
-        "Réunion mensuelle de planification :Premier lundi du mois à 20h00 à la salle paroissiale",
-        "Répétition de la chorale : Chaque mercredi de 19h30 à 21h30",
-        "Formation des lecteurs : Troisième samedi du mois de 10h00 à 12h00",
-      ],
-    },
-  },
-];
+import ActualiteDetail from "./actualite-detail";
+import { NewsItemType } from "@/services/news/types/cure.type";
+import { getAllNews } from "@/services/news/news.action";
 
 interface PageProps {
   params: Promise<{
@@ -77,37 +12,81 @@ interface PageProps {
   }>;
 }
 
-export async function generateStaticParams() {
-  return fakeMouvements.map((mouvement) => ({
-    id: mouvement.id,
-  }));
-}
+export default function Page({ params }: PageProps) {
+  const [actualite, setActualite] = useState<NewsItemType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default async function Page({ params }: PageProps)  {
-    const { id } = await params;
-  const data = fakeMouvements.find((m) => m.id === id);
+  useEffect(() => {
+    const fetchActualite = async () => {
+      try {
+        const { id } = await params;
+        const actualiteId = parseInt(id);
+        
+      
+        
+        // Utiliser votre getAllNews existant
+        const result = await getAllNews();
+        
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
 
-  if (!data) {
-    notFound();
+        const news = result.data ?? [];
+        const foundActualite = news.find((item: NewsItemType) => item.id === actualiteId);
+
+        if (!foundActualite) {
+          setError(`Actualité avec ID ${actualiteId} non trouvée`);
+          return;
+        }
+
+ 
+        setActualite(foundActualite);
+      } catch (err) {
+        console.error('Erreur lors du chargement:', err);
+        setError('Erreur lors du chargement de l\'actualité');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActualite();
+  }, [params]);
+
+  const handleBack = () => {
+    window.history.back();
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-700 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement de l'actualité...</p>
+        </div>
+      </div>
+    );
   }
 
-  return (
-    <>
-      <Content data={data} />
-    </>
-  );
+  if (error || !actualite) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Actualité non trouvée</h1>
+          <p className="text-gray-600 mb-6">
+            {error || "L'actualité que vous recherchez n'existe pas."}
+          </p>
+          <button
+            onClick={handleBack}
+            className="bg-red-700 hover:bg-red-800 text-white px-6 py-2 rounded-md"
+          >
+            Retour
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <ActualiteDetail actualite={actualite} onBack={handleBack} />;
 }
-
-// export default async function Page({ params }: Props) {
-//   const data = fakeMouvements.find((m) => m.id === params.id);
-
-//   if (!data) {
-//     notFound();
-//   }
-
-//   return (
-//     <>
-//       <Content data={data} />
-//     </>
-//   );
-// }

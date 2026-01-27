@@ -3,8 +3,20 @@ import Services from "@/components/home/services";
 import Cure from "@/components/home/cure";
 import Evenements from "@/components/home/evenements";
 import SelectProgramme from "@/components/home/selectProgramme";
+import { getAllEvents } from "@/services/Events/events.action";
+import { MorphingSquare } from "@/components/morphing-square";
+import CustomSpinner from "@/components/common/custom-spinner";
 
-export default function Home() {
+export default async function  Home() {
+  const result=await getAllEvents()
+    
+
+  if (result.error) {
+    return <div className=" h-screen flex items-center justify-center"><MorphingSquare /></div>;
+  }
+  const events=result.data.data
+
+
   return (
     <div className="overflow-hidden flex flex-col">
       <Hero />
@@ -13,7 +25,7 @@ export default function Home() {
       <div className="flex flex-col gap-12 pb-16">
         <Services />
         <Cure />
-        <Evenements />
+        <Evenements event={events} />
       </div>
     </div>
   );

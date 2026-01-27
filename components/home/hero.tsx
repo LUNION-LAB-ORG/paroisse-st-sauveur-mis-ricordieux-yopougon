@@ -12,7 +12,7 @@ export function Hero() {
           alt="Église Saint Michel"
           fill
           priority
-          className="object-cover brightness-[0.5]"
+          className="object-cover brightness-[0.8]"
         />
       </div>
 
@@ -20,7 +20,7 @@ export function Hero() {
       <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-6 lg:px-10">
         <div className="text-white text-center max-w-3xl">
           <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-snug mb-6 font-cinzel">
-            Bienvenue à la Paroisse Saint Sauveur Miséricordieux
+            Bienvenue à la Paroisse Saint Sauveur Miséricordieuxdd
           </h1>
           <p className="text-base sm:text-lg md:text-xl font-light opacity-90 mb-8 leading-relaxed">
             Une communauté vivante et accueillante à Yopougon Millionnaire.
