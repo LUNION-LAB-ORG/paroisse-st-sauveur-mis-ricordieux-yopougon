@@ -5,7 +5,10 @@ export interface IParticipant {
   phone: string | null;
   message: string | null;
   event_id?: number;
-  payment_status?: "paid" | "free" | "pending" | "failed" | null;
+  payment_status?: "paid" | "succeeded" | "free" | "pending" | "failed" | null;
+  wave_checkout_id?: string | null;
+  payment_reference?: string | null;
+  amount?: number | null;
   created_at: string;
 }
 
