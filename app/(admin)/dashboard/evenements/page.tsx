@@ -99,8 +99,8 @@ export default function EvenementsPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard icon={CalIcon} value={String(events.length)} label="Total événements" iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
-        <StatCard icon={Users} value="—" label="Participants inscrits" iconBgColor="bg-green-100" iconColor="text-green-600" />
-        <StatCard icon={CalIcon} value="—" label="Ce mois" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
+        <StatCard icon={Users} value={String(events.filter((e) => { const d = new Date(e.date_at); return d >= new Date() }).length)} label="À venir" iconBgColor="bg-green-100" iconColor="text-green-600" />
+        <StatCard icon={CalIcon} value={String(events.filter((e) => { const d = new Date(e.date_at); const n = new Date(); return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear() }).length)} label="Ce mois" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
       </div>
 
       {/* Add button */}

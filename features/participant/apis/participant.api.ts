@@ -1,25 +1,8 @@
 import { apiClient } from "@/lib/api.client";
-import type {
-  IParticipant,
-  IParticipantCreer,
-  IParticipantModifier,
-  IParticipantReponse,
-  IParticipantListeReponse,
-} from "../types/participant.type";
+import type { IParticipant, IParticipantCreer } from "../types/participant.type";
 
 export const participantAPI = {
-  ajouter(data: IParticipantCreer): Promise<IParticipantReponse> {
-    return apiClient.request({
-      endpoint: "/participants",
-      method: "POST",
-      data,
-      service: "public",
-    });
-  },
-
-  obtenirTous(
-    params?: Record<string, string>,
-  ): Promise<IParticipantListeReponse> {
+  obtenirTous(params?: Record<string, string>): Promise<{ data: IParticipant[] }> {
     return apiClient.request({
       endpoint: "/participants",
       method: "GET",
@@ -28,26 +11,25 @@ export const participantAPI = {
     });
   },
 
-  obtenirParEvenement(
-    eventId: number,
-  ): Promise<IParticipantListeReponse> {
+  obtenirParEvenement(eventId: number): Promise<{ data: IParticipant[] }> {
     return apiClient.request({
-      endpoint: `/participants/event/${eventId}`,
+      endpoint: "/participants",
       method: "GET",
-      service: "public",
-    });
-  },
-
-  modifier(id: number, data: IParticipantModifier): Promise<IParticipantReponse> {
-    return apiClient.request({
-      endpoint: `/participants/${id}`,
-      method: "PUT",
-      data,
+      searchParams: { event_id: String(eventId) },
       service: "private",
     });
   },
 
-  supprimer(id: number): Promise<IParticipantReponse> {
+  ajouter(data: IParticipantCreer): Promise<{ data: IParticipant }> {
+    return apiClient.request({
+      endpoint: "/participants",
+      method: "POST",
+      data,
+      service: "public",
+    });
+  },
+
+  supprimer(id: number): Promise<void> {
     return apiClient.request({
       endpoint: `/participants/${id}`,
       method: "DELETE",

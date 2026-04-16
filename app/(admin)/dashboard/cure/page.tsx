@@ -5,7 +5,6 @@ import { Edit, Plus, Trash2, User, Calendar, ChurchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import Image from "next/image";
 
 import { Header } from "@/components/admin/header";
 import { StatCard } from "@/components/admin/stat-card";
@@ -16,8 +15,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 
 import { Card, Avatar, Chip, Separator, TextField, Label, Input as HeroInput, TextArea as HeroTextArea } from "@heroui/react";
 import { Button as HeroButton } from "@heroui/react";
@@ -40,6 +37,9 @@ export default function CuresPage() {
   const [cureToDelete, setCureToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+
+  const actifs = cures.filter((c) => !c.ended_at);
+  const anciens = cures.filter((c) => !!c.ended_at);
 
   /* ================= FETCH ================= */
   useEffect(() => {
@@ -100,6 +100,21 @@ export default function CuresPage() {
     }
   };
 
+  /* ================= TOGGLE EN POSTE ================= */
+  const toggleEnPoste = async (cure: any) => {
+    const isCurrentlyActive = !cure.ended_at;
+    const payload: UpdateCureType = isCurrentlyActive
+      ? { ended_at: new Date().toISOString().slice(0, 10) }
+      : { ended_at: null };
+    try {
+      const res = await cureAPI.modifier(String(cure.id), payload);
+      toast.success(isCurrentlyActive ? "Marqué comme ancien curé" : "Remis en poste");
+      setCures((prev) => prev.map((c) => (c.id === cure.id ? (res as any) : c)));
+    } catch (err: any) {
+      toast.error(err.message || "Erreur");
+    }
+  };
+
   /* ================= DELETE ================= */
   const confirmDelete = async () => {
     if (!cureToDelete) return;
@@ -124,8 +139,8 @@ export default function CuresPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard icon={ChurchIcon} value={String(cures.length)} label="Total curés" iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
-        <StatCard icon={User} value="—" label="En activité" iconBgColor="bg-green-100" iconColor="text-green-600" />
-        <StatCard icon={Calendar} value="—" label="Anciens curés" iconBgColor="bg-gray-100" iconColor="text-gray-500" />
+        <StatCard icon={User} value={String(actifs.length)} label="En activité" iconBgColor="bg-green-100" iconColor="text-green-600" />
+        <StatCard icon={Calendar} value={String(anciens.length)} label="Anciens curés" iconBgColor="bg-gray-100" iconColor="text-gray-500" />
       </div>
 
       {/* Add button */}
@@ -159,6 +174,16 @@ export default function CuresPage() {
             <Card key={cure.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               {/* Photo header */}
               <div className="relative h-40 bg-gradient-to-br from-[#2d2d83] to-[#98141f]">
+                {/* Status badge */}
+                <div className="absolute top-3 right-3">
+                  <Chip
+                    variant="soft"
+                    color={cure.ended_at ? "default" : "success"}
+                    size="sm"
+                  >
+                    {cure.ended_at ? "Ancien" : "En poste"}
+                  </Chip>
+                </div>
                 <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
                   <Avatar className="w-20 h-20 ring-4 ring-white">
                     <Avatar.Image
@@ -191,21 +216,32 @@ export default function CuresPage() {
 
                 <Separator className="my-4" />
 
-                <div className="flex justify-center gap-2">
-                  <HeroButton
-                    variant="outline"
-                    className="rounded-lg text-[#2d2d83] border-[#2d2d83]/20"
-                    onPress={() => { setCureToEdit(cure); setEditOpen(true); }}
-                  >
-                    <Edit className="w-4 h-4" /> Modifier
-                  </HeroButton>
+                <div className="flex flex-col gap-2">
+                  {/* Toggle En poste / Ancien */}
                   <HeroButton
                     variant="ghost"
-                    className="rounded-lg text-red-500 hover:bg-red-50"
-                    onPress={() => { setCureToDelete(cure.id); setDeleteOpen(true); }}
+                    className={`w-full rounded-lg text-sm ${cure.ended_at ? "text-green-700 bg-green-50" : "text-gray-600 bg-gray-50"}`}
+                    onPress={() => toggleEnPoste(cure)}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    {cure.ended_at ? "↩ Remettre en poste" : "✓ Marquer comme ancien"}
                   </HeroButton>
+
+                  <div className="flex justify-center gap-2">
+                    <HeroButton
+                      variant="outline"
+                      className="rounded-lg text-[#2d2d83] border-[#2d2d83]/20"
+                      onPress={() => { setCureToEdit(cure); setEditOpen(true); }}
+                    >
+                      <Edit className="w-4 h-4" /> Modifier
+                    </HeroButton>
+                    <HeroButton
+                      variant="ghost"
+                      className="rounded-lg text-red-500 hover:bg-red-50"
+                      onPress={() => { setCureToDelete(cure.id); setDeleteOpen(true); }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </HeroButton>
+                  </div>
                 </div>
               </Card.Content>
             </Card>
