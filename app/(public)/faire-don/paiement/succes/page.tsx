@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle, Home, Heart, Loader2 } from "lucide-react";
@@ -7,7 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { waveAPI } from "@/features/don/apis/wave.api";
 
-export default function SuccesPage() {
+function SuccesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const ref = searchParams.get("ref");
@@ -88,5 +89,13 @@ export default function SuccesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SuccesPage() {
+  return (
+    <Suspense>
+      <SuccesContent />
+    </Suspense>
   );
 }

@@ -16,7 +16,7 @@ export default function ActualiteDetail({ actualite, onBack }: ActualiteDetailPr
       try {
         await navigator.share({
           title: actualite.title,
-          text: actualite.new_resume,
+          text: actualite.new_resume ?? actualite.title,
           url: window.location.href,
         });
       } catch (err) {

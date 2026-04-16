@@ -1,9 +1,10 @@
+import { Suspense } from "react";
 import Content from "./content";
 
-export default async function PageDonPayement() {
+export default function PageDonPayement() {
   return (
-    <>
+    <Suspense>
       <Content />
-    </>
+    </Suspense>
   );
 }
