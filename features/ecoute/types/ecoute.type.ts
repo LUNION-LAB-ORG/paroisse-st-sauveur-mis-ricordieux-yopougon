@@ -5,9 +5,8 @@ export interface IEcoute {
   type?: string;
   fullname: string;
   phone?: string;
-  availability: string;
+  availability?: string;
   message: string;
-  acceptConditions: boolean;
   request_status?: IEcouteStatutDemande;
   created_at?: string;
 }
@@ -16,10 +15,9 @@ export interface IEcouteCreer {
   type?: string;
   fullname: string;
   phone?: string;
-  availability: string;
+  availability?: string;
   message: string;
-  acceptConditions: boolean;
-  request_status: IEcouteStatutDemande;
+  request_status?: IEcouteStatutDemande;
 }
 
 export interface IEcouteModifier extends Partial<IEcouteCreer> {}
