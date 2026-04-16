@@ -1,43 +1,69 @@
 "use client"
 
-import { useState } from "react"
-import { Newspaper, Plus, Eye, Calendar, User, Edit, Trash2, Search } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Newspaper, Plus, Eye, Calendar, User, Edit, Trash2 } from "lucide-react"
 import { Header } from "@/components/admin/header"
 import { StatCard } from "@/components/admin/stat-card"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { Card, Button, Chip, Separator, SearchField } from "@heroui/react"
-import Image from "next/image"
 import Link from "next/link"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { actualiteAPI } from "@/features/actualite/apis/actualite.api"
+import type { IActualite } from "@/features/actualite/types/actualite.type"
+import { toast } from "sonner"
 
-const articles = [
-  { id: 1, titre: "Célébration de Pâques 2025", date: "15/04/2025", auteur: "Père Thomas", categorie: "Événement", statut: "published" as const, statutLabel: "Publié", vues: 256, extrait: "La paroisse célèbre Pâques avec une messe solennelle et un repas communautaire.", image: "/assets/images/projet-en-cours.jpg" },
-  { id: 2, titre: "Nouvelle chorale paroissiale", date: "10/04/2025", auteur: "Père François", categorie: "Annonce", statut: "published" as const, statutLabel: "Publié", vues: 189, extrait: "Rejoignez notre nouvelle chorale ! Les répétitions ont lieu chaque samedi à 16h.", image: "/assets/images/projet-en-cours.jpg" },
-  { id: 3, titre: "Journée des familles", date: "08/04/2025", auteur: "Père Thomas", categorie: "Événement", statut: "draft" as const, statutLabel: "Brouillon", vues: 0, extrait: "Une journée de rencontre et de partage pour toutes les familles de la paroisse.", image: "/assets/images/projet-en-cours.jpg" },
-  { id: 4, titre: "Retraite spirituelle de Carême", date: "01/04/2025", auteur: "Père François", categorie: "Spiritualité", statut: "published" as const, statutLabel: "Publié", vues: 312, extrait: "Une journée de recueillement pour préparer son cœur à Pâques.", image: "/assets/images/projet-en-cours.jpg" },
-]
+function formatDate(iso: string | null) {
+  if (!iso) return "—"
+  try {
+    return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })
+  } catch { return iso }
+}
 
 export default function ActualitesPage() {
+  const [articles, setArticles] = useState<IActualite[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState("all")
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    actualiteAPI
+      .obtenirTous()
+      .then((res) => setArticles(res.data ?? []))
+      .catch(() => toast.error("Erreur lors du chargement des actualités"))
+      .finally(() => setLoading(false))
+  }, [])
 
   const filtered = articles
-    .filter((a) => filter === "all" || a.statut === filter)
-    .filter((a) => !search || a.titre.toLowerCase().includes(search.toLowerCase()))
+    .filter((a) => filter === "all" || a.status === filter)
+    .filter((a) => !search || a.title.toLowerCase().includes(search.toLowerCase()))
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    setDeleting(true)
+    try {
+      await actualiteAPI.supprimer(String(deleteId))
+      setArticles((prev) => prev.filter((a) => a.id !== deleteId))
+      toast.success("Article supprimé")
+      setDeleteId(null)
+    } catch {
+      toast.error("Erreur lors de la suppression")
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <div>
       <Header title="Actualités" />
 
-      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard icon={Newspaper} value={String(articles.length)} label="Total articles" trend="12%" trendUp iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
-        <StatCard icon={Eye} value={String(articles.reduce((s, a) => s + a.vues, 0))} label="Vues totales" trend="8%" trendUp iconBgColor="bg-green-100" iconColor="text-green-600" />
-        <StatCard icon={Newspaper} value={String(articles.filter((a) => a.statut === "draft").length)} label="Brouillons" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
+        <StatCard icon={Eye} value={String(articles.reduce((s, a) => s + (a.views ?? 0), 0))} label="Vues totales" trend="8%" trendUp iconBgColor="bg-green-100" iconColor="text-green-600" />
+        <StatCard icon={Newspaper} value={String(articles.filter((a) => a.status === "draft").length)} label="Brouillons" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
       </div>
 
-      {/* Search + filters + add */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <SearchField className="flex-1 sm:max-w-xs" value={search} onChange={setSearch}>
           <SearchField.Group>
@@ -72,54 +98,56 @@ export default function ActualitesPage() {
         </Link>
       </div>
 
-      {/* Articles grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filtered.map((article) => (
-          <Card key={article.id} className="overflow-hidden hover:shadow-md transition-shadow">
-            <div className="relative h-40">
-              <Image src={article.image} alt={article.titre} fill className="object-cover" />
-              <div className="absolute top-3 right-3">
-                <StatusBadge status={article.statut} label={article.statutLabel} />
-              </div>
-            </div>
+      {loading && (
+        <p className="text-center text-gray-400 py-12">Chargement...</p>
+      )}
 
-            <Card.Content className="p-4">
-              <Chip variant="soft" color="default" size="sm" className="mb-2">{article.categorie}</Chip>
+      {!loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filtered.map((article) => (
+            <Card key={article.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <Card.Content className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Chip variant="soft" color="default" size="sm">{article.category}</Chip>
+                  <StatusBadge
+                    status={article.status === "published" ? "confirmed" : "pending"}
+                    label={article.status === "published" ? "Publié" : "Brouillon"}
+                  />
+                </div>
 
-              <Card.Title className="text-base font-bold text-[#2d2d83] mb-1 line-clamp-2">
-                {article.titre}
-              </Card.Title>
+                <Card.Title className="text-base font-bold text-[#2d2d83] mb-1 line-clamp-2">
+                  {article.title}
+                </Card.Title>
 
-              <p className="text-xs text-gray-500 line-clamp-2 mb-3">{article.extrait}</p>
+                <div className="flex items-center gap-3 text-xs text-gray-400 mb-3">
+                  <span className="flex items-center gap-1"><User className="w-3 h-3" /> {article.author}</span>
+                  <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {formatDate(article.published_at ?? article.created_at)}</span>
+                  {article.views > 0 && <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {article.views}</span>}
+                </div>
 
-              <div className="flex items-center gap-3 text-xs text-gray-400 mb-3">
-                <span className="flex items-center gap-1"><User className="w-3 h-3" /> {article.auteur}</span>
-                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {article.date}</span>
-                {article.vues > 0 && <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {article.vues}</span>}
-              </div>
+                <Separator className="mb-3" />
 
-              <Separator className="mb-3" />
-
-              <div className="flex gap-2">
-                <Link href={`/dashboard/actualites/${article.id}`} className="flex-1">
-                  <Button variant="outline" className="w-full rounded-lg text-sm text-[#2d2d83] border-[#2d2d83]/20">
-                    <Edit className="w-3.5 h-3.5" /> Modifier
+                <div className="flex gap-2">
+                  <Link href={`/dashboard/actualites/${article.id}`} className="flex-1">
+                    <Button variant="outline" className="w-full rounded-lg text-sm text-[#2d2d83] border-[#2d2d83]/20">
+                      <Edit className="w-3.5 h-3.5" /> Modifier
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    className="rounded-lg text-red-500 hover:bg-red-50"
+                    onPress={() => setDeleteId(article.id)}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
                   </Button>
-                </Link>
-                <Button
-                  variant="ghost"
-                  className="rounded-lg text-red-500 hover:bg-red-50"
-                  onPress={() => setDeleteId(article.id)}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            </Card.Content>
-          </Card>
-        ))}
-      </div>
+                </div>
+              </Card.Content>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {filtered.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <Card className="p-12 text-center mt-4">
           <Card.Content>
             <p className="text-gray-400">Aucun article pour ce filtre.</p>
@@ -127,7 +155,6 @@ export default function ActualitesPage() {
         </Card>
       )}
 
-      {/* Delete confirmation */}
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -135,11 +162,11 @@ export default function ActualitesPage() {
           </DialogHeader>
           <p className="text-sm text-gray-500">Cette action est irréversible.</p>
           <div className="flex justify-end gap-3 mt-4">
-            <button onClick={() => setDeleteId(null)} className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
+            <button onClick={() => setDeleteId(null)} disabled={deleting} className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
               Annuler
             </button>
-            <button className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors">
-              Supprimer
+            <button onClick={handleDelete} disabled={deleting} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-60">
+              {deleting ? "Suppression..." : "Supprimer"}
             </button>
           </div>
         </DialogContent>

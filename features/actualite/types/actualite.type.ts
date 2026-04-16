@@ -1,27 +1,21 @@
-export type IActualiteStatut = "draft" | "published" | "archived";
+export type IActualiteStatut = "draft" | "published";
 
 export interface IActualite {
   id: number;
   title: string;
-  new_resume: string;
-  location: string;
-  content: string;
-  image: string;
-  new_status: IActualiteStatut;
-  status?: IActualiteStatut;
-  views_count: number;
-  reads_count: number;
-  published_at: string;
+  author: string;
+  category: string;
+  status: IActualiteStatut;
+  views: number;
+  published_at: string | null;
   created_at: string;
 }
 
 export interface IActualiteCreer {
   title: string;
-  image?: File | string;
-  new_resume: string;
-  location: string;
-  content: string;
-  new_status?: IActualiteStatut;
+  author: string;
+  category: string;
+  status?: IActualiteStatut;
   published_at?: string;
 }
 
