@@ -1,27 +1,27 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Button } from "@heroui/button";
+import { Church, HeartHandshake, CalendarPlus } from "lucide-react";
+import { Card, Button } from "@heroui/react";
 
 const data = [
   {
     title: "Demander une Messe",
     description:
       "Faites une demande de messe d'intention ou d'action de grâce.",
-    image: "/assets/images/service-1.jpg",
+    icon: Church,
     btn: "Demander",
     link: "/demande-messe",
   },
   {
     title: "Demander une Écoute",
     description: "Prenez rendez-vous pour un temps d'écoute ou de confession.",
-    image: "/assets/images/service-2.jpg",
+    icon: HeartHandshake,
     btn: "Contacter",
     link: "/ecoute",
   },
   {
     title: "Organiser un Événement",
     description: "Planifiez une activité ou un événement paroissial.",
-    image: "/assets/images/service-3.jpg",
+    icon: CalendarPlus,
     btn: "Organiser",
     link: "/evenement",
   },
@@ -29,47 +29,46 @@ const data = [
 
 export default function Services() {
   return (
-    <section className="relative w-full px-4 max-w-7xl mx-auto py-16">
-      <h2 className="text-blue-900 text-3xl sm:text-4xl font-extrabold text-center mb-14">
-        Services rapides
-      </h2>
+    <section className="px-6 lg:px-[100px] max-w-[1440px] mx-auto">
+      <div className="text-center mb-12">
+        <p className="text-[#98141f] text-sm font-semibold uppercase tracking-widest mb-3">
+          Nos services
+        </p>
+        <h2 className="text-[#2d2d83] text-2xl sm:text-3xl lg:text-4xl font-bold">
+          Comment pouvons-nous vous aider ?
+        </h2>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {data.map((item, index) => (
-          <div
+          <Card
             key={index}
-            className="bg-white shadow-md hover:shadow-xl transition-shadow duration-300 rounded-xl overflow-hidden flex flex-col"
+            className="group overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col"
           >
-            <div className="w-full h-[200px] relative">
-              <Image
-                src={item.image}
-                alt={item.title}
-                fill
-                className="object-cover"
-              />
-            </div>
+            {/* Top accent line */}
+            <div className="h-1 bg-gradient-to-r from-[#2d2d83] to-[#98141f]" />
 
-            <div className="flex-1 p-6 flex flex-col justify-between">
-              <div>
-                <h3 className="text-xl md:text-2xl font-semibold text-blue-800 mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-6">
-                  {item.description}
-                </p>
+            <Card.Content className="p-6 lg:p-8 flex-1 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-[#2d2d83]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#2d2d83] group-hover:scale-110 transition-all duration-300">
+                <item.icon className="w-7 h-7 text-[#2d2d83] group-hover:text-white transition-colors duration-300" />
               </div>
 
-              <Link href={item.link}>
-                <Button
-                  color="primary"
-                  size="lg"
-                  className="w-full text-md md:text-lg py-4"
-                >
-                  {item.btn}
-                </Button>
-              </Link>
-            </div>
-          </div>
+              <Card.Title className="text-xl font-bold text-[#2d2d83] mb-3">
+                {item.title}
+              </Card.Title>
+              <Card.Description className="text-sm leading-relaxed mb-6 flex-1">
+                {item.description}
+              </Card.Description>
+
+              <Button
+                variant="primary"
+                className="w-full bg-[#98141f] rounded-xl"
+                asChild
+              >
+                <Link href={item.link}>{item.btn}</Link>
+              </Button>
+            </Card.Content>
+          </Card>
         ))}
       </div>
     </section>

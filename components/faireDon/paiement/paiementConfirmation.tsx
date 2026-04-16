@@ -1,7 +1,6 @@
 "use client";
 
-import { Button } from "@heroui/button";
-import { Radio, RadioGroup } from "@heroui/radio";
+import { Button, Radio, RadioGroup } from "@heroui/react";
 
 interface Props {
   formData: {
@@ -74,7 +73,7 @@ export function PaiementConfirmation({
             </Button>
             <Button
               className="text-sm lg:text-sm w-fit lg:px-10 py-4 lg:py-6"
-              color="primary"
+              variant="primary"
               onPress={onSubmit}
             >
               Faire mon don
@@ -97,11 +96,10 @@ function ModePaiementRadioGroup({
 }: ModePaiementRadioGroupProps) {
   return (
     <RadioGroup
-      label="Mode de paiement"
       value={selected}
-      onValueChange={onChange}
-      isRequired
+      onChange={onChange}
     >
+      <p className="text-lg font-semibold mb-2">Mode de paiement</p>
       <div className="rounded-lg flex items-center gap-2 border-2 p-4">
         <Radio value="en-ligne" />
         <div>

@@ -1,4 +1,4 @@
-import { Button } from "@heroui/button";
+import { Button } from "@heroui/react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -62,7 +62,7 @@ export default function Paroisse() {
               </p>
               <Link href={item.link}>
                 <Button
-                  color="primary"
+                  variant="primary"
                   className="rounded-full text-sm px-6 py-2 font-medium"
                 >
                   En savoir plus

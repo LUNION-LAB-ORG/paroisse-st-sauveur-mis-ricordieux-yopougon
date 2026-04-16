@@ -1,61 +1,68 @@
 "use client";
 
-import { CalendarDays, ChevronDown } from "lucide-react";
+import { CalendarDays, ChevronDown, Clock } from "lucide-react";
+import { Button, Card, Separator } from "@heroui/react";
 
 const data = [
-  {
-    heure: "06:00 - 07:30",
-    messe: "Messe du matin",
-  },
-  {
-    heure: "08:00 - 09:00",
-    messe: "Confession",
-  },
-  {
-    heure: "10:00 - 11:30",
-    messe: "Messe chantée",
-  },
-  {
-    heure: "18:00 - 19:30",
-    messe: "Adoration et louange",
-  },
+  { heure: "06:00 - 07:30", messe: "Messe du matin", icon: "🕯️" },
+  { heure: "08:00 - 09:00", messe: "Confession", icon: "✝️" },
+  { heure: "10:00 - 11:30", messe: "Messe chantée", icon: "🎵" },
+  { heure: "18:00 - 19:30", messe: "Adoration et louange", icon: "🙏" },
 ];
 
 export default function SelectProgramme() {
   return (
-    <section className="relative bg-white w-full px-4 sm:px-6 lg:px-10 py-16 max-w-7xl mx-auto">
-      {/* Calendrier */}
-      <div className="mx-auto bg-blue-900 text-white p-6 rounded-2xl flex flex-col sm:flex-row items-center gap-6 max-w-xl shadow-lg">
-        <CalendarDays className="w-12 h-12 sm:w-16 sm:h-16" />
-        <div className="text-center sm:text-left">
-          <h3 className="text-lg sm:text-xl mb-1 font-medium">Sélectionner une date</h3>
-          <h4 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">22 avril 2025</h4>
-        </div>
-        <div className="bg-white/10 hover:bg-white/20 transition-colors rounded-full p-3 cursor-pointer ml-auto">
-          <ChevronDown className="w-6 h-6" />
-        </div>
-      </div>
+    <section className="bg-white w-full px-6 lg:px-[100px] py-12 max-w-[1440px] mx-auto flex flex-col gap-10 items-center">
+      {/* Selecteur de date */}
+      <Card className="bg-[#2d2d83] text-white p-0 overflow-hidden w-full max-w-[591px]">
+        <Card.Content className="p-0">
+          <div className="flex items-center">
+            <div className="flex items-center gap-4 flex-1 pl-4 py-4">
+              <CalendarDays className="w-12 h-12 sm:w-16 sm:h-16 text-white/80" />
+              <div className="text-center flex-1">
+                <p className="text-sm sm:text-base font-medium text-white/70">
+                  Sélectionner une date
+                </p>
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-semibold">
+                  22 avril 2025
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="primary"
+              className="bg-[#98141f] hover:bg-[#7a1019] rounded-none h-full px-8 py-12 self-stretch"
+            >
+              <ChevronDown className="w-7 h-7" />
+            </Button>
+          </div>
+        </Card.Content>
+      </Card>
 
       {/* Titre jour liturgique */}
-      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-blue-900 text-center mt-14 mb-10">
-        Mardi dans l'octave de Pâques
+      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-normal italic text-[#2d2d83] text-center">
+        Mardi dans l&apos;octave de Pâques
       </h2>
 
-      {/* Programmes */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 justify-center">
+      {/* Cartes horaires */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full">
         {data.map((item, index) => (
-          <div
+          <Card
             key={index}
-            className="bg-blue-50 border-t-8 border-blue-800 rounded-xl p-6 shadow hover:shadow-md transition"
+            className="border-t-4 border-t-[#98141f] hover:shadow-lg transition-shadow"
           >
-            <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900 mb-4">
-              {item.heure}
-            </h3>
-            <div className="h-[1px] bg-blue-900 w-full mb-4" />
-            <p className="text-base sm:text-lg text-gray-800 font-medium">
-              {item.messe}
-            </p>
-          </div>
+            <Card.Content className="p-6 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <Clock className="w-5 h-5 text-[#98141f]" />
+                <Card.Title className="text-xl sm:text-2xl font-bold text-[#2d2d83]">
+                  {item.heure}
+                </Card.Title>
+              </div>
+              <Separator />
+              <Card.Description className="text-base sm:text-lg text-foreground">
+                {item.messe}
+              </Card.Description>
+            </Card.Content>
+          </Card>
         ))}
       </div>
     </section>

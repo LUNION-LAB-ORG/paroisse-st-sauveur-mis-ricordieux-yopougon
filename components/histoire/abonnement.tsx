@@ -1,7 +1,6 @@
 "use client";
 
-import { Button } from "@heroui/button";
-import { Input } from "@heroui/input";
+import { Button, Input } from "@heroui/react";
 
 export default function Abonnement() {
   return (
@@ -19,14 +18,11 @@ export default function Abonnement() {
             <Input
               placeholder="Entrez votre adresse email"
               type="email"
-              variant="bordered"
-              size="lg"
-              className="w-full sm:flex-1"
+              className="w-full sm:flex-1 text-lg"
             />
             <Button
-              color="primary"
-              size="lg"
-              className="w-full sm:w-auto px-8 py-3 text-base font-semibold"
+              variant="primary"
+              className="w-full sm:w-auto px-8 py-3 text-lg font-semibold"
             >
               S'abonner
             </Button>

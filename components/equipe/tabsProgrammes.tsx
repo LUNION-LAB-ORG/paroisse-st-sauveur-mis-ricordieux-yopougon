@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@heroui/button";
+import { Button, Card } from "@heroui/react";
 import { Clock2, Mail, Phone } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -46,13 +46,14 @@ export default function TabsProgrammes() {
     <section className="py-16 bg-slate-50">
       <div className="max-w-7xl mx-auto px-4">
         {/* Filtres */}
-        <div className="overflow-x-auto mb-12 ">
-          <div className="flex gap-4 w-fit mx-auto">
+        <div className="overflow-x-auto mb-12">
+          <div className="flex gap-3 w-fit mx-auto">
             {btnsFilter.map((btn) => (
               <Button
                 key={btn.id}
-                onClick={() => handleFilterClick(btn.value)}
-                className="text-sm md:text-md font-semibold border-2 border-blue-900 rounded-full px-6 py-3 hidden hover:bg-blue-900 hover:text-white transition-colors"
+                variant="outline"
+                className="text-sm font-semibold border-2 border-[#2d2d83] text-[#2d2d83] rounded-full px-6 hover:bg-[#2d2d83] hover:text-white transition-colors"
+                onPress={() => handleFilterClick(btn.value)}
               >
                 {btn.title}
               </Button>
@@ -61,11 +62,11 @@ export default function TabsProgrammes() {
         </div>
 
         {/* Cartes */}
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {data.map((item, index) => (
-            <div
+            <Card
               key={index}
-              className="bg-white shadow-sm rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300"
+              className="overflow-hidden hover:shadow-lg transition-shadow duration-300"
             >
               <div className="relative w-full h-64">
                 <Image
@@ -76,31 +77,31 @@ export default function TabsProgrammes() {
                 />
               </div>
 
-              <div className="p-6">
-                <h3 className="text-2xl font-bold text-blue-900 mb-1 uppercase">
+              <Card.Content className="p-6">
+                <Card.Title className="text-xl font-bold text-[#2d2d83] mb-1 uppercase">
                   {item.title}
-                </h3>
-                <h4 className="text-gray-700 text-sm font-extrabold mb-4">{item.role}</h4>
-                <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+                </Card.Title>
+                <p className="text-gray-700 text-sm font-semibold mb-4">{item.role}</p>
+                <Card.Description className="text-sm leading-relaxed mb-6">
                   {item.description}
-                </p>
+                </Card.Description>
 
-                <div className="space-y-2 text-gray-800 text-md">
+                <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-3">
-                    <Mail className="w-4 h-4 text-blue-900" />
-                    <span className="truncate text-sm text-gray-400">{item.email}</span>
+                    <Mail className="w-4 h-4 text-[#2d2d83]" />
+                    <span className="truncate text-muted">{item.email}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Clock2 className="w-4 h-4 text-blue-900" />
-                    <span className="text-sm text-gray-400">{item.date}</span>
+                    <Clock2 className="w-4 h-4 text-[#2d2d83]" />
+                    <span className="text-muted">{item.date}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Phone className="w-4 h-4 text-blue-900" />
-                    <span className="text-sm text-gray-400">{item.phone}</span>
+                    <Phone className="w-4 h-4 text-[#2d2d83]" />
+                    <span className="text-muted">{item.phone}</span>
                   </div>
                 </div>
-              </div>
-            </div>
+              </Card.Content>
+            </Card>
           ))}
         </div>
       </div>

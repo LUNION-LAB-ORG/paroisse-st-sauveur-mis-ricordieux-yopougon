@@ -1,7 +1,6 @@
 "use client";
 
-import { Button } from "@heroui/button";
-import { Input } from "@heroui/input";
+import { Button, Input } from "@heroui/react";
 
 interface Props {
   formData: {
@@ -33,11 +32,9 @@ export function Coordonnees({ formData, onFieldChange, onNext, errors }: Props) 
             <Input
               value={formData.nom}
               onChange={(e) => onFieldChange("nom", e.target.value)}
-              isRequired
-              labelPlacement="inside"
-              label="Nom"
+              required
+              placeholder="Nom"
               type="text"
-              variant="bordered"
               className="w-full text-md"
             />
             {errors.nom && <p className="text-red-500 text-sm">{errors.nom}</p>}
@@ -49,11 +46,9 @@ export function Coordonnees({ formData, onFieldChange, onNext, errors }: Props) 
             <Input
               value={formData.email}
               onChange={(e) => onFieldChange("email", e.target.value)}
-              isRequired
-              labelPlacement="inside"
-              label="Email"
+              required
+              placeholder="Email"
               type="email"
-              variant="bordered"
             />
             {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
           </div>
@@ -64,10 +59,8 @@ export function Coordonnees({ formData, onFieldChange, onNext, errors }: Props) 
             <Input
               value={formData.telephone}
               onChange={(e) => onFieldChange("telephone", e.target.value)}
-              labelPlacement="inside"
-              label="Téléphone"
+              placeholder="Téléphone"
               type="tel"
-              variant="bordered"
             />
           </div>
 
@@ -75,7 +68,7 @@ export function Coordonnees({ formData, onFieldChange, onNext, errors }: Props) 
           <div className="flex justify-end">
             <Button
               className="text-sm lg:text-md w-fit lg:px-6 py-4 lg:py-4"
-              color="primary"
+              variant="primary"
               onPress={onNext}
             >
               Continuer

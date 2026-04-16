@@ -1,21 +1,31 @@
 "use client";
-import { Select, SelectItem } from "@heroui/select";
+import { Select, Label, ListBox } from "@heroui/react";
 
-export const animals = [
-  { key: "cat", label: "Renovation de clocher" },
-  { key: "dog", label: "Renovation de la cher" },
-  { key: "elephant", label: "Renovation de clocher" },
-  { key: "lion", label: "Lion" },
+const projets = [
+  { key: "fonctionnement", label: "Fonctionnement général" },
+  { key: "renovation-chapelle", label: "Rénovation de la chapelle" },
+  { key: "aide-demunis", label: "Aide aux plus démunis" },
+  { key: "catechese", label: "Catéchèse et formation" },
+  { key: "autre", label: "Autre projet" },
 ];
 
 export default function SelectDon() {
   return (
-    <div className="w-md mb-4">
-      <Select className="w-full " label="Renovation de clocher" size="md">
-        {animals.map((animal) => (
-          <SelectItem key={animal.key} className="text-lg">{animal.label}</SelectItem>
-        ))}
-      </Select>
-    </div>
+    <Select placeholder="Choisir un projet" className="w-full">
+      <Label>Affecter votre don à</Label>
+      <Select.Trigger>
+        <Select.Value />
+        <Select.Indicator />
+      </Select.Trigger>
+      <Select.Popover>
+        <ListBox>
+          {projets.map((p) => (
+            <ListBox.Item key={p.key} id={p.key} textValue={p.label}>
+              {p.label}
+            </ListBox.Item>
+          ))}
+        </ListBox>
+      </Select.Popover>
+    </Select>
   );
 }

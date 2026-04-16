@@ -1,81 +1,68 @@
 "use client";
-import { createIntention } from "@/services/messes/messes.action";
-import { RequestStatus } from "@/services/messes/types/messes.type";
-import { ArrowLeft, CheckCircle, X } from "lucide-react";
-import { ChangeEvent, useState } from "react";
+import { messeAPI } from "@/features/messe/apis/messe.api";
+import { ArrowLeft, CheckCircle, Church } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "../ui/button";
-import { Label } from "../ui/label";
 import {
+  Button,
+  Input,
+  Label,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { IntentionType } from "@/services/messes/messes.schema";
+  ListBox,
+  TextArea,
+  TextField,
+  DatePicker,
+  DateField,
+  Calendar,
+  TimeField,
+  RadioGroup,
+  Radio,
+  Description,
+  Card,
+} from "@heroui/react";
+import { today, getLocalTimeZone, Time } from "@internationalized/date";
+import type { DateValue, TimeValue } from "@heroui/react";
+import { IntentionType } from "@/features/messe/schemas/messe.schema";
+
 export default function MesseForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<{
-    intentionType: string;
-    amount: number;
-    message: string;
-    firstName: string;
-    email: string;
-    phone: string;
-    date: string;
-    time: string;
-    request_status: "pending" | "accepted" | "canceled";
-    paymentMethod: string;
-  }>({
+  const [formData, setFormData] = useState({
     intentionType: "",
     amount: 2000,
     message: "",
     firstName: "",
     email: "",
     phone: "",
-    date: "",
-    time: "",
-    request_status: "pending",
+    request_status: "pending" as const,
     paymentMethod: "online",
   });
-
+  const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
+  const [selectedTime, setSelectedTime] = useState<TimeValue | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleNextStep = () => {
-    if (currentStep < 4) {
-      setCurrentStep(currentStep + 1);
-    }
+    if (currentStep < 4) setCurrentStep(currentStep + 1);
   };
 
   const handlePrevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
   const handleSubmit = async () => {
     setLoading(true);
-    setError(null);
-
     const toastId = toast.loading("Envoi de votre demande...");
-
     try {
-      // ✅ ISO datetime requis par Zod
-      const isoDateTime = new Date(
-        `${formData.date}T${formData.time}`
-      ).toISOString();
+      const dateStr = selectedDate
+        ? `${selectedDate.year}-${String(selectedDate.month).padStart(2, "0")}-${String(selectedDate.day).padStart(2, "0")}`
+        : "";
+      const timeStr = selectedTime
+        ? `${String(selectedTime.hour).padStart(2, "0")}:${String(selectedTime.minute).padStart(2, "0")}`
+        : "00:00";
+      const isoDateTime = new Date(`${dateStr}T${timeStr}`).toISOString();
 
-      // ✅ PAYLOAD CONFORME AU ZOD
       const payload: IntentionType = {
         type: formData.intentionType,
         fullname: formData.firstName,
@@ -85,19 +72,10 @@ export default function MesseForm() {
         amount: Number(formData.amount),
         date_at: isoDateTime,
         time_at: isoDateTime,
-        request_status: formData.request_status, // 👈 plus jamais string
+        request_status: formData.request_status,
       };
-
-      console.log("PAYLOAD FINAL =>", payload);
-
-      const result = await createIntention(payload);
-
-      if (!result.success) {
-        toast.error(result.error || "Erreur", { id: toastId });
-        return;
-      }
-
-      toast.success("Demande envoyée avec succès 🙏", { id: toastId });
+      await messeAPI.ajouter(payload);
+      toast.success("Demande envoyée avec succès", { id: toastId });
       setIsSubmitted(true);
     } catch (err) {
       console.error(err);
@@ -116,354 +94,303 @@ export default function MesseForm() {
       email: "",
       phone: "",
       request_status: "pending",
-      date: "",
-      time: "",
       paymentMethod: "online",
     });
+    setSelectedDate(null);
+    setSelectedTime(null);
     setCurrentStep(1);
     setIsSubmitted(false);
   };
 
   const steps = [
-    {
-      title: "Type d'intention",
-      description: "Choisissez le type d'intention",
-    },
-    { title: "Vos coordonnées", description: "Nom et prénom du demandeur" },
-    { title: "Date et heure souhaitées", description: "Date de la messe" },
-    {
-      title: "Paiement & Confirmation",
-      description: "Récapitulatif de votre demande",
-    },
+    { title: "Type d'intention", description: "Choisissez le type d'intention" },
+    { title: "Vos coordonnées", description: "Informations du demandeur" },
+    { title: "Date et heure", description: "Planifiez votre messe" },
+    { title: "Confirmation", description: "Récapitulatif et paiement" },
   ];
 
+  // ─── SUCCESS STATE ───
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-purple-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
-          <div className="flex justify-end">
-            <Button
-              onClick={resetForm}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X size={20} />
-            </Button>
-          </div>
-          <div className="text-center py-8">
-            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle size={32} className="text-green-600" />
+      <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <Image src="/assets/images/hero-histoire.jpg" alt="Église" fill className="object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#2d2d83]/80 via-[#2d2d83]/60 to-[#98141f]/40" />
+        </div>
+        <div className="relative z-10 w-full max-w-md mx-4">
+          <Card className="bg-white/95 backdrop-blur-xl shadow-2xl p-8 text-center">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle size={40} className="text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Félicitation
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Votre demande a bien été enregistrer. Nous vous remercions pour
-              votre confiance. Un membre de notre équipe paroissiale prendra
-              contact avec vous dans les plus brefs délais, généralement sous 48
-              heures.
-            </p>
-            <Button className="w-full bg-red-700 text-white py-3 rounded-md hover:bg-red-800 transition-colors">
-              Payer ou payer
-            </Button>
-          </div>
+            <Card.Header>
+              <Card.Title className="text-2xl font-bold text-[#2d2d83]">Demande envoyée</Card.Title>
+              <Card.Description className="text-gray-600 leading-relaxed">
+                Votre demande a bien été enregistrée. Un membre de notre équipe paroissiale vous contactera sous 48 heures.
+              </Card.Description>
+            </Card.Header>
+            <Card.Footer className="flex flex-col gap-3 mt-4">
+              <Button variant="primary" className="w-full bg-[#98141f] rounded-xl" onPress={resetForm}>
+                Nouvelle demande
+              </Button>
+              <Link href="/" className="text-[#2d2d83] hover:underline text-sm font-medium">
+                Retour à l&apos;accueil
+              </Link>
+            </Card.Footer>
+          </Card>
         </div>
       </div>
     );
   }
 
+  // ─── FORM ───
   return (
-    <div
-      className="min-h-screen bg-purple-50 flex items-center bg-cover bg-center justify-center p-4"
-      style={{
-        backgroundImage: "url('/assets/images/hero-histoire.jpg')",
-      }}
-    >
-      <div className="">
-        <div className="relative lg:-top-80 lg:-left-80 hidden lg:block">
-          <Button
-            onClick={handlePrevStep}
-            className="flex items-center text-white  bg-opacity-30 px-3 py-2 rounded-md hover:bg-opacity-50 transition"
-          >
-            <ArrowLeft size={16} className="mr-1" />
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 z-0">
+        <Image src="/assets/images/hero-histoire.jpg" alt="Église" fill priority className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#2d2d83]/80 via-[#2d2d83]/60 to-[#98141f]/40" />
+      </div>
+
+      {/* Back button */}
+      <div className="absolute top-6 left-6 z-20">
+        {currentStep > 1 ? (
+          <Button variant="ghost" className="text-white/90 hover:text-white bg-white/10 backdrop-blur-sm rounded-xl" onPress={handlePrevStep}>
+            <ArrowLeft size={18} />
             Retour
           </Button>
-        </div>
+        ) : (
+          <Link href="/" className="flex items-center gap-2 text-white/90 hover:text-white transition-colors bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl">
+            <ArrowLeft size={18} />
+            <span className="text-sm font-medium">Accueil</span>
+          </Link>
+        )}
       </div>
-      <div className=" rounded-lg shadow-xl overflow-hidden max-w-md w-full">
+
+      {/* Form card */}
+      <div className="relative z-10 w-full max-w-lg mx-4 my-8">
         {/* Header */}
-        <div className=" sm:bg-[#8e0b10] lg:bg-transparent relative h-20 lg:flex lg:justify-center  ">
-          <div className="absolute top-4 left-4 lg:hidden md:block">
-            <Button
-              onClick={handlePrevStep}
-              className="flex items-center text-white bg-black bg-opacity-30 px-3 py-2 rounded-md hover:bg-opacity-50 transition"
-            >
-              <ArrowLeft size={16} className="mr-1" />
-              Retour
-            </Button>
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-white/15 backdrop-blur-sm rounded-2xl mb-4">
+            <Church className="w-7 h-7 text-white" />
           </div>
-          <div className="absolute  lg:w-full lg:text-center  top-4 right-4">
-            <span className="lg:text-[#8e0b10] sm:text-white md:text-white font-bold lg:font-extrabold md:text-lg text-sm  lg:text-2xl">Demande de Messe</span>
-          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">Demande de Messe</h1>
+          <p className="text-white/70 text-sm">Faites célébrer une messe pour vos intentions</p>
         </div>
 
-        {/* Content */}
-        <div className="p-6 bg-white">
-          {/* Step indicator */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-[#8e0b10]">
-              {steps[currentStep - 1].title}
-            </h2>
-            <p className="text-gray-600 text-sm">
-              {steps[currentStep - 1].description}
+        {/* Step indicators */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          {steps.map((_, i) => (
+            <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i + 1 <= currentStep ? "bg-white w-10" : "bg-white/30 w-6"}`} />
+          ))}
+        </div>
+
+        {/* Card */}
+        <Card className="bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+          {/* Step title */}
+          <Card.Header className="px-6 pt-6 pb-4 border-b border-gray-100">
+            <p className="text-xs font-semibold text-[#98141f] uppercase tracking-wider mb-1">
+              Étape {currentStep} sur 4
             </p>
-          </div>
+            <Card.Title className="text-lg font-bold text-[#2d2d83]">{steps[currentStep - 1].title}</Card.Title>
+            <Card.Description>{steps[currentStep - 1].description}</Card.Description>
+          </Card.Header>
 
-          {/* Form content based on current step */}
-          {currentStep === 1 && (
-            <div className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">
-                  Type d&apos;intention
-                </Label>
+          {/* Form content */}
+          <Card.Content className="p-6">
+            {currentStep === 1 && (
+              <div className="space-y-5">
                 <Select
-                  value={formData.intentionType}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, intentionType: value }))
-                  }
+                  placeholder="Sélectionnez un type"
+                  selectedKey={formData.intentionType || undefined}
+                  onSelectionChange={(key) => setFormData((prev) => ({ ...prev, intentionType: String(key) }))}
                 >
-                  <SelectTrigger id="type" className="bg-card">
-                    <SelectValue placeholder="Sélectionnez un type" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card z-50">
-                    <SelectItem value="action-de-grace">
-                      Action de grâce
-                    </SelectItem>
-                    <SelectItem value="repos-ame">
-                      Repos de l&apos;âme
-                    </SelectItem>
-                    <SelectItem value="guerison">Guérison</SelectItem>
-                    <SelectItem value="protection">Protection</SelectItem>
-                    <SelectItem value="benediction">Bénédiction</SelectItem>
-                    <SelectItem value="autre">Autre</SelectItem>
-                  </SelectContent>
+                  <Label>Type d&apos;intention</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      <ListBox.Item id="action-de-grace" textValue="Action de grâce">Action de grâce</ListBox.Item>
+                      <ListBox.Item id="repos-ame" textValue="Repos de l'âme">Repos de l&apos;âme</ListBox.Item>
+                      <ListBox.Item id="guerison" textValue="Guérison">Guérison</ListBox.Item>
+                      <ListBox.Item id="protection" textValue="Protection">Protection</ListBox.Item>
+                      <ListBox.Item id="benediction" textValue="Bénédiction">Bénédiction</ListBox.Item>
+                      <ListBox.Item id="autre" textValue="Autre">Autre</ListBox.Item>
+                    </ListBox>
+                  </Select.Popover>
                 </Select>
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">
-                  Message
-                </Label>
-                <input
-                  type="text"
-                  name="message"
+
+                <TextField
                   value={formData.message}
-                  onChange={handleInputChange}
-                  placeholder="Nom"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring- focus:border-transparent"
-                />
-              </div>
-              <div className="flex justify-end">
-                <button
-                  onClick={handleNextStep}
-                  className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-[#8e0b10] transition-colors"
+                  onChange={(val) => setFormData((prev) => ({ ...prev, message: val }))}
                 >
-                  Suivant
-                </button>
-              </div>
-            </div>
-          )}
+                  <Label>Votre intention</Label>
+                  <TextArea placeholder="Décrivez votre intention de messe..." rows={3} />
+                </TextField>
 
-          {currentStep === 2 && (
-            <div className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom et prénom du demandeur
-                </Label>
-                <input
-                  type="text"
-                  name="firstName"
+                <div className="flex justify-end pt-2">
+                  <Button variant="primary" className="bg-[#2d2d83] rounded-xl px-6" onPress={handleNextStep}>
+                    Suivant
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 2 && (
+              <div className="space-y-5">
+                <TextField
                   value={formData.firstName}
-                  onChange={handleInputChange}
-                  placeholder="Nom"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">
-                  Adresse e-mail
-                </Label>
-                <input
-                  type="email"
-                  name="email"
+                  onChange={(val) => setFormData((prev) => ({ ...prev, firstName: val }))}
+                >
+                  <Label>Nom et prénom</Label>
+                  <Input placeholder="Jean Dupont" />
+                </TextField>
+
+                <TextField
                   value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Nom"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">
-                  Numéro de téléphone (optionnel)
-                </Label>
-                <input
-                  type="tel"
-                  name="phone"
+                  onChange={(val) => setFormData((prev) => ({ ...prev, email: val }))}
+                >
+                  <Label>Adresse e-mail</Label>
+                  <Input type="email" placeholder="jean@exemple.com" />
+                </TextField>
+
+                <TextField
                   value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="Nom"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                />
-              </div>
-              <div className="flex justify-between">
-                <Button
-                  onClick={handlePrevStep}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+                  onChange={(val) => setFormData((prev) => ({ ...prev, phone: val }))}
                 >
-                  Précédent
-                </Button>
-                <Button
-                  onClick={handleNextStep}
-                  className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800 transition-colors"
+                  <Label>Téléphone (optionnel)</Label>
+                  <Input type="tel" placeholder="+225 07 00 00 00 00" />
+                </TextField>
+
+                <div className="flex justify-between pt-2">
+                  <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>Précédent</Button>
+                  <Button variant="primary" className="bg-[#2d2d83] rounded-xl px-6" onPress={handleNextStep}>Suivant</Button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 3 && (
+              <div className="space-y-5">
+                <DatePicker
+                  className="w-full"
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                  minValue={today(getLocalTimeZone())}
                 >
-                  Suivant
-                </Button>
-              </div>
-            </div>
-          )}
+                  <Label>Date souhaitée</Label>
+                  <DateField.Group fullWidth>
+                    <DateField.Input>
+                      {(segment) => <DateField.Segment segment={segment} />}
+                    </DateField.Input>
+                    <DateField.Suffix>
+                      <DatePicker.Trigger>
+                        <DatePicker.TriggerIndicator />
+                      </DatePicker.Trigger>
+                    </DateField.Suffix>
+                  </DateField.Group>
+                  <DatePicker.Popover>
+                    <Calendar aria-label="Date de messe">
+                      <Calendar.Header>
+                        <Calendar.NavButton slot="previous" />
+                        <Calendar.Heading />
+                        <Calendar.NavButton slot="next" />
+                      </Calendar.Header>
+                      <Calendar.Grid>
+                        <Calendar.GridHeader>
+                          {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                        </Calendar.GridHeader>
+                        <Calendar.GridBody>
+                          {(date) => <Calendar.Cell date={date} />}
+                        </Calendar.GridBody>
+                      </Calendar.Grid>
+                    </Calendar>
+                  </DatePicker.Popover>
+                </DatePicker>
 
-          {currentStep === 3 && (
-            <div className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date de la messe
-                </Label>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">
-                  Horaire de messe
-                </Label>
-                <input
-                  type="time"
-                  name="time"
-                  value={formData.time}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                />
-              </div>
-              <div className="flex justify-between">
-                <Button
-                  onClick={handlePrevStep}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+                <TimeField
+                  className="w-full"
+                  value={selectedTime}
+                  onChange={setSelectedTime}
                 >
-                  Précédent
-                </Button>
-                <Button
-                  onClick={handleNextStep}
-                  className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800 transition-colors"
-                >
-                  Suivant
-                </Button>
+                  <Label>Horaire souhaité</Label>
+                  <TimeField.Group>
+                    <TimeField.Input>
+                      {(segment) => <TimeField.Segment segment={segment} />}
+                    </TimeField.Input>
+                  </TimeField.Group>
+                </TimeField>
+
+                <div className="flex justify-between pt-2">
+                  <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>Précédent</Button>
+                  <Button variant="primary" className="bg-[#2d2d83] rounded-xl px-6" onPress={handleNextStep}>Suivant</Button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {currentStep === 4 && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium text-gray-800 mb-2">
-                  Paiement en ligne
-                </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Par carte bancaire (Sécurisé)
-                </p>
+            {currentStep === 4 && (
+              <div className="space-y-5">
+                <RadioGroup
+                  value={formData.paymentMethod}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, paymentMethod: val }))}
+                >
+                  <Label>Mode de paiement</Label>
+                  <Radio value="online">
+                    <Radio.Control><Radio.Indicator /></Radio.Control>
+                    <Radio.Content>
+                      <Label>Paiement en ligne</Label>
+                      <Description>Par carte bancaire (sécurisé)</Description>
+                    </Radio.Content>
+                  </Radio>
+                  <Radio value="parish">
+                    <Radio.Control><Radio.Indicator /></Radio.Control>
+                    <Radio.Content>
+                      <Label>Paiement à la paroisse</Label>
+                      <Description>En espèces ou par chèque</Description>
+                    </Radio.Content>
+                  </Radio>
+                </RadioGroup>
 
-                <h3 className="font-medium text-gray-800 mb-2">
-                  Paiement à la paroisse
-                </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  En espèces ou par chèque
-                </p>
+                {/* Summary */}
+                <Card className="bg-gray-50 p-4">
+                  <Card.Header>
+                    <Card.Title className="text-sm font-semibold text-[#2d2d83]">Récapitulatif</Card.Title>
+                  </Card.Header>
+                  <Card.Content>
+                    <div className="grid grid-cols-2 gap-y-2 text-sm">
+                      <span className="text-gray-500">Intention :</span>
+                      <span className="text-gray-800 font-medium">{formData.intentionType || "—"}</span>
+                      <span className="text-gray-500">Demandeur :</span>
+                      <span className="text-gray-800 font-medium">{formData.firstName || "—"}</span>
+                      <span className="text-gray-500">Date :</span>
+                      <span className="text-gray-800 font-medium">
+                        {selectedDate ? `${selectedDate.day}/${selectedDate.month}/${selectedDate.year}` : "—"}
+                      </span>
+                      <span className="text-gray-500">Horaire :</span>
+                      <span className="text-gray-800 font-medium">
+                        {selectedTime ? `${String(selectedTime.hour).padStart(2, "0")}h${String(selectedTime.minute).padStart(2, "0")}` : "—"}
+                      </span>
+                      <span className="text-gray-500">Montant :</span>
+                      <span className="text-[#98141f] font-bold">2 000 FCFA</span>
+                    </div>
+                  </Card.Content>
+                </Card>
 
-                <div className="flex items-center mb-4">
-                  <input
-                    type="radio"
-                    id="paymentOnline"
-                    name="paymentMethod"
-                    value="online"
-                    checked={formData.paymentMethod === "online"}
-                    onChange={handleInputChange}
-                    className="mr-2 cursor-pointer"
-                  />
-                  <Label
-                    htmlFor="paymentOnline"
-                    className="text-sm text-gray-700"
+                <div className="flex justify-between pt-2">
+                  <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>Précédent</Button>
+                  <Button
+                    variant="primary"
+                    className="bg-[#98141f] rounded-xl px-6"
+                    isDisabled={loading}
+                    onPress={handleSubmit}
                   >
-                    Paiement en ligne
-                  </Label>
-                </div>
-
-                <div className="flex items-center mb-4">
-                  <input
-                    type="radio"
-                    id="paymentParish"
-                    name="paymentMethod"
-                    value="parish"
-                    checked={formData.paymentMethod === "parish"}
-                    onChange={handleInputChange}
-                    className="mr-2 cursor-pointer"
-                  />
-                  <Label
-                    htmlFor="paymentParish"
-                    className="text-sm text-gray-700"
-                  >
-                    Paiement à la paroisse
-                  </Label>
+                    {loading ? "Envoi..." : "Soumettre"}
+                  </Button>
                 </div>
               </div>
-
-              <div className="border-t pt-4">
-                <h4 className="font-medium text-gray-800 mb-2">
-                  Récapitulatif de votre demande
-                </h4>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>Type d&apos;intention:</div>
-                  <div>{formData.intentionType || "Non spécifié"}</div>
-                  <div>Message:</div>
-                  <div>{formData.message || "Non spécifié"}</div>
-                  <div>Demandeur:</div>
-                  <div>{formData.firstName || "Non spécifié"}</div>
-                  <div>Date souhaitée:</div>
-                  <div>{formData.date || "Non spécifié"}</div>
-                  <div>Horaire:</div>
-                  <div>{formData.time || "Non spécifié"}</div>
-                  <div>Prix:</div>
-                  <div>2000 FCFA</div>
-                </div>
-              </div>
-
-              <div className="flex justify-between">
-                <Button
-                  onClick={handlePrevStep}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
-                >
-                  Précédent
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800 transition-colors"
-                >
-                  Soumettre la demande
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </Card.Content>
+        </Card>
       </div>
     </div>
   );

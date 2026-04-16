@@ -1,6 +1,6 @@
 "use client";
-import { NewsItemType } from "@/services/news/types/cure.type";
-import { Button } from "@heroui/button";
+import { NewsItemType } from "@/features/actualite/types/actualite.type";
+import { Button } from "@heroui/react";
 import { CalendarClock, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -63,7 +63,7 @@ export default function CardContainer({ txt1, dataContainer }: Props) {
 
               <Link href={`/actualites/${item.id}`}>
                 <Button
-                  color="primary"
+                  variant="primary"
                   className="w-full text-base py-4 font-semibold"
                 >
                   Plus d&apos;info

@@ -2,7 +2,15 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "@heroui/button";
+import {
+  Button,
+  Input,
+  Label,
+  TextField,
+  TextArea,
+  FieldError,
+  Card,
+} from "@heroui/react";
 
 const schema = z.object({
   name: z.string().min(1, "Entrez votre nom"),
@@ -22,6 +30,8 @@ export default function FormulaireContact() {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<Schema>({
     resolver: zodResolver(schema),
   });
@@ -32,56 +42,63 @@ export default function FormulaireContact() {
 
   return (
     <div className="w-full px-4 max-w-7xl mx-auto">
-      <h2 className="text-blue-900 text-3xl md:text-4xl lg:text-5xl text-center font-bold mb-10">
-      Contacter le responsable du groupe
+      <h2 className="text-[#2d2d83] text-3xl md:text-4xl lg:text-5xl text-center font-bold mb-10">
+        Contacter le responsable du groupe
       </h2>
-      <div className="border rounded-xl px-4 sm:px-10 py-20">
-        <form  onSubmit={handleSubmit(onSubmit)} className="max-w-5xl mx-auto text-xl lg:text-2xl text-stone-700 space-y-8">
-            <div className="flex flex-col gap-2">
-            <label >Votre nom</label>
-            <input className="border-2 py-5 px-2 rounded-xl" {...register("name")} placeholder="Nom" />
-            {errors.name && <p>{errors.name.message}</p>}
-            </div>
+      <Card className="px-4 sm:px-10 py-12 lg:py-16">
+        <Card.Content>
+          <form onSubmit={handleSubmit(onSubmit)} className="max-w-5xl mx-auto space-y-6">
+            <TextField isInvalid={!!errors.name}>
+              <Label>Votre nom</Label>
+              <Input {...register("name")} placeholder="Nom" />
+              {errors.name && <FieldError>{errors.name.message}</FieldError>}
+            </TextField>
 
-            <div className="flex flex-col gap-2">
-            <label>Prénom</label>
-            <input className="border-2 py-5 px-2 rounded-xl" {...register("first_name")} placeholder="Prénom" />
-            {errors.first_name && <p>{errors.first_name.message}</p>}
-            </div>
+            <TextField isInvalid={!!errors.first_name}>
+              <Label>Prénom</Label>
+              <Input {...register("first_name")} placeholder="Prénom" />
+              {errors.first_name && <FieldError>{errors.first_name.message}</FieldError>}
+            </TextField>
 
-            <div className="flex flex-col gap-2">
-            <label>Email</label>
-            <input className="border-2 py-5 px-2 rounded-xl" {...register("email")} placeholder="Email" />
-            {errors.email && <p>{errors.email.message}</p>}
-            </div>
+            <TextField isInvalid={!!errors.email}>
+              <Label>Email</Label>
+              <Input {...register("email")} type="email" placeholder="Email" />
+              {errors.email && <FieldError>{errors.email.message}</FieldError>}
+            </TextField>
 
-            <div className="flex flex-col gap-2">
-            <label>Téléphone</label>
-            <input className="border-2 py-5 px-2 rounded-xl" {...register("phone")} type="tel" placeholder="Téléphone" />
-            {errors.phone && <p>{errors.phone.message}</p>}
-            </div>
+            <TextField isInvalid={!!errors.phone}>
+              <Label>Téléphone</Label>
+              <Input {...register("phone")} type="tel" placeholder="Téléphone" />
+              {errors.phone && <FieldError>{errors.phone.message}</FieldError>}
+            </TextField>
 
-            <div className="flex flex-col gap-2">
-            <label>Message ou questions</label>
-            <textarea className="border-2 py-5 px-2 rounded-xl" {...register("message")} placeholder="Votre message" />
-            {errors.message && <p>{errors.message.message}</p>}
-            </div>
-            <div className="flex items-start space-x-2">
-            <input  className="w-8 h-8 accent-red-600" type="checkbox" {...register("conditions")} id="conditions" />
-            <label htmlFor="conditions" className="text-md">
-                J'accepte les conditions de participation et j'ai pris connaissance des modalités d'inscription
-            </label>
+            <TextField isInvalid={!!errors.message}>
+              <Label>Message ou questions</Label>
+              <TextArea {...register("message")} placeholder="Votre message" rows={4} />
+              {errors.message && <FieldError>{errors.message.message}</FieldError>}
+            </TextField>
+
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+              <input
+                type="checkbox"
+                {...register("conditions")}
+                id="conditions"
+                className="mt-1 w-5 h-5 accent-[#98141f]"
+              />
+              <label htmlFor="conditions" className="text-sm text-muted cursor-pointer leading-relaxed">
+                J&apos;accepte les conditions de participation et j&apos;ai pris connaissance des modalités d&apos;inscription
+              </label>
             </div>
             {errors.conditions && (
-            <p className="text-red-500 text-sm">{errors.conditions.message}</p>
+              <p className="text-red-500 text-xs">{errors.conditions.message}</p>
             )}
-            <Button color="primary" className="text-md lg:text-xl py-4 lg:px-20 lg:py-8" >
-              <input type="submit" value="Envoyer" />
-            </Button>
-        </form>
 
-      </div>
-     
+            <Button type="submit" variant="primary" className="bg-[#98141f] rounded-xl px-8 py-3">
+              Envoyer
+            </Button>
+          </form>
+        </Card.Content>
+      </Card>
     </div>
   );
 }

@@ -2,17 +2,17 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { Button } from "@heroui/button";
 import {
+  Button,
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
-} from "@heroui/dropdown";
+} from "@heroui/react";
 import { useKeenSlider } from "keen-slider/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import "keen-slider/keen-slider.min.css";
-import { Pastor } from "@/services/cure/types/cure.type";
+import { Pastor } from "@/features/cure/types/cure.type";
 
 export default function Cures({ cure }: { cure: Pastor[] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -93,14 +93,13 @@ export default function Cures({ cure }: { cure: Pastor[] }) {
                 <Dropdown>
                   <DropdownTrigger>
                     <Button
-                      color="primary"
+                      variant="primary"
                       className="rounded-full text-sm px-4 py-2 w-max self-start"
                     >
                       En savoir plus
                     </Button>
                   </DropdownTrigger>
                   <DropdownMenu
-                    variant="faded"
                     className="max-w-md p-4"
                     aria-label={`Plus d'informations sur ${item.fullname}`}
                   >

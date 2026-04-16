@@ -1,4 +1,4 @@
-import { Button } from "@heroui/button";
+import { Button } from "@heroui/react";
 import Link from "next/link";
 
 export default function Organisation() {
@@ -22,7 +22,7 @@ export default function Organisation() {
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 px-2">
           <Button
             className="rounded-full text-sm sm:text-base font-semibold py-3 px-6 shadow-md w-full sm:w-auto"
-            color="primary"
+            variant="primary"
           >
             Équipe Paroissiale
           </Button>

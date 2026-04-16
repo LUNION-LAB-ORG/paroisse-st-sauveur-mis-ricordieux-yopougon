@@ -1,329 +1,256 @@
 "use client"
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { ArrowLeft, Check, X } from "lucide-react";
+import { ArrowLeft, Check, X, HeartHandshake } from "lucide-react";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { EcouteType, CreateEcouteSchema } from "@/services/ecoute/ecoute.schema";
-import { createEcoute } from "@/services/ecoute/ecoute.action";
+  Button,
+  Input,
+  Label,
+  Select,
+  ListBox,
+  TextArea,
+  TextField,
+  Description,
+  Card,
+} from "@heroui/react";
+import { EcouteType, CreateEcouteSchema } from "@/features/ecoute/schemas/ecoute.schema";
+import { ecouteAPI } from "@/features/ecoute/apis/ecoute.api";
 import { toast } from "sonner";
+import Image from "next/image";
+import Link from "next/link";
 
-// Type pour le formulaire
 interface EcouteFormData {
-    type: string;
-    fullname: string;
-    phone: string;
-    availability: string;
-    message: string;
-    acceptConditions: boolean;
+  type: string;
+  fullname: string;
+  phone: string;
+  availability: string;
+  message: string;
+  acceptConditions: boolean;
 }
 
 const EcouteRequestForm = () => {
-    const [formData, setFormData] = useState<EcouteFormData>({
-        type: "",
-        fullname: "",
-        phone: "",
-        availability: "",
-        message: "",
-        acceptConditions: false,
-    });
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState<EcouteFormData>({
+    type: "",
+    fullname: "",
+    phone: "",
+    availability: "",
+    message: "",
+    acceptConditions: false,
+  });
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
 
-    const handleChange = (field: keyof EcouteFormData, value: string | boolean) => {
-        setFormData((prev) => ({ ...prev, [field]: value }));
-        // Clear error when field is modified
-        if (errors[field]) {
-            setErrors((prev) => {
-                const newErrors = { ...prev };
-                delete newErrors[field];
-                return newErrors;
-            });
-        }
-    };
+  const handleChange = (field: keyof EcouteFormData, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
 
-    const handleSubmit = async () => {
-        setLoading(true);
-        setErrors({});
-
-        const toastId = toast.loading("Envoi de votre demande...");
-
-        try {
-            // Préparer les données pour la validation
-            const submitData: EcouteType = {
-                ...formData,
-                request_status: "pending" as const,
-            };
-
-            // Validation avec le schéma Zod
-            const result = CreateEcouteSchema.safeParse(submitData);
-            if (!result.success) {
-                const newErrors: Record<string, string> = {};
-                result.error.errors.forEach((err) => {
-                    if (err.path[0]) {
-                        newErrors[err.path[0] as string] = err.message;
-                    }
-                });
-                setErrors(newErrors);
-                toast.error("Erreur de validation", { id: toastId });
-                return;
-            }
-
-            // Envoyer les données au serveur
-            const response = await createEcoute(result.data);
-
-            if (!response.success) {
-                toast.error(response.error || "Erreur", { id: toastId });
-                return;
-            }
-
-            toast.success("Demande envoyée avec succès 🙏", { id: toastId });
-            setShowSuccess(true);
-        } catch (err) {
-            console.error(err);
-            toast.error("Erreur serveur", { id: toastId });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleReset = () => {
-        setFormData({
-            type: "",
-            fullname: "",
-            phone: "",
-            availability: "",
-            message: "",
-            acceptConditions: false,
+  const handleSubmit = async () => {
+    setLoading(true);
+    setErrors({});
+    const toastId = toast.loading("Envoi de votre demande...");
+    try {
+      const submitData: EcouteType = {
+        ...formData,
+        request_status: "pending" as const,
+      };
+      const result = CreateEcouteSchema.safeParse(submitData);
+      if (!result.success) {
+        const newErrors: Record<string, string> = {};
+        result.error.errors.forEach((err) => {
+          if (err.path[0]) newErrors[err.path[0] as string] = err.message;
         });
-        setShowSuccess(false);
-    };
+        setErrors(newErrors);
+        toast.error("Veuillez corriger les erreurs", { id: toastId });
+        return;
+      }
+      await ecouteAPI.ajouter(result.data);
+      toast.success("Demande envoyée avec succès", { id: toastId });
+      setShowSuccess(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur serveur", { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen bg-purple-50 flex items-center bg-cover bg-center justify-center p-4" style={{ backgroundImage: "url('/assets/images/mvt-id.jpg')" }}>
-            <div className="">
-                <div className="relative lg:-top-80 lg:-left-80 hidden lg:block">
-                    {/* <button
-                        onClick={() => window.history.back()}
-                        className="flex items-center text-white bg-opacity-30 px-3 py-2 rounded-md hover:bg-opacity-50 transition"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        Retour
-                    </button> */}
-                </div>
-            </div>
-            <div className=" rounded-lg shadow-xl overflow-hidden max-w-3xl w-full">
-                {/* Header */}
-                <div className=" sm:bg-red-700 lg:bg-transparent relative h-20 lg:flex lg:justify-center lg:items-center  ">
-                    <div className="absolute top-4 left-4 lg:hidden md:block">
-                        <button
-                            onClick={() => window.history.back()}
-                            className="flex items-center text-white bg-black bg-opacity-30 px-3 py-2 rounded-md hover:bg-opacity-50 transition"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            Retour
-                        </button>
-                    </div>
-                    <div className="hidden lg:flex lg:w-full  lg:justify-between lg:items-center lg:px-4">
-                        <button
-                            onClick={() => window.history.back()}
-                            className="flex items-center font-bold text-white bg-opacity-30 px-3 py-2 rounded-md hover:bg-opacity-50 transition"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            Retour
-                        </button>
-                        <span className="text-white font-extrabold text-2xl">Demander une Écoute</span>
-                        <div></div>
-                    </div>
-                    <div className="absolute lg:hidden  lg:w-full lg:text-center  top-4 right-4">
-                        <span className=" sm:text-white md:text-white font-bold md:text-lg text-sm">Demander une Écoute</span>
-                    </div>
-                </div>
-                <div className="mb-6 bg-white border-l-8 border-blue-900">
-                    {/* <h2 className="text-xl font-semibold text-red-700 mb-2">Demander une Écoute</h2> */}
-                    <p className="text-gray-600 p-2 text-sm">
-                        Vous souhaitez rencontrer un prêtre pour un accompagnement spirituel, un conseil ou simplement pour échanger ? Remplissez ce formulaire et nous vous contacterons rapidement pour organiser cette rencontre
-                    </p>
-                </div>
-                {/* Form */}
-                <div className="p-6 space-y-5 bg-white  ">
+  const handleReset = () => {
+    setFormData({ type: "", fullname: "", phone: "", availability: "", message: "", acceptConditions: false });
+    setShowSuccess(false);
+  };
 
-                    <div className="space-y-2 bg-white">
-                        <Label htmlFor="type" className="text-foreground">
-                            Type d'écoute (optionnel)
-                        </Label>
-                        <Select
-                            value={formData.type}
-                            onValueChange={(value) => handleChange("type", value)}
-                        >
-                            <SelectTrigger className="bg-gray-50 border-1">
-                                <SelectValue placeholder="Sélectionnez un type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="spirituel">Accompagnement spirituel</SelectItem>
-                                <SelectItem value="conseil">Conseil</SelectItem>
-                                <SelectItem value="confession">Confession</SelectItem>
-                                <SelectItem value="echange">Échange</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+  return (
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 z-0">
+        <Image src="/assets/images/mvt-id.jpg" alt="Écoute spirituelle" fill priority className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#2d2d83]/80 via-[#2d2d83]/60 to-[#98141f]/40" />
+      </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="fullname" className="text-foreground">
-                            Nom et prénom
-                        </Label>
-                        <Input
-                            id="fullname"
-                            value={formData.fullname}
-                            onChange={(e) => handleChange("fullname", e.target.value)}
-                            placeholder="Votre nom et prénom"
-                            className="bg-gray-50 border-1"
-                        />
-                        {errors.fullname && (
-                            <p className="text-destructive text-sm">{errors.fullname}</p>
-                        )}
-                    </div>
+      {/* Back button */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link href="/" className="flex items-center gap-2 text-white/90 hover:text-white transition-colors bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl">
+          <ArrowLeft size={18} />
+          <span className="text-sm font-medium">Accueil</span>
+        </Link>
+      </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="phone" className="text-foreground">
-                            Numéro de téléphone (optionnel)
-                        </Label>
-                        <Input
-                            id="phone"
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(e) => handleChange("phone", e.target.value)}
-                            placeholder="Votre numéro de téléphone"
-                            className="bg-gray-50 border-1"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="availability" className="text-foreground">
-                            Vos disponibilité
-                        </Label>
-                        <Select
-                            value={formData.availability}
-                            onValueChange={(value) => handleChange("availability", value)}
-                        >
-                            <SelectTrigger className="bg-gray-50 border-1">
-                                <SelectValue placeholder="Sélectionnez vos disponibilités" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="lundi-matin">Lundi matin</SelectItem>
-                                <SelectItem value="lundi-apres-midi">Lundi après-midi</SelectItem>
-                                <SelectItem value="mardi-matin">Mardi matin</SelectItem>
-                                <SelectItem value="mardi-apres-midi">Mardi après-midi</SelectItem>
-                                <SelectItem value="mercredi-matin">Mercredi matin</SelectItem>
-                                <SelectItem value="mercredi-apres-midi">Mercredi après-midi</SelectItem>
-                                <SelectItem value="jeudi-matin">Jeudi matin</SelectItem>
-                                <SelectItem value="jeudi-apres-midi">Jeudi après-midi</SelectItem>
-                                <SelectItem value="vendredi-matin">Vendredi matin</SelectItem>
-                                <SelectItem value="vendredi-apres-midi">Vendredi après-midi</SelectItem>
-                                <SelectItem value="samedi-matin">Samedi matin</SelectItem>
-                                <SelectItem value="samedi-apres-midi">Samedi après-midi</SelectItem>
-                                <SelectItem value="dimanche-matin">Dimanche matin</SelectItem>
-                                <SelectItem value="dimanche-apres-midi">Dimanche après-midi</SelectItem>
-                                <SelectItem value="soir-semaine">Soir en semaine</SelectItem>
-                                <SelectItem value="weekend">Weekend</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        {errors.availability && (
-                            <p className="text-destructive text-sm">{errors.availability}</p>
-                        )}
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="message" className="text-foreground">
-                            Message ou questions
-                        </Label>
-                        <Textarea
-                            id="message"
-                            value={formData.message}
-                            onChange={(e) => handleChange("message", e.target.value)}
-                            placeholder="Votre message ou vos questions"
-                            className="bg-gray-50 border-1 min-h-[100px]"
-                        />
-                        {errors.message && (
-                            <p className="text-destructive text-sm">{errors.message}</p>
-                        )}
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                        <Checkbox
-                            id="conditions"
-                            checked={formData.acceptConditions}
-                            onCheckedChange={(checked) =>
-                                handleChange("acceptConditions", checked as boolean)
-                            }
-                            className="mt-1"
-                        />
-                        <Label
-                            htmlFor="conditions"
-                            className="text-sm text-muted-foreground cursor-pointer"
-                        >
-                            J'accepte les conditions de participation et j'ai pris connaissance des modalités d'inscription
-                        </Label>
-                    </div>
-                    {errors.acceptConditions && (
-                        <p className="text-destructive text-sm">{errors.acceptConditions}</p>
-                    )}
-
-                    <Button
-                        onClick={handleSubmit}
-                        className="bg-red-700 hover:bg-red-800 text-white"
-                        disabled={loading}
-                    >
-                        {loading ? "Envoi..." : "Envoyer ma demande"}
-                    </Button>
-                </div>
-            </div>
-
-            {/* Success Modal */}
-            <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
-                <DialogContent className="sm:max-w-md text-center">
-                    <button
-                        onClick={() => setShowSuccess(false)}
-                        className="absolute right-4 border-2 top-4 text-muted-foreground hover:text-foreground"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-
-                    <div className="flex flex-col items-center py-6">
-                        <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-6">
-                            <Check className="w-8 h-8 text-emerald-500" />
-                        </div>
-
-                        <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                            Votre demande a bien été envoyée
-                        </h2>
-
-                        <p className="text-muted-foreground text-sm mb-6 max-w-sm">
-                            Nous vous remercions pour votre confiance. Un membre de notre équipe paroissiale prendra contact avec vous dans les plus brefs délais, généralement sous 48 heures.
-                        </p>
-
-                        <Button
-                            onClick={handleReset}
-                            className="bg-red-700 hover:bg-red-800 text-white px-8"
-                        >
-                            Retour à l'accueil
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+      {/* Form card */}
+      <div className="relative z-10 w-full max-w-xl mx-4 my-8">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-white/15 backdrop-blur-sm rounded-2xl mb-4">
+            <HeartHandshake className="w-7 h-7 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">Demander une Écoute</h1>
+          <p className="text-white/70 text-sm max-w-md mx-auto">
+            Un prêtre est disponible pour vous écouter et vous accompagner.
+          </p>
         </div>
-    );
+
+        {/* Card */}
+        <Card className="bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+          <Card.Header className="px-6 pt-6 pb-4 border-b border-gray-100">
+            <Card.Description>
+              Remplissez ce formulaire et nous vous contacterons rapidement pour organiser cette rencontre.
+            </Card.Description>
+          </Card.Header>
+
+          <Card.Content className="p-6 space-y-5">
+            <Select
+              placeholder="Sélectionnez un type"
+              selectedKey={formData.type || undefined}
+              onSelectionChange={(key) => handleChange("type", String(key))}
+            >
+              <Label>Type d&apos;écoute (optionnel)</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  <ListBox.Item id="spirituel" textValue="Accompagnement spirituel">Accompagnement spirituel</ListBox.Item>
+                  <ListBox.Item id="conseil" textValue="Conseil">Conseil</ListBox.Item>
+                  <ListBox.Item id="confession" textValue="Confession">Confession</ListBox.Item>
+                  <ListBox.Item id="echange" textValue="Échange">Échange</ListBox.Item>
+                </ListBox>
+              </Select.Popover>
+            </Select>
+
+            <TextField
+              isRequired
+              value={formData.fullname}
+              onChange={(val) => handleChange("fullname", val)}
+              isInvalid={!!errors.fullname}
+            >
+              <Label>Nom et prénom</Label>
+              <Input placeholder="Jean Dupont" />
+              {errors.fullname && <Description className="text-red-500 text-xs">{errors.fullname}</Description>}
+            </TextField>
+
+            <TextField
+              value={formData.phone}
+              onChange={(val) => handleChange("phone", val)}
+            >
+              <Label>Téléphone (optionnel)</Label>
+              <Input type="tel" placeholder="+225 07 00 00 00 00" />
+            </TextField>
+
+            <Select
+              placeholder="Sélectionnez vos disponibilités"
+              selectedKey={formData.availability || undefined}
+              onSelectionChange={(key) => handleChange("availability", String(key))}
+              isInvalid={!!errors.availability}
+            >
+              <Label>Vos disponibilités</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover className="max-h-60">
+                <ListBox>
+                  <ListBox.Item id="lundi-matin" textValue="Lundi matin">Lundi matin</ListBox.Item>
+                  <ListBox.Item id="lundi-apres-midi" textValue="Lundi après-midi">Lundi après-midi</ListBox.Item>
+                  <ListBox.Item id="mardi-matin" textValue="Mardi matin">Mardi matin</ListBox.Item>
+                  <ListBox.Item id="mardi-apres-midi" textValue="Mardi après-midi">Mardi après-midi</ListBox.Item>
+                  <ListBox.Item id="mercredi-matin" textValue="Mercredi matin">Mercredi matin</ListBox.Item>
+                  <ListBox.Item id="mercredi-apres-midi" textValue="Mercredi après-midi">Mercredi après-midi</ListBox.Item>
+                  <ListBox.Item id="jeudi-matin" textValue="Jeudi matin">Jeudi matin</ListBox.Item>
+                  <ListBox.Item id="jeudi-apres-midi" textValue="Jeudi après-midi">Jeudi après-midi</ListBox.Item>
+                  <ListBox.Item id="vendredi-matin" textValue="Vendredi matin">Vendredi matin</ListBox.Item>
+                  <ListBox.Item id="samedi-matin" textValue="Samedi matin">Samedi matin</ListBox.Item>
+                  <ListBox.Item id="weekend" textValue="Weekend">Weekend</ListBox.Item>
+                </ListBox>
+              </Select.Popover>
+              {errors.availability && <Description className="text-red-500 text-xs">{errors.availability}</Description>}
+            </Select>
+
+            <TextField
+              value={formData.message}
+              onChange={(val) => handleChange("message", val)}
+              isInvalid={!!errors.message}
+            >
+              <Label>Message ou questions</Label>
+              <TextArea placeholder="Décrivez brièvement votre besoin..." rows={3} />
+              {errors.message && <Description className="text-red-500 text-xs">{errors.message}</Description>}
+            </TextField>
+
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+              <input
+                type="checkbox"
+                id="conditions"
+                checked={formData.acceptConditions}
+                onChange={(e) => handleChange("acceptConditions", e.target.checked)}
+                className="mt-1 accent-[#2d2d83]"
+              />
+              <label htmlFor="conditions" className="text-xs text-gray-500 cursor-pointer leading-relaxed">
+                J&apos;accepte les conditions de participation et j&apos;ai pris connaissance des modalités
+              </label>
+            </div>
+            {errors.acceptConditions && <p className="text-red-500 text-xs">{errors.acceptConditions}</p>}
+
+            <Button
+              variant="primary"
+              className="w-full bg-[#98141f] rounded-xl py-3"
+              isDisabled={loading}
+              onPress={handleSubmit}
+            >
+              {loading ? "Envoi..." : "Envoyer ma demande"}
+            </Button>
+          </Card.Content>
+        </Card>
+      </div>
+
+      {/* Success Modal */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <Card className="bg-white rounded-2xl shadow-2xl max-w-md mx-4 p-8 text-center">
+            <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
+              <Check className="w-10 h-10 text-emerald-500" />
+            </div>
+            <Card.Header>
+              <Card.Title className="text-xl font-bold text-[#2d2d83]">Demande envoyée</Card.Title>
+              <Card.Description>
+                Un membre de notre équipe paroissiale prendra contact avec vous sous 48 heures.
+              </Card.Description>
+            </Card.Header>
+            <Card.Footer className="justify-center mt-4">
+              <Button variant="primary" className="bg-[#98141f] rounded-xl px-8" onPress={handleReset}>
+                Nouvelle demande
+              </Button>
+            </Card.Footer>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default EcouteRequestForm;

@@ -3,30 +3,16 @@
 import { useState } from "react";
 import Cures from "./cures";
 import CardHistoire from "./cardHistoire";
-import { AnimatePresence, motion } from "framer-motion";
 import { useMediaQuery } from "../hooks/useMediaQuery";
-import { Pastor } from "@/services/cure/types/cure.type";
+import { Pastor } from "@/features/cure/types/cure.type";
 
 const listButton = [
   { label: "Notre Histoire", value: "NotreHistoire" },
-  { label: "Nos Curés", value: "NosCurés" },
+  { label: "Nos Cures", value: "NosCures" },
 ];
 
-export default function ToggleBody({cure}:{cure:Pastor[]} ) {
+export default function ToggleBody({ cure }: { cure: Pastor[] }) {
   const [table, setTable] = useState("NotreHistoire");
-  const isMobile = useMediaQuery("(max-width: 767px)"); // mobile < 768px
-
-  const fadeVariants = {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -10 },
-  };
-
-  const slideVariants = {
-    initial: { opacity: 0, x: 100 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -100 },
-  };
 
   return (
     <div className="w-full">
@@ -57,20 +43,14 @@ export default function ToggleBody({cure}:{cure:Pastor[]} ) {
         })}
       </div>
 
-      {/* Content with conditional animation */}
+      {/* Content with CSS transition */}
       <div className="max-w-7xl mx-auto px-4 mb-16 relative min-h-[300px] overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={table}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            variants={isMobile ? slideVariants : fadeVariants}
-            transition={{ duration: 0.3 }}
-          >
-            {table === "NotreHistoire" ? <CardHistoire /> : <Cures cure={cure} />}
-          </motion.div>
-        </AnimatePresence>
+        <div
+          key={table}
+          className="animate-in fade-in slide-in-from-bottom-2 duration-300"
+        >
+          {table === "NotreHistoire" ? <CardHistoire /> : <Cures cure={cure} />}
+        </div>
       </div>
     </div>
   );

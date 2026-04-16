@@ -1,11 +1,32 @@
 'use client'
-import { ChangeEvent, useState } from 'react';
-import { ArrowLeft, CheckCircle, X } from 'lucide-react';
-import { Label } from '../ui/label';
+import { useState } from 'react';
+import { ArrowLeft, CheckCircle, CalendarPlus } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createOrganisation } from '@/services/organisation/organisation.action';
-import { OrganisationType } from '@/services/organisation/organisation.schema';
+import { organisationAPI } from '@/features/organisation/apis/organisation.api';
+import { OrganisationType } from '@/features/organisation/schemas/organisation.schema';
 import { toast } from 'sonner';
+import Image from 'next/image';
+import Link from 'next/link';
+import {
+  Button,
+  Input,
+  Label,
+  Select,
+  ListBox,
+  TextArea,
+  TextField,
+  RadioGroup,
+  Radio,
+  NumberField,
+  Description,
+  Card,
+  DatePicker,
+  DateField,
+  Calendar,
+  TimeField,
+} from "@heroui/react";
+import { today, getLocalTimeZone } from "@internationalized/date";
+import type { DateValue, TimeValue } from "@heroui/react";
 
 export default function OrganisationForm() {
   const queryClient = useQueryClient();
@@ -15,354 +36,284 @@ export default function OrganisationForm() {
     movement: '',
     email: '',
     eventType: '',
-    date: '',
-    startTime: '',
-    endTime: '',
     description: '',
-    estimatedParticipants: ''
+    estimatedParticipants: '',
   });
+  const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
+  const [startTime, setStartTime] = useState<TimeValue | null>(null);
+  const [endTime, setEndTime] = useState<TimeValue | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  console.log(formData);
-  const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
 
-  const handleRadioChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleNextStep = () => {
-    if (currentStep < 4) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handlePrevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleSubmit = () => {
-    setIsSubmitted(true);
-    // In a real app, you would send the form data to your backend here
-  };
+  const handleNextStep = () => { if (currentStep < 4) setCurrentStep(currentStep + 1); };
+  const handlePrevStep = () => { if (currentStep > 1) setCurrentStep(currentStep - 1); };
 
   const resetForm = () => {
-    setFormData({
-      isParishMember: 'yes',
-      movement: '',
-      email: '',
-      eventType: '',
-      date: '',
-      startTime: '',
-      endTime: '',
-      description: '',
-      estimatedParticipants: ''
-    });
+    setFormData({ isParishMember: 'yes', movement: '', email: '', eventType: '', description: '', estimatedParticipants: '' });
+    setSelectedDate(null);
+    setStartTime(null);
+    setEndTime(null);
     setCurrentStep(1);
     setIsSubmitted(false);
   };
+
   const mutation = useMutation({
-    mutationFn: (data: OrganisationType) => createOrganisation(data),
+    mutationFn: (data: OrganisationType) => organisationAPI.ajouter(data),
     onSuccess: () => {
-      toast.success('✅ Organisation créée !');
+      toast.success('Organisation créée !');
       queryClient.invalidateQueries({ queryKey: ['organisations'] });
-      // reset formulaire si besoin
-      setFormData({
-        isParishMember: 'yes',
-        movement: '',
-        email: '',
-        eventType: '',
-        date: '',
-        startTime: '',
-        endTime: '',
-        description: '',
-        estimatedParticipants: '',
-      });
-      setCurrentStep(1);
+      setIsSubmitted(true);
     },
     onError: (error: any) => {
-      toast.error('❌ Erreur création organisation :', error.message);
+      toast.error('Erreur : ' + error.message);
     },
   });
+
   const steps = [
-    { title: "Organisateur", description: "Votre mouvement ou groupe fait-il déjà partie de la paroisse ?" },
+    { title: "Organisateur", description: "Informations sur votre mouvement" },
     { title: "Type d'événement", description: "Sélectionnez le type d'activité" },
     { title: "Date et Horaires", description: "Planifiez votre événement" },
-    { title: "Détails complémentaires", description: "Description de l'événement et besoins spécifiques" }
+    { title: "Détails", description: "Description et besoins spécifiques" },
   ];
 
+  // ─── SUCCESS ───
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-purple-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
-          <div className="flex justify-end">
-            <button
-              onClick={resetForm}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X size={20} />
-            </button>
-          </div>
-          <div className="text-center py-8">
-            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle size={32} className="text-green-600" />
+      <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <Image src="/assets/images/mvt-id.jpg" alt="Événement" fill className="object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#2d2d83]/80 via-[#2d2d83]/60 to-[#98141f]/40" />
+        </div>
+        <div className="relative z-10 w-full max-w-md mx-4">
+          <Card className="bg-white/95 backdrop-blur-xl shadow-2xl p-8 text-center">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle size={40} className="text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Félicitation</h2>
-            <p className="text-gray-600 mb-6">
-              Votre demande a bien été envoyée. Nous vous remercions pour cette confiance. Un membre de notre équipe paroissiale prendra contact avec vous dans les plus brefs délais, généralement sous 48 heures.
-            </p>
-            <button className="w-full bg-red-700 text-white py-3 rounded-md hover:bg-red-800 transition-colors">
-              Retour à l&apos;accueil
-            </button>
-          </div>
+            <Card.Header>
+              <Card.Title className="text-2xl font-bold text-[#2d2d83]">Demande envoyée</Card.Title>
+              <Card.Description>Un membre de notre équipe vous contactera sous 48 heures.</Card.Description>
+            </Card.Header>
+            <Card.Footer className="flex flex-col gap-3 mt-4">
+              <Button variant="primary" className="w-full bg-[#98141f] rounded-xl" onPress={resetForm}>Nouvelle demande</Button>
+              <Link href="/" className="text-[#2d2d83] hover:underline text-sm font-medium">Retour à l&apos;accueil</Link>
+            </Card.Footer>
+          </Card>
         </div>
       </div>
     );
   }
 
+  // ─── FORM ───
   return (
-    <div className="min-h-screen bg-purple-50 flex items-center bg-cover bg-center justify-center p-4" style={{ backgroundImage: "url('/assets/images/mvt-id.jpg')" }}>
-      <div className="">
-        <div className="relative lg:-top-80 lg:-left-80 hidden lg:block">
-          <button
-            onClick={handlePrevStep}
-            className="flex items-center text-white bg-opacity-30 px-3 py-2 rounded-md hover:bg-opacity-50 transition"
-          >
-            <ArrowLeft size={16} className="mr-1" />
-            Retour
-          </button>
-        </div>
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <Image src="/assets/images/mvt-id.jpg" alt="Événement paroissial" fill priority className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#2d2d83]/80 via-[#2d2d83]/60 to-[#98141f]/40" />
       </div>
-      <div className=" rounded-lg shadow-xl overflow-hidden max-w-md w-full">
+
+      {/* Back button */}
+      <div className="absolute top-6 left-6 z-20">
+        {currentStep > 1 ? (
+          <Button variant="ghost" className="text-white/90 hover:text-white bg-white/10 backdrop-blur-sm rounded-xl" onPress={handlePrevStep}>
+            <ArrowLeft size={18} /> Retour
+          </Button>
+        ) : (
+          <Link href="/" className="flex items-center gap-2 text-white/90 hover:text-white transition-colors bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl">
+            <ArrowLeft size={18} /><span className="text-sm font-medium">Accueil</span>
+          </Link>
+        )}
+      </div>
+
+      <div className="relative z-10 w-full max-w-lg mx-4 my-8">
         {/* Header */}
-        <div className=" sm:bg-red-700 lg:bg-transparent relative h-20 lg:flex lg:justify-center  ">
-          <div className="absolute top-4 left-4 lg:hidden md:block">
-            <button
-              onClick={handlePrevStep}
-              className="flex items-center text-white bg-black bg-opacity-30 px-3 py-2 rounded-md hover:bg-opacity-50 transition"
-            >
-              <ArrowLeft size={16} className="mr-1" />
-              Retour
-            </button>
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-white/15 backdrop-blur-sm rounded-2xl mb-4">
+            <CalendarPlus className="w-7 h-7 text-white" />
           </div>
-          <div className="absolute  lg:w-full lg:text-center  top-4 right-4">
-            <span className="lg:text-red-700 sm:text-white md:text-white font-bold lg:font-extrabold md:text-lg text-sm  lg:text-2xl">Organiser un Événement Paroissial</span>
-          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">Organiser un Événement</h1>
+          <p className="text-white/70 text-sm">Planifiez un événement paroissial en quelques étapes</p>
         </div>
 
-        {/* Content */}
-        <div className="p-6 bg-white">
-          {/* Step indicator */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-red-700">{steps[currentStep - 1].title}</h2>
-            <p className="text-gray-600 text-sm">{steps[currentStep - 1].description}</p>
-          </div>
+        {/* Step indicators */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          {steps.map((_, i) => (
+            <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i + 1 <= currentStep ? "bg-white w-10" : "bg-white/30 w-6"}`} />
+          ))}
+        </div>
 
-          {/* Form content based on current step */}
-          {currentStep === 1 && (
-            <div className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-2">Votre mouvement ou groupe fait-il déjà partie de la paroisse ?</Label>
-                <div className="flex space-x-4 mb-4">
-                  <div className="flex items-center">
-                    <input
-                      type="radio"
-                      id="parishMemberYes"
-                      name="isParishMember"
-                      value="yes"
-                      checked={formData.isParishMember === 'yes'}
-                      onChange={handleRadioChange}
-                      className="mr-2"
-                    />
-                    <label htmlFor="parishMemberYes" className="text-sm text-gray-700">Oui</label>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="radio"
-                      id="parishMemberNo"
-                      name="isParishMember"
-                      value="no"
-                      checked={formData.isParishMember === 'no'}
-                      onChange={handleRadioChange}
-                      className="mr-2"
-                    />
-                    <label htmlFor="parishMemberNo" className="text-sm text-gray-700">Non</label>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">Sélectionner votre mouvement</Label>
-                <select
-                  name="movement"
-                  value={formData.movement}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+        {/* Card */}
+        <Card className="bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+          <Card.Header className="px-6 pt-6 pb-4 border-b border-gray-100">
+            <p className="text-xs font-semibold text-[#98141f] uppercase tracking-wider mb-1">Étape {currentStep} sur 4</p>
+            <Card.Title className="text-lg font-bold text-[#2d2d83]">{steps[currentStep - 1].title}</Card.Title>
+            <Card.Description>{steps[currentStep - 1].description}</Card.Description>
+          </Card.Header>
+
+          <Card.Content className="p-6">
+            {currentStep === 1 && (
+              <div className="space-y-5">
+                <RadioGroup
+                  value={formData.isParishMember}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, isParishMember: val }))}
+                  orientation="horizontal"
                 >
-                  <option value="">Sélectionnez un mouvement</option>
-                  <option value="jeunesse">Jeunesse Catholique</option>
-                  <option value="famille">Famille Chrétienne</option>
-                  <option value="catechese">Catéchèse</option>
-                  <option value="musique">Chorale</option>
-                  <option value="autre">Autre</option>
-                </select>
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">Votre email</Label>
-                <input
-                  type="email"
-                  name="email"
+                  <Label>Membre de la paroisse ?</Label>
+                  <div className="flex gap-4">
+                    <Radio value="yes">
+                      <Radio.Control><Radio.Indicator /></Radio.Control>
+                      <Radio.Content><Label>Oui</Label></Radio.Content>
+                    </Radio>
+                    <Radio value="no">
+                      <Radio.Control><Radio.Indicator /></Radio.Control>
+                      <Radio.Content><Label>Non</Label></Radio.Content>
+                    </Radio>
+                  </div>
+                </RadioGroup>
+
+                <Select
+                  placeholder="Sélectionnez un mouvement"
+                  selectedKey={formData.movement || undefined}
+                  onSelectionChange={(key) => setFormData((prev) => ({ ...prev, movement: String(key) }))}
+                >
+                  <Label>Mouvement</Label>
+                  <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      <ListBox.Item id="jeunesse" textValue="Jeunesse Catholique">Jeunesse Catholique</ListBox.Item>
+                      <ListBox.Item id="famille" textValue="Famille Chrétienne">Famille Chrétienne</ListBox.Item>
+                      <ListBox.Item id="catechese" textValue="Catéchèse">Catéchèse</ListBox.Item>
+                      <ListBox.Item id="musique" textValue="Chorale">Chorale</ListBox.Item>
+                      <ListBox.Item id="autre" textValue="Autre">Autre</ListBox.Item>
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+
+                <TextField
                   value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Nom"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                />
-              </div>
-              <div className="flex justify-end">
-                <button
-                  onClick={handleNextStep}
-                  className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800 transition-colors"
+                  onChange={(val) => setFormData((prev) => ({ ...prev, email: val }))}
                 >
-                  Suivant
-                </button>
-              </div>
-            </div>
-          )}
+                  <Label>E-mail</Label>
+                  <Input type="email" placeholder="jean@exemple.com" />
+                </TextField>
 
-          {currentStep === 2 && (
-            <div className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">Type d&apos;activité</Label>
-                <select
-                  name="eventType"
-                  value={formData.eventType}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                >
-                  <option value="">Sélectionnez un type d&apos;activité</option>
-                  <option value="messe">Messe</option>
-                  <option value="adore">Adoration</option>
-                  <option value="formation">Formation</option>
-                  <option value="fete">Fête paroissiale</option>
-                  <option value="autre">Autre</option>
-                </select>
-              </div>
-              <div className="flex justify-between">
-                <button
-                  onClick={handlePrevStep}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
-                >
-                  Précédent
-                </button>
-                <button
-                  onClick={handleNextStep}
-                  className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800 transition-colors"
-                >
-                  Suivant
-                </button>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 3 && (
-            <div className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">Date de l&apos;événement</Label>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="block text-sm font-medium text-gray-700 mb-1">Heure de début</Label>
-                  <input
-                    type="time"
-                    name="startTime"
-                    value={formData.startTime}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <Label className="block text-sm font-medium text-gray-700 mb-1">Heure de fin</Label>
-                  <input
-                    type="time"
-                    name="endTime"
-                    value={formData.endTime}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  />
+                <div className="flex justify-end pt-2">
+                  <Button variant="primary" className="bg-[#2d2d83] rounded-xl px-6" onPress={handleNextStep}>Suivant</Button>
                 </div>
               </div>
-              <div className="flex justify-between">
-                <button
-                  onClick={handlePrevStep}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
-                >
-                  Précédent
-                </button>
-                <button
-                  onClick={handleNextStep}
-                  className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800 transition-colors"
-                >
-                  Suivant
-                </button>
-              </div>
-            </div>
-          )}
+            )}
 
-          {currentStep === 4 && (
-            <div className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">Description de l&apos;événement et besoins spécifiques</Label>
-                <textarea
-                  name="description"
+            {currentStep === 2 && (
+              <div className="space-y-5">
+                <Select
+                  placeholder="Sélectionnez un type"
+                  selectedKey={formData.eventType || undefined}
+                  onSelectionChange={(key) => setFormData((prev) => ({ ...prev, eventType: String(key) }))}
+                >
+                  <Label>Type d&apos;activité</Label>
+                  <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      <ListBox.Item id="messe" textValue="Messe">Messe</ListBox.Item>
+                      <ListBox.Item id="adore" textValue="Adoration">Adoration</ListBox.Item>
+                      <ListBox.Item id="formation" textValue="Formation">Formation</ListBox.Item>
+                      <ListBox.Item id="fete" textValue="Fête paroissiale">Fête paroissiale</ListBox.Item>
+                      <ListBox.Item id="autre" textValue="Autre">Autre</ListBox.Item>
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+
+                <div className="flex justify-between pt-2">
+                  <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>Précédent</Button>
+                  <Button variant="primary" className="bg-[#2d2d83] rounded-xl px-6" onPress={handleNextStep}>Suivant</Button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 3 && (
+              <div className="space-y-5">
+                <DatePicker
+                  className="w-full"
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                  minValue={today(getLocalTimeZone())}
+                >
+                  <Label>Date de l&apos;événement</Label>
+                  <DateField.Group fullWidth>
+                    <DateField.Input>{(segment) => <DateField.Segment segment={segment} />}</DateField.Input>
+                    <DateField.Suffix>
+                      <DatePicker.Trigger><DatePicker.TriggerIndicator /></DatePicker.Trigger>
+                    </DateField.Suffix>
+                  </DateField.Group>
+                  <DatePicker.Popover>
+                    <Calendar aria-label="Date événement">
+                      <Calendar.Header>
+                        <Calendar.NavButton slot="previous" />
+                        <Calendar.Heading />
+                        <Calendar.NavButton slot="next" />
+                      </Calendar.Header>
+                      <Calendar.Grid>
+                        <Calendar.GridHeader>{(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}</Calendar.GridHeader>
+                        <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+                      </Calendar.Grid>
+                    </Calendar>
+                  </DatePicker.Popover>
+                </DatePicker>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <TimeField className="w-full" value={startTime} onChange={setStartTime}>
+                    <Label>Heure de début</Label>
+                    <TimeField.Group>
+                      <TimeField.Input>{(segment) => <TimeField.Segment segment={segment} />}</TimeField.Input>
+                    </TimeField.Group>
+                  </TimeField>
+
+                  <TimeField className="w-full" value={endTime} onChange={setEndTime}>
+                    <Label>Heure de fin</Label>
+                    <TimeField.Group>
+                      <TimeField.Input>{(segment) => <TimeField.Segment segment={segment} />}</TimeField.Input>
+                    </TimeField.Group>
+                  </TimeField>
+                </div>
+
+                <div className="flex justify-between pt-2">
+                  <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>Précédent</Button>
+                  <Button variant="primary" className="bg-[#2d2d83] rounded-xl px-6" onPress={handleNextStep}>Suivant</Button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 4 && (
+              <div className="space-y-5">
+                <TextField
                   value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Nom"
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-1">Nombre de participants estimé (optionnel)</Label>
-                <input
-                  type="number"
-                  name="estimatedParticipants"
-                  value={formData.estimatedParticipants}
-                  onChange={handleInputChange}
-                  placeholder="Nom"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                />
-              </div>
-              <div className="flex justify-between">
-                <button
-                  onClick={handlePrevStep}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+                  onChange={(val) => setFormData((prev) => ({ ...prev, description: val }))}
                 >
-                  Précédent
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800 transition-colors"
-                >
-                  Soumettre la demande
-                  {mutation.isPending ? 'Envoi...' : ''}
-                </button>
+                  <Label>Description de l&apos;événement</Label>
+                  <TextArea placeholder="Décrivez votre événement et vos besoins..." rows={4} />
+                </TextField>
 
+                <TextField
+                  value={formData.estimatedParticipants}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, estimatedParticipants: val }))}
+                >
+                  <Label>Participants estimés (optionnel)</Label>
+                  <Input type="number" placeholder="Ex: 50" />
+                </TextField>
+
+                <div className="flex justify-between pt-2">
+                  <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>Précédent</Button>
+                  <Button
+                    variant="primary"
+                    className="bg-[#98141f] rounded-xl px-6"
+                    isDisabled={mutation.isPending}
+                    onPress={() => mutation.mutate(formData as unknown as OrganisationType)}
+                  >
+                    {mutation.isPending ? 'Envoi...' : 'Soumettre'}
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </Card.Content>
+        </Card>
       </div>
     </div>
   );

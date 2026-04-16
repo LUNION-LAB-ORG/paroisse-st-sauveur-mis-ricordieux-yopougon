@@ -1,103 +1,159 @@
 "use client";
 
-import { useState } from "react";
+import { useRef } from "react";
 import Link from "next/link";
-import { Button } from "@heroui/button";
-import { CalendarClock, CalendarDays, MapPinHouse } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
 import Image from "next/image";
-import { Event } from "@/services/Events/types/events.type";
+import { format, parseISO } from "date-fns";
+import { fr } from "date-fns/locale";
+import { Event } from "@/features/evenement/types/evenement.type";
+import { Button, Card, Chip } from "@heroui/react";
 
-export default function Evenements({ event }: { event: Event[] }) {
-  const dataEvent = event;
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "Date à venir";
+  try {
+    return format(parseISO(dateStr), "dd MMM", { locale: fr });
+  } catch {
+    return dateStr;
+  }
+}
 
-  // PAGINATION
-  const ITEMS_PER_PAGE = 6; // tu peux changer 6 par 9, 12, etc.
-  const [currentPage, setCurrentPage] = useState(1);
+function formatTime(timeStr: string | null): string {
+  if (!timeStr) return "";
+  try {
+    return format(parseISO(timeStr), "HH'h'mm");
+  } catch {
+    return timeStr;
+  }
+}
 
-  const totalPages = Math.ceil(dataEvent.length / ITEMS_PER_PAGE);
+export default function Evenements({ event = [] }: { event: Event[] }) {
+  const dataEvent = event ?? [];
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const paginatedEvents = dataEvent.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const scroll = (direction: "left" | "right") => {
+    if (!scrollRef.current) return;
+    const cardWidth = scrollRef.current.querySelector<HTMLElement>(":scope > *")?.offsetWidth ?? 300;
+    const gap = 24;
+    scrollRef.current.scrollBy({
+      left: direction === "right" ? cardWidth + gap : -(cardWidth + gap),
+      behavior: "smooth",
+    });
+  };
+
+  if (dataEvent.length === 0) {
+    return (
+      <section className="px-6 w-full max-w-screen-xl mx-auto">
+        <div className="text-center mb-12">
+          <p className="text-[#98141f] text-sm font-semibold uppercase tracking-widest mb-3">
+            Agenda
+          </p>
+          <h2 className="text-[#2d2d83] text-2xl sm:text-3xl lg:text-4xl font-bold">
+            Prochains Événements
+          </h2>
+        </div>
+        <Card className="p-12 text-center">
+          <Card.Content>
+            <p className="text-muted">Aucun événement pour le moment.</p>
+          </Card.Content>
+        </Card>
+      </section>
+    );
+  }
 
   return (
-    <section className="px-4 max-w-7xl mx-auto">
-      <h2 className="text-blue-900 text-2xl md:text-3xl lg:text-4xl font-bold mb-10">
-        Prochains Événements
-      </h2>
-
-      {/* GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-10 max-w-6xl mx-auto">
-        {paginatedEvents.map((item) => (
-          <div
-            key={item.id}
-            className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl overflow-hidden  flex flex-col"
+    <section className="px-6 w-full max-w-screen-xl mx-auto">
+      {/* Header + nav buttons */}
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <p className="text-[#98141f] text-sm font-semibold uppercase tracking-widest mb-3">
+            Agenda
+          </p>
+          <h2 className="text-[#2d2d83] text-2xl sm:text-3xl lg:text-4xl font-bold">
+            Prochains Événements
+          </h2>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="h-10 w-10 p-0 rounded-full border-[#2d2d83] text-[#2d2d83]"
+            onPress={() => scroll("left")}
           >
-            <div className="w-full h-[200px] relative">
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <Button
+            variant="outline"
+            className="h-10 w-10 p-0 rounded-full border-[#2d2d83] text-[#2d2d83]"
+            onPress={() => scroll("right")}
+          >
+            <ChevronRight className="w-5 h-5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Carousel horizontal */}
+      <div
+        ref={scrollRef}
+        className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 -mx-2 px-2"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        <style>{`[data-events-scroll]::-webkit-scrollbar { display: none; }`}</style>
+        {dataEvent.map((item) => (
+          <Card
+            key={item.id}
+            className="overflow-hidden hover:shadow-lg transition-shadow flex-shrink-0 snap-start w-[85vw] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]"
+          >
+            {/* Image avec badge date */}
+            <div className="relative h-[220px] w-full">
               <Image
-                src={`${item.image}`}
+                src={item.image}
                 alt={item.title}
                 fill
                 className="object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "/placeholder.jpg";
+                }}
               />
-            </div>
-
-        <div className="p-8">
-              <h3 className="text-md font-semibold  mb-4 text-blue-800 mt-2 text-center">
-              {item.title}
-            </h3>
-
-            <div className="pb-2 flex gap-4 justify-center">
-              <div className="flex items-center gap-1 text-sm text-gray-700">
-                <CalendarDays className="w-5 h-5 text-blue-600" />
-                <span>{item.date_at ?? "Date à venir"}</span>
-              </div>
-
-              <div className="flex items-center gap-1 text-sm text-gray-700">
-                <CalendarClock className="w-5 h-5 text-blue-600" />
-                <span>{item.time_at ?? "—"}</span>
-              </div>
-
-              <div className="flex items-center gap-1 text-sm text-gray-700">
-                <MapPinHouse className="w-5 h-5 text-blue-600" />
-                <span>{item.location_at ?? "À préciser"}</span>
+              <div className="absolute top-4 left-4">
+                <Chip color="accent" variant="primary" className="bg-white text-[#2d2d83] font-bold text-base px-3 py-1">
+                  {formatDate(item.date_at)}
+                </Chip>
               </div>
             </div>
 
-            <p className="text-gray-900 py-2 mb-4 text-center text-sm mx-auto">
-              {item.description}
-            </p>
+            <Card.Content className="p-5">
+              <Card.Title className="text-[#2d2d83] text-lg font-bold mb-3">
+                {item.title}
+              </Card.Title>
 
-            <Link href={`/evenement/${item.id}`} className="w-full">
-              <Button color="primary" className="text-md w-full py-2">
-                Plus d&apos;infos
+              <div className="flex flex-wrap gap-4 items-center mb-3 text-sm text-muted">
+                {item.time_at && (
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
+                    <span>{formatTime(item.time_at)}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4" />
+                  <span>{item.location_at ?? "À préciser"}</span>
+                </div>
+              </div>
+
+              {item.description && (
+                <Card.Description className="text-sm line-clamp-2 mb-4">
+                  {item.description}
+                </Card.Description>
+              )}
+
+              <Button
+                variant="primary"
+                className="w-full bg-[#98141f] rounded-xl"
+              >
+                <Link href={`/evenement/${item.id}`}>Plus d&apos;info</Link>
               </Button>
-            </Link>
-        </div>
-          </div>
+            </Card.Content>
+          </Card>
         ))}
-      </div>
-
-      {/* PAGINATION BUTTONS */}
-      <div className="flex justify-center mt-10 gap-3">
-        <Button
-          isDisabled={currentPage === 1}
-          onPress={() => setCurrentPage((p) => p - 1)}
-        >
-          Précédent
-        </Button>
-
-        <span className="px-4 py-2 text-blue-900 font-semibold">
-          Page {currentPage} / {totalPages}
-        </span>
-
-        <Button
-          isDisabled={currentPage === totalPages}
-          onPress={() => setCurrentPage((p) => p + 1)}
-        >
-          Suivant
-        </Button>
       </div>
     </section>
   );

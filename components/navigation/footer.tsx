@@ -1,104 +1,73 @@
 "use client";
 import Link from "next/link";
-import {
-  MapPin,
-  Phone,
-  Mail,
-  ArrowRight,
-  Clock3,
-  ChevronRight,
-  House,
-  Newspaper,
-  BookX,
-  Church,
-} from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="bg-[#2D2D83] text-white w-full pt-16 pb-10">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-
-          {/* Section 1 : Horaires */}
-          <div>
-            <h3 className="font-cinzel text-2xl font-bold mb-4 flex items-center gap-2">
-               Horaires
-            </h3>
-            <p className="text-sm text-gray-200 leading-relaxed">
-              La Paroisse Saint Sauveur Miséricordieux est une communauté
-              catholique située à Yopougon Millionnaire. Messe tous les jours à
-              partir de 6h.
+    <footer className="bg-[#2d2d83] text-white w-full py-[74px] px-6 lg:px-[121px]">
+      <div className="max-w-[1440px] mx-auto">
+        <div className="flex flex-col md:flex-row gap-10 lg:gap-[120px] items-start">
+          {/* A Propos */}
+          <div className="w-full md:w-[290px] text-center md:text-left">
+            <h3 className="text-2xl font-semibold mb-8">A Propos</h3>
+            <p className="text-[#cfcdcd] text-lg leading-relaxed">
+              La Paroisse Saint Sauveur Misericordieux est une communaute
+              catholique situee a Yopougon Millionnaire.
             </p>
           </div>
 
-          {/* Section 2 : Liens rapides */}
+          {/* Liens Rapides */}
           <div>
-            <h3 className="font-cinzel text-2xl font-bold mb-4 flex items-center gap-2">
-              Liens rapides
-            </h3>
-            <ul className="space-y-2 text-gray-200 text-sm">
-              {[
-                { label: "Accueil", href: "/" , icon: House },
-                { label: "Actualités", href: "/actualites", icon: Newspaper },
-                { label: "Méditations", href: "/meditations", icon: Church },
-                { label: "Historique", href: "/historique", icon: BookX },
-              ].map(({label, href, icon: Icon}, index) => (
-                <li key={index}>
-                  <Link
-                    href={href}
-                    className="flex items-center gap-2 hover:underline hover:text-primary transition-colors"
-                  >
-                    <Icon className="w-4 h-4" /> {label}
-                  </Link>
-                </li>
-              ))}
+            <h3 className="text-2xl font-semibold mb-4">Liens Rapides</h3>
+            <ul className="space-y-4 text-[#cfcdcd] text-lg">
+              <li>
+                <Link href="/" className="hover:text-white transition-colors">
+                  Accueil
+                </Link>
+              </li>
+              <li>
+                <Link href="/mouvement" className="hover:text-white transition-colors">
+                  A Propos
+                </Link>
+              </li>
+              <li>
+                <Link href="/meditations" className="hover:text-white transition-colors">
+                  Horaires
+                </Link>
+              </li>
+              <li>
+                <Link href="/historique" className="hover:text-white transition-colors">
+                  Contact
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* Section 3 : Contact */}
-          <div>
-            <h3 className="font-cinzel text-2xl font-bold mb-4 flex items-center gap-2">
-              Contact
-            </h3>
-            <ul className="space-y-3 text-sm text-gray-200">
-              <li className="flex items-start gap-2">
-                <MapPin className="w-5 h-5 mt-1 text-gray-200" />
-                <span>
-                  Paroisse Saint Sauveur Miséricordieux,
-                  <br />
-                  Yopougon Millionnaire
-                </span>
+          {/* Contact */}
+          <div className="flex-1">
+            <h3 className="text-2xl font-semibold mb-4">Contact</h3>
+            <ul className="space-y-4 text-[#cfcdcd] text-lg">
+              <li>
+                Adresse : Paroisse Saint Sauveur Misericordieux, Yopougon
+                Millionnaire
               </li>
-              <li className="flex items-center gap-2">
-                <Phone className="w-5 h-5 text-gray-200" />
-                <span>+225 XX XX XX XX</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Mail className="w-5 h-5 text-gray-200" />
-                <span>contact@saintsauveur.org</span>
-              </li>
+              <li>Telephone : +225 XX XX XX XX</li>
+              <li>Email : contact@saintsauveurmisericordieux.org</li>
             </ul>
           </div>
         </div>
 
-        {/* Ligne en bas */}
-        <div className="mt-10 border-t border-white/20 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-300">
+        {/* Copyright */}
+        <div className="mt-12 border-t border-white/20 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-[#cfcdcd]">
           <p>
-            © {new Date().getFullYear()} Paroisse Saint Sauveur Miséricordieux.
-            Tous droits réservés.
+            &copy; {new Date().getFullYear()} Paroisse Saint Sauveur
+            Misericordieux. Tous droits reserves.
           </p>
           <div className="flex gap-4 mt-4 md:mt-0">
-            <Link
-              href="/mentions-legales"
-              className="hover:text-primary underline transition"
-            >
-              Mentions légales
+            <Link href="/mentions-legales" className="hover:text-white transition underline">
+              Mentions legales
             </Link>
-            <Link
-              href="/politique-confidentialite"
-              className="hover:text-primary underline transition"
-            >
-              Politique de confidentialité
+            <Link href="/politique-confidentialite" className="hover:text-white transition underline">
+              Politique de confidentialite
             </Link>
           </div>
         </div>

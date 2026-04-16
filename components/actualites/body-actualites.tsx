@@ -1,4 +1,4 @@
-import { NewsItemType } from "@/services/news/types/cure.type";
+import { NewsItemType } from "@/features/actualite/types/actualite.type";
 import CardContainer from "./card-container";
 import FilterActualites from "./filterActualites";
 

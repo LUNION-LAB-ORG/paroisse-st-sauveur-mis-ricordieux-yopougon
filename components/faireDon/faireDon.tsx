@@ -1,60 +1,69 @@
-const dataPrix = [
-  { id: 1, prix: "500 FCFA" },
-  { id: 2, prix: "1000 FCFA" },
-  { id: 3, prix: "1500 FCFA" },
-  { id: 4, prix: "2000 FCFA" },
-  { id: 5, prix: "5000 FCFA" },
-  { id: 6, prix: "Autre" },
-];
+"use client";
 
-function MoneyIcon() {
-  return (
-    <svg
-      className="w-6 h-6 text-blue-600 group-hover:text-blue-900"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path d="M12 1v22M17 5H9a4 4 0 1 0 0 8h6a4 4 0 1 1 0 8H7" />
-    </svg>
-  );
-}
+import { useState } from "react";
+import { Heart } from "lucide-react";
+import { Button, Card, Input, Label, TextField } from "@heroui/react";
+
+const montants = [500, 1000, 1500, 2000, 5000];
 
 export default function FaireDon() {
+  const [selected, setSelected] = useState<number | null>(null);
+  const [custom, setCustom] = useState("");
+  const isCustom = selected === -1;
+
   return (
-    <section className="w-full px-4 bg-white max-w-6xl mx-auto py-14">
-      <div className="text-center">
-        <h2 className="text-blue-900 uppercase text-xl sm:text-2xl md:text-3xl font-bold tracking-wide mb-4">
-          Faire un don
+    <section className="w-full">
+      <div className="text-center mb-8">
+        <p className="text-[#98141f] text-sm font-semibold uppercase tracking-widest mb-2">
+          Votre soutien
+        </p>
+        <h2 className="text-[#2d2d83] text-2xl sm:text-3xl font-bold mb-2">
+          Choisissez un montant
         </h2>
-        <p className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto mb-12">
-          Soutenez notre paroisse en faisant un don. Choisissez un montant ci-dessous ou entrez un montant personnalisé.
+        <p className="text-gray-500 text-sm max-w-lg mx-auto">
+          Chaque don contribue au fonctionnement et au rayonnement de notre paroisse.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 md:gap-6">
-        {dataPrix.map((item) => (
-          <div
-            key={item.id}
-            className="group border border-gray-200 rounded-xl shadow-sm p-5 sm:p-6 flex items-center gap-3 cursor-pointer transition-all duration-300 hover:shadow-md hover:border-blue-600"
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {montants.map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => { setSelected(m); setCustom(""); }}
+            className={`relative rounded-xl p-4 text-center font-bold text-lg transition-all border-2 ${
+              selected === m
+                ? "border-[#98141f] bg-[#98141f]/5 text-[#98141f]"
+                : "border-gray-200 bg-white text-[#2d2d83] hover:border-[#2d2d83]/30"
+            }`}
           >
-            <MoneyIcon />
-            <h4 className="text-base sm:text-lg font-semibold text-blue-800 group-hover:text-blue-900">
-              {item.prix}
-            </h4>
-          </div>
+            {m.toLocaleString("fr-FR")} F
+            {selected === m && (
+              <Heart className="absolute top-2 right-2 w-4 h-4 text-[#98141f] fill-[#98141f]" />
+            )}
+          </button>
         ))}
+        <button
+          type="button"
+          onClick={() => setSelected(-1)}
+          className={`rounded-xl p-4 text-center font-bold text-lg transition-all border-2 ${
+            isCustom
+              ? "border-[#98141f] bg-[#98141f]/5 text-[#98141f]"
+              : "border-gray-200 bg-white text-[#2d2d83] hover:border-[#2d2d83]/30"
+          }`}
+        >
+          Autre
+        </button>
       </div>
 
-      {/* <div className="text-center mt-10">
-        <button className="bg-blue-900 hover:bg-blue-800 text-white font-medium px-6 py-3 rounded-full transition">
-          Valider le don
-        </button>
-      </div> */}
+      {isCustom && (
+        <div className="mt-4">
+          <TextField value={custom} onChange={setCustom}>
+            <Label>Montant personnalisé (FCFA)</Label>
+            <Input type="number" placeholder="Ex: 10 000" />
+          </TextField>
+        </div>
+      )}
     </section>
   );
 }
