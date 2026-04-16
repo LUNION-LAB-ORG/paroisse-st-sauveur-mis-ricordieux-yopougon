@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Church, HeartHandshake, CalendarPlus } from "lucide-react";
-import { Card, Button } from "@heroui/react";
+import { Card } from "@heroui/react";
 
 const data = [
   {
@@ -60,13 +60,12 @@ export default function Services() {
                 {item.description}
               </Card.Description>
 
-              <Button
-                variant="primary"
-                className="w-full bg-[#98141f] rounded-xl"
-                asChild
+              <Link
+                href={item.link}
+                className="block w-full bg-[#98141f] hover:bg-[#7a1019] text-white text-center rounded-xl py-3 text-base font-medium transition-colors"
               >
-                <Link href={item.link}>{item.btn}</Link>
-              </Button>
+                {item.btn}
+              </Link>
             </Card.Content>
           </Card>
         ))}

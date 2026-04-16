@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { Button, Card } from "@heroui/react";
+import { Card } from "@heroui/react";
 
 interface Props {
   txt1: string;
@@ -45,13 +45,12 @@ export default function CardContainer({ txt1, dataContainer }: Props) {
               <Card.Description className="text-sm mb-4 flex-grow">
                 {item.description}
               </Card.Description>
-              <Button
-                variant="primary"
-                className="w-full bg-[#98141f] rounded-xl"
-                asChild
+              <Link
+                href={item.link || "#"}
+                className="block w-full bg-[#98141f] hover:bg-[#7a1019] text-white text-center rounded-xl py-2.5 text-sm font-medium transition-colors"
               >
-                <Link href={item.link || "#"}>Soutenir ce projet</Link>
-              </Button>
+                Soutenir ce projet
+              </Link>
             </Card.Content>
           </Card>
         ))}

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Button } from "@heroui/react";
 import SelectDon from "./selectDon";
 
 export default function AffectationDon() {
@@ -20,13 +19,12 @@ export default function AffectationDon() {
       <div className="max-w-md mx-auto space-y-6">
         <SelectDon />
 
-        <Button
-          variant="primary"
-          className="w-full bg-[#98141f] rounded-xl py-3 text-base"
-          asChild
+        <Link
+          href="/faire-don/paiement"
+          className="block w-full bg-[#98141f] hover:bg-[#7a1019] text-white text-center rounded-xl py-3 text-base font-medium transition-colors"
         >
-          <Link href="/faire-don/paiement">Continuer</Link>
-        </Button>
+          Continuer
+        </Link>
       </div>
     </section>
   );
