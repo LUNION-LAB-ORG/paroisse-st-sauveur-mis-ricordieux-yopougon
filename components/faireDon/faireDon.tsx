@@ -1,15 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
 import { Button, Card, Input, Label, TextField } from "@heroui/react";
 
 const montants = [500, 1000, 1500, 2000, 5000];
 
 export default function FaireDon() {
+  const router = useRouter();
   const [selected, setSelected] = useState<number | null>(null);
   const [custom, setCustom] = useState("");
   const isCustom = selected === -1;
+
+  const finalAmount = isCustom ? Number(custom) : selected;
+
+  const handleContinue = () => {
+    if (!finalAmount || finalAmount < 100) return;
+    router.push(`/faire-don/paiement?amount=${finalAmount}`);
+  };
 
   return (
     <section className="w-full">
@@ -59,9 +68,22 @@ export default function FaireDon() {
       {isCustom && (
         <div className="mt-4">
           <TextField value={custom} onChange={setCustom}>
-            <Label>Montant personnalisé (FCFA)</Label>
-            <Input type="number" placeholder="Ex: 10 000" />
+            <Label>Montant personnalisé (XOF)</Label>
+            <Input type="number" placeholder="Ex: 10 000" min="100" />
           </TextField>
+        </div>
+      )}
+
+      {finalAmount && finalAmount >= 100 && (
+        <div className="mt-6">
+          <Button
+            variant="primary"
+            className="w-full bg-[#98141f] hover:bg-[#7a1019] text-white py-4 rounded-xl font-semibold text-lg"
+            onPress={handleContinue}
+          >
+            <Heart className="w-5 h-5" />
+            Faire un don de {finalAmount.toLocaleString("fr-FR")} XOF
+          </Button>
         </div>
       )}
     </section>

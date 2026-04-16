@@ -1,14 +1,17 @@
 "use client"
 
-import { useState } from "react"
-import { Heart, TrendingUp, Users, CreditCard, Plus, Search, Eye } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Heart, TrendingUp, Users, CreditCard, Plus } from "lucide-react"
 import { Header } from "@/components/admin/header"
 import { StatCard } from "@/components/admin/stat-card"
 import { BarChart } from "@/components/admin/charts/bar-chart"
 import { PieChart } from "@/components/admin/charts/pie-chart"
-import { Card, Chip, Separator, Button, SearchField, Input, Label, Select, ListBox, TextField, TextArea } from "@heroui/react"
+import { Card, Chip, Button, SearchField, Input, Label, Select, ListBox, TextField, TextArea } from "@heroui/react"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { donAPI } from "@/features/don/apis/don.api"
+import type { IDon, IDonCreer } from "@/features/don/types/don.type"
+import { toast } from "sonner"
 
 const barData = [
   { name: "Jan", value: 65 },
@@ -26,38 +29,70 @@ const pieData = [
   { name: "Autres (15%)", value: 15, color: "#6b7280" },
 ]
 
-const recentDons = [
-  { id: "D001", donateur: "Jean Kouassi", montant: "75 000", projet: "Construction", date: "01/05", mode: "Mobile Money" },
-  { id: "D002", donateur: "Marie Konan", montant: "50 000", projet: "Fonctionnement", date: "02/05", mode: "Espèces" },
-  { id: "D003", donateur: "Pierre Yao", montant: "100 000", projet: "Caritatives", date: "03/05", mode: "Virement" },
-  { id: "D004", donateur: "Awa Diallo", montant: "25 000", projet: "Construction", date: "04/05", mode: "Mobile Money" },
-  { id: "D005", donateur: "François Bamba", montant: "45 000", projet: "Fonctionnement", date: "05/05", mode: "Espèces" },
-]
-
-const projets = [
-  { nom: "Construction salle paroissiale", objectif: 5000000, collecte: 3685250, couleur: "#2d2d83" },
-  { nom: "Rénovation chapelle", objectif: 2000000, collecte: 640000, couleur: "#98141f" },
-  { nom: "Aide aux démunis", objectif: 1000000, collecte: 780000, couleur: "#c49a2a" },
-]
-
-const historique = [
-  { id: "D001", date: "01/05/2025", donateur: "Jean Kouassi", montant: "75 000", projet: "Construction", mode: "Mobile Money", type: "numerique" },
-  { id: "D002", date: "02/05/2025", donateur: "Marie Konan", montant: "50 000", projet: "Fonctionnement", mode: "Espèces", type: "manuel" },
-  { id: "D003", date: "03/05/2025", donateur: "Pierre Yao", montant: "100 000", projet: "Caritatives", mode: "Virement", type: "numerique" },
-  { id: "D004", date: "04/05/2025", donateur: "Awa Diallo", montant: "25 000", projet: "Construction", mode: "Mobile Money", type: "numerique" },
-  { id: "D005", date: "05/05/2025", donateur: "François Bamba", montant: "45 000", projet: "Fonctionnement", mode: "Espèces", type: "manuel" },
-  { id: "D006", date: "06/05/2025", donateur: "Claire Touré", montant: "30 000", projet: "Fonctionnement", mode: "Nature (riz 50kg)", type: "nature" },
-  { id: "D007", date: "06/05/2025", donateur: "Anonyme", montant: "15 000", projet: "Caritatives", mode: "Quête dimanche", type: "manuel" },
-]
+function formatDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })
+  } catch {
+    return iso
+  }
+}
 
 export default function DonsPage() {
+  const [dons, setDons] = useState<IDon[]>([])
+  const [loading, setLoading] = useState(true)
   const [addOpen, setAddOpen] = useState(false)
   const [searchDon, setSearchDon] = useState("")
   const [filterMode, setFilterMode] = useState("all")
+  const [submitting, setSubmitting] = useState(false)
 
-  const filteredHistorique = historique
-    .filter((d) => filterMode === "all" || d.type === filterMode)
-    .filter((d) => !searchDon || d.donateur.toLowerCase().includes(searchDon.toLowerCase()))
+  const [form, setForm] = useState({
+    donator: "",
+    amount: "",
+    project: "Fonctionnement",
+    paymethod: "especes" as IDonCreer["paymethod"],
+    description: "",
+  })
+
+  useEffect(() => {
+    donAPI
+      .obtenirTous()
+      .then((res) => setDons(res.data ?? []))
+      .catch(() => toast.error("Erreur lors du chargement des dons"))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filteredDons = dons
+    .filter((d) => filterMode === "all" || d.paymethod === filterMode)
+    .filter((d) => !searchDon || d.donator.toLowerCase().includes(searchDon.toLowerCase()))
+
+  const totalAmount = dons.reduce((sum, d) => sum + d.amount, 0)
+
+  const handleAddDon = async () => {
+    if (!form.donator || !form.amount) {
+      toast.error("Nom et montant requis")
+      return
+    }
+    setSubmitting(true)
+    try {
+      const payload: IDonCreer = {
+        donator: form.donator || "Anonyme",
+        amount: Number(form.amount),
+        project: form.project,
+        paymethod: form.paymethod,
+        description: form.description || null,
+        donation_at: new Date().toISOString(),
+      }
+      const res = await donAPI.ajouter(payload)
+      setDons((prev) => [res.data, ...prev])
+      toast.success("Don enregistré avec succès")
+      setAddOpen(false)
+      setForm({ donator: "", amount: "", project: "Fonctionnement", paymethod: "especes", description: "" })
+    } catch {
+      toast.error("Erreur lors de l'enregistrement")
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <div>
@@ -65,10 +100,10 @@ export default function DonsPage() {
 
       {/* Hero stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard icon={Heart} value="3,7M" label="Total dons 2025" trend="12%" trendUp iconBgColor="bg-[#98141f]/10" iconColor="text-[#98141f]" />
-        <StatCard icon={TrendingUp} value="528K" label="Ce mois-ci" trend="8%" trendUp iconBgColor="bg-green-100" iconColor="text-green-600" />
-        <StatCard icon={Users} value="324" label="Donateurs" trend="5%" trendUp iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
-        <StatCard icon={CreditCard} value="62%" label="Mobile Money" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
+        <StatCard icon={Heart} value={totalAmount >= 1000000 ? `${(totalAmount / 1000000).toFixed(1)}M` : `${(totalAmount / 1000).toFixed(0)}K`} label="Total dons" trend="12%" trendUp iconBgColor="bg-[#98141f]/10" iconColor="text-[#98141f]" />
+        <StatCard icon={TrendingUp} value={String(dons.filter((d) => { const m = new Date(d.donation_at).getMonth(); return m === new Date().getMonth() }).length)} label="Ce mois-ci" trend="8%" trendUp iconBgColor="bg-green-100" iconColor="text-green-600" />
+        <StatCard icon={Users} value={String(new Set(dons.map((d) => d.donator)).size)} label="Donateurs" trend="5%" trendUp iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
+        <StatCard icon={CreditCard} value={`${dons.length ? Math.round((dons.filter((d) => d.paymethod === "wave").length / dons.length) * 100) : 0}%`} label="Wave" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
       </div>
 
       {/* Charts row */}
@@ -98,61 +133,36 @@ export default function DonsPage() {
         </Card>
       </div>
 
-      {/* Bottom row: recent donations + project progress */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Recent donations - 2/3 */}
-        <Card className="lg:col-span-2">
-          <Card.Header className="px-5 pt-5 pb-3">
-            <Card.Title className="text-base font-semibold text-[#2d2d83]">Derniers dons</Card.Title>
-          </Card.Header>
-          <Card.Content className="px-5 pb-5">
+      {/* Bottom row: recent donations */}
+      <Card className="mb-6">
+        <Card.Header className="px-5 pt-5 pb-3">
+          <Card.Title className="text-base font-semibold text-[#2d2d83]">Derniers dons</Card.Title>
+        </Card.Header>
+        <Card.Content className="px-5 pb-5">
+          {loading ? (
+            <p className="text-sm text-gray-400 text-center py-4">Chargement...</p>
+          ) : (
             <div className="space-y-0 divide-y divide-gray-50">
-              {recentDons.map((don) => (
+              {dons.slice(0, 5).map((don) => (
                 <div key={don.id} className="flex items-center gap-4 py-3">
                   <div className="w-9 h-9 rounded-full bg-[#2d2d83]/10 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-bold text-[#2d2d83]">{don.donateur.charAt(0)}</span>
+                    <span className="text-sm font-bold text-[#2d2d83]">{don.donator.charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{don.donateur}</p>
-                    <p className="text-xs text-gray-400">{don.date} · {don.mode}</p>
+                    <p className="text-sm font-medium text-gray-800 truncate">{don.donator}</p>
+                    <p className="text-xs text-gray-400">{formatDate(don.donation_at)} · {don.paymethod}</p>
                   </div>
-                  <Chip variant="soft" color="default" size="sm">{don.projet}</Chip>
-                  <span className="text-sm font-bold text-[#2d2d83] shrink-0">{don.montant} F</span>
+                  <Chip variant="soft" color="default" size="sm">{don.project}</Chip>
+                  <span className="text-sm font-bold text-[#2d2d83] shrink-0">{don.amount.toLocaleString("fr-FR")} F</span>
                 </div>
               ))}
+              {dons.length === 0 && (
+                <p className="text-center text-gray-400 text-sm py-4">Aucun don enregistré.</p>
+              )}
             </div>
-          </Card.Content>
-        </Card>
-
-        {/* Project progress - 1/3 */}
-        <Card>
-          <Card.Header className="px-5 pt-5 pb-3">
-            <Card.Title className="text-base font-semibold text-[#2d2d83]">Objectifs projets</Card.Title>
-          </Card.Header>
-          <Card.Content className="px-5 pb-5 space-y-5">
-            {projets.map((p, i) => {
-              const pct = Math.round((p.collecte / p.objectif) * 100)
-              return (
-                <div key={i}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-sm font-medium text-gray-700 truncate">{p.nom}</p>
-                    <span className="text-xs font-bold" style={{ color: p.couleur }}>{pct}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${pct}%`, backgroundColor: p.couleur }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {(p.collecte / 1000).toFixed(0)}K / {(p.objectif / 1000000).toFixed(1)}M FCFA
-                  </p>
-                </div>
-              )
-            })}
-          </Card.Content>
-        </Card>
-      </div>
+          )}
+        </Card.Content>
+      </Card>
 
       {/* Historique des dons */}
       <div className="mt-6">
@@ -175,9 +185,10 @@ export default function DonsPage() {
           <div className="flex gap-2 flex-wrap">
             {[
               { key: "all", label: "Tous" },
-              { key: "numerique", label: "Numériques" },
-              { key: "manuel", label: "Espèces" },
-              { key: "nature", label: "En nature" },
+              { key: "wave", label: "Wave" },
+              { key: "especes", label: "Espèces" },
+              { key: "cheque", label: "Chèque" },
+              { key: "virement", label: "Virement" },
             ].map((f) => (
               <button
                 key={f.key}
@@ -204,29 +215,22 @@ export default function DonsPage() {
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Montant</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Projet</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Mode</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Type</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredHistorique.map((d) => (
+                  {filteredDons.map((d) => (
                     <tr key={d.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="px-4 py-3 text-sm text-gray-600">{d.date}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-800">{d.donateur}</td>
-                      <td className="px-4 py-3 text-sm font-bold text-[#2d2d83]">{d.montant} F</td>
-                      <td className="px-4 py-3"><Chip variant="soft" color="default" size="sm">{d.projet}</Chip></td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{d.mode}</td>
-                      <td className="px-4 py-3">
-                        <StatusBadge
-                          status={d.type === "numerique" ? "confirmed" : d.type === "nature" ? "pending" : "draft"}
-                          label={d.type === "numerique" ? "Numérique" : d.type === "nature" ? "En nature" : "Espèces"}
-                        />
-                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{formatDate(d.donation_at)}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800">{d.donator}</td>
+                      <td className="px-4 py-3 text-sm font-bold text-[#2d2d83]">{d.amount.toLocaleString("fr-FR")} F</td>
+                      <td className="px-4 py-3"><Chip variant="soft" color="default" size="sm">{d.project}</Chip></td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{d.paymethod}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {filteredHistorique.length === 0 && (
+            {filteredDons.length === 0 && !loading && (
               <p className="text-center text-gray-400 text-sm py-8">Aucun don pour ce filtre.</p>
             )}
           </Card.Content>
@@ -240,52 +244,63 @@ export default function DonsPage() {
             <DialogTitle className="text-[#2d2d83]">Ajouter un don</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-gray-500 mb-4">
-            Enregistrez un don recu en especes, par cheque ou en nature.
+            Enregistrez un don reçu en espèces, par chèque ou en nature.
           </p>
           <div className="space-y-4">
-            <TextField>
+            <TextField value={form.donator} onChange={(v) => setForm((p) => ({ ...p, donator: v }))}>
               <Label>Nom du donateur</Label>
               <Input placeholder="Jean Dupont (ou Anonyme)" />
             </TextField>
 
-            <TextField>
-              <Label>Montant (FCFA)</Label>
+            <TextField value={form.amount} onChange={(v) => setForm((p) => ({ ...p, amount: v }))}>
+              <Label>Montant (XOF)</Label>
               <Input type="number" placeholder="Ex: 25 000" />
             </TextField>
 
-            <Select placeholder="Choisir un projet">
+            <Select
+              selectedKey={form.project}
+              onSelectionChange={(k) => setForm((p) => ({ ...p, project: String(k) }))}
+              placeholder="Choisir un projet"
+            >
               <Label>Affectation</Label>
               <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
               <Select.Popover>
                 <ListBox>
-                  <ListBox.Item id="fonctionnement" textValue="Fonctionnement">Fonctionnement</ListBox.Item>
-                  <ListBox.Item id="construction" textValue="Construction">Construction</ListBox.Item>
-                  <ListBox.Item id="caritatives" textValue="Actions caritatives">Actions caritatives</ListBox.Item>
-                  <ListBox.Item id="autre" textValue="Autre">Autre</ListBox.Item>
+                  <ListBox.Item id="Fonctionnement" textValue="Fonctionnement">Fonctionnement</ListBox.Item>
+                  <ListBox.Item id="Construction" textValue="Construction">Construction</ListBox.Item>
+                  <ListBox.Item id="Caritatives" textValue="Actions caritatives">Actions caritatives</ListBox.Item>
+                  <ListBox.Item id="Autre" textValue="Autre">Autre</ListBox.Item>
                 </ListBox>
               </Select.Popover>
             </Select>
 
-            <Select placeholder="Choisir le mode">
+            <Select
+              selectedKey={form.paymethod}
+              onSelectionChange={(k) => setForm((p) => ({ ...p, paymethod: String(k) as IDonCreer["paymethod"] }))}
+              placeholder="Mode de paiement"
+            >
               <Label>Mode de paiement</Label>
               <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
               <Select.Popover>
                 <ListBox>
-                  <ListBox.Item id="especes" textValue="Espèces">Especes</ListBox.Item>
-                  <ListBox.Item id="cheque" textValue="Chèque">Cheque</ListBox.Item>
-                  <ListBox.Item id="quete" textValue="Quête">Quete</ListBox.Item>
-                  <ListBox.Item id="nature" textValue="Don en nature">Don en nature</ListBox.Item>
+                  <ListBox.Item id="especes" textValue="Espèces">Espèces</ListBox.Item>
+                  <ListBox.Item id="cheque" textValue="Chèque">Chèque</ListBox.Item>
+                  <ListBox.Item id="virement" textValue="Virement">Virement</ListBox.Item>
                 </ListBox>
               </Select.Popover>
             </Select>
 
-            <TextField>
+            <TextField value={form.description} onChange={(v) => setForm((p) => ({ ...p, description: v }))}>
               <Label>Notes (optionnel)</Label>
-              <TextArea placeholder="Ex: Sac de riz 50kg, don pour la fete patronale..." rows={2} />
+              <TextArea placeholder="Ex: don pour la fête patronale..." rows={2} />
             </TextField>
 
-            <button className="w-full bg-[#98141f] hover:bg-[#7a1019] text-white rounded-xl py-3 font-medium transition-colors">
-              Enregistrer le don
+            <button
+              onClick={handleAddDon}
+              disabled={submitting}
+              className="w-full bg-[#98141f] hover:bg-[#7a1019] text-white rounded-xl py-3 font-medium transition-colors disabled:opacity-60"
+            >
+              {submitting ? "Enregistrement..." : "Enregistrer le don"}
             </button>
           </div>
         </DialogContent>

@@ -1,23 +1,25 @@
-export type IDonModePaiement = "carte" | "virement" | "especes" | "cheque" | "mobile_money";
-
-export type IDonStatut = "en_attente" | "confirme" | "annule" | "rembourse";
+export type IDonPaymethod = "wave" | "especes" | "cheque" | "virement";
 
 export interface IDon {
   id: number;
-  montant: number;
-  projet: string;
-  donateur: string;
-  modePaiement: IDonModePaiement;
-  statut: IDonStatut;
+  donator: string;
+  amount: number;
+  project: string;
+  paymethod: IDonPaymethod;
+  paytransaction: string | null;
+  description: string | null;
+  donation_at: string;
   created_at: string;
 }
 
 export interface IDonCreer {
-  montant: number;
-  projet: string;
-  donateur: string;
-  modePaiement: IDonModePaiement;
-  statut?: IDonStatut;
+  donator: string;
+  amount: number;
+  project: string;
+  paymethod: IDonPaymethod;
+  paytransaction?: string | null;
+  description?: string | null;
+  donation_at: string;
 }
 
 export interface IDonModifier extends Partial<IDonCreer> {}

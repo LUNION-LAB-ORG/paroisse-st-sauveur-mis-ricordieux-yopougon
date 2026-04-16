@@ -1,5 +1,6 @@
 "use client";
 import { messeAPI } from "@/features/messe/apis/messe.api";
+import { waveAPI } from "@/features/don/apis/wave.api";
 import { ArrowLeft, CheckCircle, Church } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -69,17 +70,32 @@ export default function MesseForm() {
         email: formData.email || null,
         phone: formData.phone,
         message: formData.message,
-        amount: Number(formData.amount),
+        amount: 3000,
         date_at: isoDateTime,
         time_at: isoDateTime,
         request_status: formData.request_status,
       };
+
+      if (formData.paymentMethod === "online") {
+        // Paiement Wave — enregistrement + redirection
+        const result = await waveAPI.createCheckout({
+          amount: 3000,
+          type: "messe",
+          donator: formData.firstName || "Anonyme",
+          description: `Demande de messe : ${formData.intentionType} — ${formData.firstName}`,
+        });
+        toast.success("Redirection vers Wave...", { id: toastId });
+        window.location.href = result.wave_launch_url;
+        return;
+      }
+
+      // Paiement à la paroisse — enregistrement seul
       await messeAPI.ajouter(payload);
       toast.success("Demande envoyée avec succès", { id: toastId });
       setIsSubmitted(true);
     } catch (err) {
       console.error(err);
-      toast.error("Erreur serveur", { id: toastId });
+      toast.error("Erreur lors de l'envoi. Veuillez réessayer.", { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -88,7 +104,7 @@ export default function MesseForm() {
   const resetForm = () => {
     setFormData({
       intentionType: "",
-      amount: 2000,
+      amount: 3000,
       message: "",
       firstName: "",
       email: "",
@@ -371,7 +387,7 @@ export default function MesseForm() {
                         {selectedTime ? `${String(selectedTime.hour).padStart(2, "0")}h${String(selectedTime.minute).padStart(2, "0")}` : "—"}
                       </span>
                       <span className="text-gray-500">Montant :</span>
-                      <span className="text-[#98141f] font-bold">2 000 FCFA</span>
+                      <span className="text-[#98141f] font-bold">3 000 XOF</span>
                     </div>
                   </Card.Content>
                 </Card>

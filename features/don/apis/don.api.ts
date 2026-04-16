@@ -8,7 +8,7 @@ import type {
 export const donAPI = {
   ajouter(data: IDonCreer): Promise<{ data: IDon }> {
     return apiClient.request({
-      endpoint: "/dons",
+      endpoint: "/donations",
       method: "POST",
       data,
       service: "public",
@@ -17,7 +17,7 @@ export const donAPI = {
 
   obtenirTous(params?: Record<string, string>): Promise<{ data: IDon[] }> {
     return apiClient.request({
-      endpoint: "/dons",
+      endpoint: "/donations",
       method: "GET",
       searchParams: params,
       service: "private",

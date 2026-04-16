@@ -27,13 +27,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (res.ok) {
           const data = await res.json();
+          // Backend returns: { "data": { id, fullname, email, role, ... }, "token": "..." }
           return {
-            id: String(data?.user?.id ?? ""),
-            name: data?.user?.username ?? data?.user?.name ?? "",
-            email: data?.user?.email ?? "",
-            image: data?.user?.avatarUrl ?? null,
+            id: String(data?.data?.id ?? ""),
+            name: data?.data?.fullname ?? "",
+            email: data?.data?.email ?? "",
+            image: data?.data?.photo ?? null,
             token: data?.token ?? "",
-            role: data?.user?.role ?? "",
+            role: data?.data?.role ?? "",
           };
         }
         return null;

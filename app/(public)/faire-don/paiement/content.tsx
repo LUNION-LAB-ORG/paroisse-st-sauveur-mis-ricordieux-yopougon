@@ -1,15 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 
 import { Coordonnees } from "@/components/faireDon/paiement/coordonnees";
 import { PaiementConfirmation } from "@/components/faireDon/paiement/paiementConfirmation";
+import { waveAPI } from "@/features/don/apis/wave.api";
 
 export default function Content() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const donAmount = Math.max(100, Number(searchParams.get("amount") ?? "3000"));
   const [step, setStep] = useState(0);
 
   const [formData, setFormData] = useState({
@@ -47,7 +51,9 @@ export default function Content() {
     }
   };
 
-  const handleFinalSubmit = () => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleFinalSubmit = async () => {
     if (!formData.modePaiement) {
       setErrors((prev) => ({
         ...prev,
@@ -56,8 +62,35 @@ export default function Content() {
       return;
     }
 
+    // Paiement Wave
+    if (formData.modePaiement === "wave") {
+      setSubmitting(true);
+      const toastId = toast.loading("Redirection vers Wave...");
 
-    // Ici, on envoie les données
+      try {
+        const result = await waveAPI.createCheckout({
+          amount: donAmount,
+          type: "donation",
+          donator: formData.nom || "Anonyme",
+          project: "Fonctionnement",
+          description: `Don de ${formData.nom || "Anonyme"} via le site`,
+        });
+
+        toast.success("Redirection vers Wave...", { id: toastId });
+
+        // Rediriger vers Wave - CRITIQUE: laisser le navigateur ouvrir l'URL
+        window.location.href = result.wave_launch_url;
+      } catch (err) {
+        console.error(err);
+        toast.error("Erreur lors de la connexion à Wave. Veuillez réessayer.", { id: toastId });
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // Paiement en espèces à la paroisse
+    toast.success("Votre don a été enregistré. Rendez-vous à la paroisse pour le paiement.");
+    router.push("/faire-don/paiement/succes");
   };
 
   return (

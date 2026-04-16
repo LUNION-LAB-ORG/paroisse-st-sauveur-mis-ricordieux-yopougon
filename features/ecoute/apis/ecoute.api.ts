@@ -10,7 +10,7 @@ import type {
 export const ecouteAPI = {
   ajouter(data: IEcouteCreer): Promise<IEcouteReponse> {
     return apiClient.request({
-      endpoint: "/ecoute",
+      endpoint: "/listens",
       method: "POST",
       data,
       service: "public",
@@ -19,7 +19,7 @@ export const ecouteAPI = {
 
   obtenirTous(params?: Record<string, string>): Promise<IEcouteListeReponse> {
     return apiClient.request({
-      endpoint: "/ecoute",
+      endpoint: "/listens",
       method: "GET",
       searchParams: params,
       service: "private",
@@ -28,7 +28,7 @@ export const ecouteAPI = {
 
   modifier(id: number, data: IEcouteModifier): Promise<IEcouteReponse> {
     return apiClient.request({
-      endpoint: `/ecoute/${id}`,
+      endpoint: `/listens/${id}`,
       method: "PUT",
       data,
       service: "private",
@@ -37,7 +37,7 @@ export const ecouteAPI = {
 
   supprimer(id: number): Promise<IEcouteReponse> {
     return apiClient.request({
-      endpoint: `/ecoute/${id}`,
+      endpoint: `/listens/${id}`,
       method: "DELETE",
       service: "private",
     });
