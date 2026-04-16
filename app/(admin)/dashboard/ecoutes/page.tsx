@@ -1,179 +1,140 @@
 "use client"
 
 import { useState } from "react"
-import { Volume2, Check, X, Eye } from "lucide-react"
+import { Volume2, Clock, User, MapPin, GripVertical } from "lucide-react"
 import { Header } from "@/components/admin/header"
 import { StatCard } from "@/components/admin/stat-card"
-import { DataTable } from "@/components/admin/data-table"
-import { StatusBadge } from "@/components/admin/status-badge"
-import { Button } from "@/components/ui/button"
-import { DetailModal } from "@/components/admin/detail-modal"
+import { Card, Chip, Separator } from "@heroui/react"
 
-const tableData = [
-  {
-    id: "#E001",
-    date: "02/05/2025 - 10:30",
-    demandeur: "Jean Konan",
-    type: "Pour un défunt",
-    statut: "pending",
-    statutLabel: "En attente",
-    rdv: "03/05/2025 14:00",
-    lieu: "Paroisse St Sauveur",
-    description:
-      "Demande d'écoute pour accompagnement spirituel suite au décès d'un proche. Besoin de soutien pastoral.",
-  },
-  {
-    id: "#E002",
-    date: "02/05/2025 - 10:30",
-    demandeur: "Marie Kouadio",
-    type: "Conseil conjugal",
-    statut: "confirmed",
-    statutLabel: "Rendez-vous fixé",
-    rdv: "Non fixé",
-    lieu: "Bureau pastoral",
-    description: "Séance d'écoute pour un couple en difficulté. Demande de médiation.",
-  },
-  {
-    id: "#E003",
-    date: "03/05/2025 - 09:00",
-    demandeur: "Pierre Yao",
-    type: "Guidance spirituelle",
-    statut: "pending",
-    statutLabel: "En attente",
-    rdv: "04/05/2025 16:00",
-    lieu: "Paroisse St Sauveur",
-    description: "Demande de direction spirituelle et discernement vocationnel.",
-  },
-  {
-    id: "#E004",
-    date: "04/05/2025 - 14:00",
-    demandeur: "Awa Diallo",
-    type: "Soutien familial",
-    statut: "cancelled",
-    statutLabel: "Annulée",
-    rdv: "05/05/2025 10:00",
-    lieu: "Bureau pastoral",
-    description: "Écoute pour problèmes familiaux. Annulé par le demandeur.",
-  },
-  {
-    id: "#E005",
-    date: "05/05/2025 - 11:00",
-    demandeur: "François Bamba",
-    type: "Pour un défunt",
-    statut: "confirmed",
-    statutLabel: "Rendez-vous fixé",
-    rdv: "06/05/2025 09:00",
-    lieu: "Chapelle Notre Dame",
-    description: "Accompagnement dans le deuil suite à la perte d'un parent.",
-  },
-  {
-    id: "#E006",
-    date: "06/05/2025 - 15:30",
-    demandeur: "Claire Touré",
-    type: "Conseil personnel",
-    statut: "pending",
-    statutLabel: "En attente",
-    rdv: "Non fixé",
-    lieu: "Paroisse St Sauveur",
-    description: "Demande d'écoute pour des difficultés personnelles.",
-  },
+type Ecoute = {
+  id: string
+  date: string
+  demandeur: string
+  type: string
+  statut: "pending" | "confirmed" | "done" | "cancelled"
+  rdv: string
+  lieu: string
+  description: string
+}
+
+const initialData: Ecoute[] = [
+  { id: "E001", date: "02/05/2025", demandeur: "Jean Konan", type: "Accompagnement", statut: "pending", rdv: "Non fixé", lieu: "Paroisse St Sauveur", description: "Accompagnement spirituel suite au décès d'un proche." },
+  { id: "E002", date: "02/05/2025", demandeur: "Marie Kouadio", type: "Conseil conjugal", statut: "confirmed", rdv: "05/05 à 14h", lieu: "Bureau pastoral", description: "Séance d'écoute pour un couple en difficulté." },
+  { id: "E003", date: "03/05/2025", demandeur: "Pierre Yao", type: "Direction spirituelle", statut: "pending", rdv: "Non fixé", lieu: "Paroisse St Sauveur", description: "Discernement vocationnel." },
+  { id: "E004", date: "04/05/2025", demandeur: "Awa Diallo", type: "Soutien familial", statut: "cancelled", rdv: "—", lieu: "Bureau pastoral", description: "Annulé par le demandeur." },
+  { id: "E005", date: "05/05/2025", demandeur: "François Bamba", type: "Deuil", statut: "confirmed", rdv: "06/05 à 9h", lieu: "Chapelle Notre Dame", description: "Accompagnement dans le deuil." },
+  { id: "E006", date: "06/05/2025", demandeur: "Claire Touré", type: "Conseil personnel", statut: "done", rdv: "Terminé", lieu: "Paroisse St Sauveur", description: "Difficultés personnelles - suivi terminé." },
+]
+
+const columns = [
+  { key: "pending" as const, label: "En attente", color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" },
+  { key: "confirmed" as const, label: "RDV fixé", color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
+  { key: "done" as const, label: "Terminé", color: "text-green-600", bg: "bg-green-50", border: "border-green-200" },
+  { key: "cancelled" as const, label: "Annulé", color: "text-gray-500", bg: "bg-gray-50", border: "border-gray-200" },
 ]
 
 export default function EcoutesPage() {
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [selectedItem, setSelectedItem] = useState<Record<string, unknown> | null>(null)
+  const [data, setData] = useState(initialData)
+  const [draggedId, setDraggedId] = useState<string | null>(null)
 
-  const handleRowClick = (row: Record<string, unknown>) => {
-    setSelectedItem(row)
-    setDetailOpen(true)
+  const moveToColumn = (id: string, newStatut: Ecoute["statut"]) => {
+    setData((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, statut: newStatut } : e))
+    )
   }
 
-  const columns = [
-    { key: "id", label: "ID" },
-    { key: "date", label: "Date de demande" },
-    { key: "demandeur", label: "Demandeur" },
-    { key: "type", label: "Type d'écoute" },
-    {
-      key: "statut",
-      label: "Statut",
-      render: (_: unknown, row: Record<string, unknown>) => (
-        <StatusBadge status={row.statut as "pending" | "confirmed" | "cancelled"} label={row.statutLabel as string} />
-      ),
-    },
-    { key: "rdv", label: "Rendez-vous" },
-    {
-      key: "actions",
-      label: "Actions",
-      render: (_: unknown, row: Record<string, unknown>) => (
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-8 w-8 bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100"
-            onClick={() => handleRowClick(row)}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-8 w-8 bg-green-50 border-green-200 text-green-600 hover:bg-green-100"
-          >
-            <Check className="w-4 h-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-8 w-8 bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ]
+  const counts = {
+    total: data.length,
+    pending: data.filter((e) => e.statut === "pending").length,
+    done: data.filter((e) => e.statut === "done").length,
+  }
 
   return (
     <div>
-      <Header title="Gestion des Demandes d'Écoute" />
+      <Header title="Demandes d'Écoute" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6 lg:mb-8">
-        <StatCard icon={Volume2} value="02" label="Demandes en attente" trend="12%" trendUp />
-        <StatCard
-          icon={Volume2}
-          value="19"
-          label="Demandes traitées (ce mois)"
-          trend="12%"
-          trendUp
-          iconBgColor="bg-green-100"
-          iconColor="text-green-600"
-        />
-        <StatCard icon={Volume2} value="10" label="Demandes annulée" trend="12%" trendUp />
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <StatCard icon={Volume2} value={String(counts.total)} label="Total demandes" trend="8%" trendUp iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
+        <StatCard icon={Clock} value={String(counts.pending).padStart(2, "0")} label="En attente" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
+        <StatCard icon={Volume2} value={String(counts.done).padStart(2, "0")} label="Terminées" trend="12%" trendUp iconBgColor="bg-green-100" iconColor="text-green-600" />
       </div>
 
-      <DataTable
-        columns={columns}
-        data={tableData}
-        actionButton={{ label: "Exporter", onClick: () => {} }}
-        itemsPerPage={5}
-      />
+      {/* Kanban board */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {columns.map((col) => {
+          const items = data.filter((e) => e.statut === col.key)
+          return (
+            <div
+              key={col.key}
+              className={`rounded-xl ${col.bg} border ${col.border} min-h-[300px]`}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => {
+                if (draggedId) {
+                  moveToColumn(draggedId, col.key)
+                  setDraggedId(null)
+                }
+              }}
+            >
+              {/* Column header */}
+              <div className="px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h3 className={`text-sm font-semibold ${col.color}`}>{col.label}</h3>
+                  <span className={`text-xs font-bold ${col.color} bg-white rounded-full w-5 h-5 flex items-center justify-center`}>
+                    {items.length}
+                  </span>
+                </div>
+              </div>
 
-      {selectedItem && (
-        <DetailModal
-          open={detailOpen}
-          onOpenChange={setDetailOpen}
-          title="Détails de ecoute"
-          data={{
-            image: "/church-choir-formation.jpg",
-            organisateur: selectedItem.demandeur as string,
-            type: selectedItem.type as string,
-            date: (selectedItem.date as string).split(" - ")[0],
-            heure: (selectedItem.date as string).split(" - ")[1] || "10:30",
-            lieu: selectedItem.lieu as string,
-            description: selectedItem.description as string,
-          }}
-        />
-      )}
+              {/* Cards */}
+              <div className="px-3 pb-3 space-y-2.5">
+                {items.map((item) => (
+                  <Card
+                    key={item.id}
+                    className="bg-white cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+                    draggable
+                    onDragStart={() => setDraggedId(item.id)}
+                    onDragEnd={() => setDraggedId(null)}
+                  >
+                    <Card.Content className="p-3">
+                      <div className="flex items-start justify-between mb-2">
+                        <Chip variant="soft" color="default" size="sm">{item.type}</Chip>
+                        <GripVertical className="w-4 h-4 text-gray-300" />
+                      </div>
+
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <User className="w-3.5 h-3.5 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-800">{item.demandeur}</span>
+                      </div>
+
+                      <p className="text-xs text-gray-500 line-clamp-2 mb-2">{item.description}</p>
+
+                      <Separator className="my-2" />
+
+                      <div className="flex items-center justify-between text-xs text-gray-400">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span>{item.rdv}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          <span className="truncate max-w-[80px]">{item.lieu}</span>
+                        </div>
+                      </div>
+                    </Card.Content>
+                  </Card>
+                ))}
+
+                {items.length === 0 && (
+                  <div className="py-8 text-center text-xs text-gray-400">
+                    Glissez une carte ici
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

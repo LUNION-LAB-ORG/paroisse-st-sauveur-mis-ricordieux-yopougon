@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   Church,
+  Bell,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { signOut } from "next-auth/react"
@@ -38,6 +39,7 @@ const contentItems = [
 ]
 
 const adminItems = [
+  { label: "Notifications", icon: Bell, href: "/dashboard/notifications" },
   { label: "Paramètres", icon: Settings, href: "/dashboard/parametres" },
 ]
 

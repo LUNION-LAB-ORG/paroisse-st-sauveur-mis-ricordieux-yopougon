@@ -1,55 +1,39 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar, Edit, Eye, X } from "lucide-react";
+import { Calendar as CalIcon, Edit, Trash2, Plus, MapPin, Clock, Users, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import Image from "next/image";
+import Link from "next/link";
 
-import { DataTable } from "@/components/admin/data-table";
-import { DetailModal } from "@/components/admin/detail-modal";
 import { Header } from "@/components/admin/header";
 import { StatCard } from "@/components/admin/stat-card";
-import { StatusBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
+import { Card, Chip, Separator, Button as HeroButton, TextField as HeroTextField, Label as HeroLabel, Input as HeroInput, TextArea as HeroTextArea } from "@heroui/react";
+import { ImageIcon } from "lucide-react";
+
 import { evenementAPI } from "@/features/evenement/apis/evenement.api";
-
 import {
-  EventSchema,
-  EventTypeSchema,
-  UpdateEventSchema,
-  UpdateEventTypeSchema,
+  EventSchema, EventTypeSchema, UpdateEventSchema, UpdateEventTypeSchema,
 } from "@/features/evenement/schemas/evenement.schema";
-import Image from "next/image";
-
-/* ================= PAGE ================= */
 
 export default function EvenementsPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [detailOpen, setDetailOpen] = useState(false);
-
   const [eventToEdit, setEventToEdit] = useState<any | null>(null);
-  const [selectedItem, setSelectedItem] = useState<any | null>(null);
-
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
   const [files, setFiles] = useState<File[]>([]);
-
-  /* ================= FETCH ================= */
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -57,273 +41,258 @@ export default function EvenementsPage() {
         const res = await evenementAPI.obtenirTous();
         setEvents(res.data ?? []);
       } catch (err: any) {
-        toast.error(err.message || "Erreur lors du chargement des evenements");
+        toast.error(err.message || "Erreur chargement");
       } finally {
         setLoading(false);
       }
     };
-
     fetchEvents();
   }, []);
 
-  /* ================= CREATE ================= */
-
-  const createForm = useForm<EventTypeSchema>({
-    resolver: zodResolver(EventSchema),
-  });
-
+  const createForm = useForm<EventTypeSchema>({ resolver: zodResolver(EventSchema) });
   const onCreateSubmit = async (data: EventTypeSchema) => {
-    const payload: EventTypeSchema = {
-      ...data,
-      image: files[0],
-    };
-
     try {
-      const res = await evenementAPI.ajouter(payload);
-      toast.success("évènement créé");
+      const res = await evenementAPI.ajouter({ ...data, image: files[0] });
+      toast.success("Événement créé");
       if (res) setEvents((prev) => [...prev, res]);
       createForm.reset();
       setCreateOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || "Erreur lors de la création");
-    }
+    } catch (err: any) { toast.error(err.message || "Erreur"); }
   };
 
-  /* ================= UPDATE (JSON !!) ================= */
-
-  const updateForm = useForm<UpdateEventTypeSchema>({
-    resolver: zodResolver(UpdateEventSchema),
-  });
-
+  const updateForm = useForm<UpdateEventTypeSchema>({ resolver: zodResolver(UpdateEventSchema) });
   useEffect(() => {
     if (eventToEdit) {
       updateForm.reset({
-        title: eventToEdit.title,
-        description: eventToEdit.description,
-        location_at: eventToEdit.location_at,
-        date_at: eventToEdit.date_at,
-        time_at: eventToEdit.time_at,
+        title: eventToEdit.title, description: eventToEdit.description,
+        location_at: eventToEdit.location_at, date_at: eventToEdit.date_at, time_at: eventToEdit.time_at,
       });
     }
   }, [eventToEdit, updateForm]);
 
   const onUpdateSubmit = async (data: UpdateEventTypeSchema) => {
     if (!eventToEdit) return;
-
     try {
       const res = await evenementAPI.modifier(String(eventToEdit.id), data);
-
-      toast.success("évènement mis à jour");
-
-      setEvents((prev) =>
-        prev.map((ev) => (ev.id === eventToEdit.id ? (res as any) : ev))
-      );
-
+      toast.success("Événement mis à jour");
+      setEvents((prev) => prev.map((ev) => (ev.id === eventToEdit.id ? (res as any) : ev)));
       setEditOpen(false);
-      setEventToEdit(null);
-    } catch (err: any) {
-      toast.error(err.message || "Erreur lors de la mise à jour");
-    }
+    } catch (err: any) { toast.error(err.message || "Erreur"); }
   };
-
-  /* ================= DELETE ================= */
 
   const confirmDelete = async () => {
     if (!eventToDelete) return;
-
     try {
       setIsDeleting(true);
-
       await evenementAPI.supprimer(String(eventToDelete));
-
-      toast.success("évènement supprimé");
+      toast.success("Événement supprimé");
       setEvents((prev) => prev.filter((e) => e.id !== eventToDelete));
       setDeleteOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || "Erreur lors de la suppression");
-    } finally {
-      setIsDeleting(false);
-    }
+    } catch (err: any) { toast.error(err.message || "Erreur"); }
+    finally { setIsDeleting(false); }
   };
-
-  /* ================= TABLE ================= */
-
-  const columns = [
-    { key: "title", label: "Titre" },
-    { key: "location_at", label: "Lieu" },
-    { key: "date_at", label: "Date" },
-    { key: "time_at", label: "Heure" },
-    {
-      key: "image",
-      label: "Image",
-      render: (_: any, row: any) => (
-        <div className="w-16 h-16 overflow-hidden rounded-md border">
-          <Image
-            src={row.image}
-            alt={row.title}
-            width={200}
-            height={200}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = "/placeholder.jpg";
-            }}
-          />
-        </div>
-      ),
-    },
-
-    {
-      key: "actions",
-      label: "Actions",
-      render: (_: any, row: any) => (
-        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-          {/* 👁️ EYE – DETAIL */}
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => {
-              setSelectedItem(row);
-              setDetailOpen(true);
-            }}
-          >
-            <Eye size={16} />
-          </Button>
-
-          {/* ✏️ EDIT */}
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => {
-              setEventToEdit(row);
-              setEditOpen(true);
-            }}
-          >
-            <Edit size={16} />
-          </Button>
-
-          {/* ❌ DELETE */}
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => {
-              setEventToDelete(row.id);
-              setDeleteOpen(true);
-            }}
-          >
-            <X size={16} />
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
-  /* ================= RENDER ================= */
 
   return (
     <div>
-      <Header title="Gestion des évènements" />
+      <Header title="Événements" />
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <StatCard icon={Calendar} value="02" label="En attente" />
-        <StatCard icon={Calendar} value="19" label="Confirmés" />
-        <StatCard icon={Calendar} value="10" label="Ce mois" />
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <StatCard icon={CalIcon} value={String(events.length)} label="Total événements" iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
+        <StatCard icon={Users} value="—" label="Participants inscrits" iconBgColor="bg-green-100" iconColor="text-green-600" />
+        <StatCard icon={CalIcon} value="—" label="Ce mois" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
       </div>
 
-      <DataTable
-        columns={columns}
-        data={events}
-        actionButton={{
-          label: "+ Nouvel évènement",
-          onClick: () => setCreateOpen(true),
-        }}
-      />
+      {/* Add button */}
+      <div className="flex justify-end mb-6">
+        <HeroButton variant="primary" className="bg-[#98141f] rounded-xl" onPress={() => setCreateOpen(true)}>
+          <Plus className="w-4 h-4" /> Nouvel événement
+        </HeroButton>
+      </div>
 
-      {/* ================= DETAIL MODAL ================= */}
-      {selectedItem && (
-        <DetailModal
-          open={detailOpen}
-          onOpenChange={setDetailOpen}
-          title="Détails de l'évènement"
-          data={{
-            image: selectedItem.image,
-            title: selectedItem.title,
-            date: selectedItem.date_at,
-            heure: selectedItem.time_at,
-            lieu: selectedItem.location_at,
-            description: selectedItem.description,
-          }}
-        />
+      {/* Events list - cards with image + details side by side */}
+      {loading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => <Card key={i} className="animate-pulse h-32" />)}
+        </div>
+      ) : events.length === 0 ? (
+        <Card className="p-12 text-center">
+          <Card.Content>
+            <CalIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-400">Aucun événement.</p>
+          </Card.Content>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {events.map((ev) => (
+            <Card key={ev.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <Card.Content className="p-0">
+                <div className="flex flex-col sm:flex-row">
+                  {/* Date badge + image */}
+                  <div className="relative w-full sm:w-56 h-40 sm:h-auto shrink-0">
+                    <Image
+                      src={ev.image || "/placeholder.jpg"}
+                      alt={ev.title}
+                      fill
+                      className="object-cover"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.jpg"; }}
+                    />
+                    {/* Date overlay */}
+                    <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 text-center shadow-sm">
+                      <p className="text-2xl font-bold text-[#2d2d83] leading-none">
+                        {ev.date_at ? new Date(ev.date_at).getDate() : "—"}
+                      </p>
+                      <p className="text-xs text-gray-500 uppercase">
+                        {ev.date_at ? new Date(ev.date_at).toLocaleDateString("fr-FR", { month: "short" }) : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-[#2d2d83] mb-2">{ev.title}</h3>
+                        <div className="flex flex-wrap gap-3 text-sm text-gray-500 mb-3">
+                          {ev.time_at && (
+                            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {ev.time_at}</span>
+                          )}
+                          {ev.location_at && (
+                            <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {ev.location_at}</span>
+                          )}
+                        </div>
+                        {ev.description && (
+                          <p className="text-sm text-gray-500 line-clamp-2">{ev.description}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <Separator className="my-3" />
+
+                    <div className="flex items-center justify-between">
+                      <Link href={`/dashboard/evenements/${ev.id}`} className="text-sm text-[#2d2d83] font-medium flex items-center gap-1 hover:underline">
+                        <Eye className="w-3.5 h-3.5" /> Voir les inscrits
+                      </Link>
+                      <div className="flex gap-2">
+                        <HeroButton variant="outline" className="rounded-lg text-sm text-[#2d2d83] border-[#2d2d83]/20" onPress={() => { setEventToEdit(ev); setEditOpen(true); }}>
+                          <Edit className="w-3.5 h-3.5" /> Modifier
+                        </HeroButton>
+                        <HeroButton variant="ghost" className="rounded-lg text-red-500 hover:bg-red-50" onPress={() => { setEventToDelete(ev.id); setDeleteOpen(true); }}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </HeroButton>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card.Content>
+            </Card>
+          ))}
+        </div>
       )}
 
-      {/* ================= CREATE MODAL ================= */}
+      {/* Create */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Créer un évènement</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="text-[#2d2d83]">Nouvel événement</DialogTitle></DialogHeader>
+          <form className="space-y-4" onSubmit={createForm.handleSubmit(onCreateSubmit)}>
+            <HeroTextField>
+              <HeroLabel>Titre</HeroLabel>
+              <HeroInput {...createForm.register("title")} placeholder="Nom de l'événement" />
+            </HeroTextField>
 
-          <form
-            className="space-y-4"
-            onSubmit={createForm.handleSubmit(onCreateSubmit)}
-          >
-            <Input {...createForm.register("title")} placeholder="Titre" />
-            <Input
-              {...createForm.register("description")}
-              placeholder="Description"
-            />
-            <Input {...createForm.register("location_at")} placeholder="Lieu" />
-            <Input type="date" {...createForm.register("date_at")} />
-            <Input type="time" {...createForm.register("time_at")} />
+            <HeroTextField>
+              <HeroLabel>Description</HeroLabel>
+              <HeroTextArea {...createForm.register("description")} placeholder="Décrivez l'événement..." rows={3} />
+            </HeroTextField>
 
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => e.target.files && setFiles([e.target.files[0]])}
-            />
+            <HeroTextField>
+              <HeroLabel>Lieu</HeroLabel>
+              <HeroInput {...createForm.register("location_at")} placeholder="Paroisse St Sauveur" />
+            </HeroTextField>
 
-            <Button type="submit">Créer</Button>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <Input type="date" {...createForm.register("date_at")} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Heure</label>
+                <Input type="time" {...createForm.register("time_at")} />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Image de l&apos;événement</label>
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-6 hover:border-[#2d2d83]/30 transition-colors cursor-pointer">
+                {files.length > 0 ? (
+                  <p className="text-sm text-gray-700">{files[0].name}</p>
+                ) : (
+                  <>
+                    <ImageIcon className="w-8 h-8 text-gray-300 mb-2" />
+                    <span className="text-sm text-gray-500">Ajouter une image</span>
+                  </>
+                )}
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files && setFiles([e.target.files[0]])} />
+              </label>
+            </div>
+
+            <button type="submit" className="w-full bg-[#98141f] hover:bg-[#7a1019] text-white rounded-xl py-3 font-medium transition-colors">
+              Créer l&apos;événement
+            </button>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* ================= UPDATE MODAL ================= */}
+      {/* Update */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier l'évènement</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="text-[#2d2d83]">Modifier l&apos;événement</DialogTitle></DialogHeader>
+          <form className="space-y-4" onSubmit={updateForm.handleSubmit(onUpdateSubmit)}>
+            <HeroTextField>
+              <HeroLabel>Titre</HeroLabel>
+              <HeroInput {...updateForm.register("title")} />
+            </HeroTextField>
 
-          <form
-            className="space-y-4"
-            onSubmit={updateForm.handleSubmit(onUpdateSubmit)}
-          >
-            <Input {...updateForm.register("title")} />
-            <Input {...updateForm.register("description")} />
-            <Input {...updateForm.register("location_at")} />
-            <Input type="date" {...updateForm.register("date_at")} />
-            <Input type="time" {...updateForm.register("time_at")} />
+            <HeroTextField>
+              <HeroLabel>Description</HeroLabel>
+              <HeroTextArea {...updateForm.register("description")} rows={3} />
+            </HeroTextField>
 
-            <Button type="submit">Mettre à jour</Button>
+            <HeroTextField>
+              <HeroLabel>Lieu</HeroLabel>
+              <HeroInput {...updateForm.register("location_at")} />
+            </HeroTextField>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <Input type="date" {...updateForm.register("date_at")} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Heure</label>
+                <Input type="time" {...updateForm.register("time_at")} />
+              </div>
+            </div>
+
+            <button type="submit" className="w-full bg-[#2d2d83] hover:bg-[#232370] text-white rounded-xl py-3 font-medium transition-colors">
+              Mettre à jour
+            </button>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* ================= DELETE MODAL ================= */}
+      {/* Delete */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Supprimer</DialogTitle>
-          </DialogHeader>
-
-          <p>Cette action est irréversible.</p>
-
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle className="text-red-600">Supprimer cet événement ?</DialogTitle></DialogHeader>
+          <p className="text-sm text-gray-500">L&apos;événement et toutes les inscriptions associées seront supprimés définitivement.</p>
+          <div className="flex justify-end gap-3 mt-4">
+            <button onClick={() => setDeleteOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
               Annuler
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Supprimer
-            </Button>
+            </button>
+            <button onClick={confirmDelete} disabled={isDeleting} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50">
+              {isDeleting ? "Suppression..." : "Supprimer"}
+            </button>
           </div>
         </DialogContent>
       </Dialog>
