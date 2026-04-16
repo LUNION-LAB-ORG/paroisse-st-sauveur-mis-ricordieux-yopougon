@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api.client";
 import type { IPaginatedResponse } from "@/types/api.type";
-import type { IEvenement } from "../types/evenement.type";
+import type { IEvenement, IInscriptionResponse } from "../types/evenement.type";
 
 export const evenementAPI = {
   obtenirTous(params?: Record<string, unknown>): Promise<IPaginatedResponse<IEvenement>> {
@@ -39,6 +39,17 @@ export const evenementAPI = {
       endpoint: `/events/${id}`,
       method: "DELETE",
       service: "private",
+    });
+  },
+  inscrire(
+    id: string,
+    data: { fullname: string; phone?: string; email?: string; message?: string },
+  ): Promise<IInscriptionResponse> {
+    return apiClient.request({
+      endpoint: `/events/${id}/register`,
+      method: "POST",
+      data,
+      service: "public",
     });
   },
 };

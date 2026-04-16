@@ -2,11 +2,12 @@ import { apiServer } from "@/lib/api";
 
 export interface WaveCheckoutParams {
   amount: number;
-  type: "donation" | "messe";
+  type: "donation" | "messe" | "event";
   client_reference?: string;
   donator?: string;
   project?: string;
   description?: string;
+  event_id?: number;
 }
 
 export interface WaveCheckoutResponse {

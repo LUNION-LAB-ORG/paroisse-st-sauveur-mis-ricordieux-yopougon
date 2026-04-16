@@ -5,6 +5,7 @@ export interface IParticipant {
   phone: string | null;
   message: string | null;
   event_id?: number;
+  payment_status?: "paid" | "free" | "pending" | "failed" | null;
   created_at: string;
 }
 

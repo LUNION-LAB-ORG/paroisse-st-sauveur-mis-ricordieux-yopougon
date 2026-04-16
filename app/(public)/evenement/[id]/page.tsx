@@ -1,50 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { notFound } from "next/navigation";
+import { useParams } from "next/navigation";
 import EventRegistration from "./event-registration";
-import { Event } from "@/features/evenement/types/evenement.type";
+import type { IEvenement } from "@/features/evenement/types/evenement.type";
 import { evenementAPI } from "@/features/evenement/apis/evenement.api";
 
-interface PageProps {
-  params: Promise<{
-    id: string;
-  }>;
-}
-
-export default function Page({ params }: PageProps) {
-  const [event, setEvent] = useState<Event | null>(null);
+export default function Page() {
+  const { id } = useParams<{ id: string }>();
+  const [event, setEvent] = useState<IEvenement | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchEvent = async () => {
-      try {
-        const { id } = await params;
-        const eventId = parseInt(id);
-        
-        // Utiliser l'API evenement
-        const result = await evenementAPI.obtenirTous();
-
-        const events = result?.data ?? [];
-        const foundEvent = events.find((e: any) => e.id === eventId);
-
-        if (!foundEvent) {
-          setError(`Événement avec ID ${eventId} non trouvé`);
-          return;
-        }
-
-        setEvent(foundEvent);
-      } catch (err) {
-        console.error('Erreur lors du chargement:', err);
-        setError('Erreur lors du chargement de l\'événement');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEvent();
-  }, [params]);
+    if (!id) return;
+    evenementAPI
+      .obtenirParId(id)
+      .then(setEvent)
+      .catch(() => setError("Événement introuvable"))
+      .finally(() => setLoading(false));
+  }, [id]);
 
   const handleBack = () => {
     window.history.back();
