@@ -1,27 +1,22 @@
-export type IMediationStatut = "en_attente" | "en_cours" | "resolue" | "annulee";
-
-export type IMediationType = "familiale" | "conjugale" | "communautaire" | "autre";
+export type IMediationStatus = "draft" | "published";
 
 export interface IMediation {
   id: number;
-  type: IMediationType;
-  demandeur: string;
-  email?: string;
-  telephone: string;
-  description: string;
-  statut: IMediationStatut;
-  dateDisponibilite?: string;
+  title: string;
+  date_at: string;
+  author: string;
+  category: string;
+  status: IMediationStatus;
+  views: number | null;
   created_at: string;
 }
 
 export interface IMediationCreer {
-  type: IMediationType;
-  demandeur: string;
-  email?: string;
-  telephone: string;
-  description: string;
-  statut?: IMediationStatut;
-  dateDisponibilite?: string;
+  title: string;
+  date_at: string;
+  author: string;
+  category: string;
+  status?: IMediationStatus;
 }
 
 export interface IMediationModifier extends Partial<IMediationCreer> {}

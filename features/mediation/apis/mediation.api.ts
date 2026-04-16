@@ -6,15 +6,6 @@ import type {
 } from "../types/mediation.type";
 
 export const mediationAPI = {
-  ajouter(data: IMediationCreer): Promise<{ data: IMediation }> {
-    return apiClient.request({
-      endpoint: "/mediations",
-      method: "POST",
-      data,
-      service: "public",
-    });
-  },
-
   obtenirTous(
     params?: Record<string, string>,
   ): Promise<{ data: IMediation[] }> {
@@ -22,6 +13,23 @@ export const mediationAPI = {
       endpoint: "/mediations",
       method: "GET",
       searchParams: params,
+      service: "public",
+    });
+  },
+
+  obtenirUn(id: number | string): Promise<{ data: IMediation }> {
+    return apiClient.request({
+      endpoint: `/mediations/${id}`,
+      method: "GET",
+      service: "public",
+    });
+  },
+
+  ajouter(data: IMediationCreer): Promise<{ data: IMediation }> {
+    return apiClient.request({
+      endpoint: "/mediations",
+      method: "POST",
+      data,
       service: "private",
     });
   },
@@ -38,7 +46,7 @@ export const mediationAPI = {
     });
   },
 
-  supprimer(id: number): Promise<{ data: IMediation }> {
+  supprimer(id: number): Promise<void> {
     return apiClient.request({
       endpoint: `/mediations/${id}`,
       method: "DELETE",
