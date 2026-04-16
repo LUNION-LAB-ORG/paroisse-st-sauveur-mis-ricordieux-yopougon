@@ -5,7 +5,7 @@ export interface ICure {
   ended_at: string | null;
   description: string;
   created_at: string | null;
-  image?: string;
+  photo?: string;
 }
 
 /** Alias pour compatibilite ascendante */
