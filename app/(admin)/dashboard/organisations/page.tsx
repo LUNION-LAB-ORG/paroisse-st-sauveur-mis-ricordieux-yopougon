@@ -297,13 +297,6 @@ export default function OrganisationsPage() {
                           <Chip variant="soft" color="accent" size="sm">{o.movement}</Chip>
                         )}
                         <Chip variant="soft" color={meta.chipColor} size="sm">{meta.label}</Chip>
-                        <Chip
-                          variant="soft"
-                          color={o.is_paid ? "accent" : "success"}
-                          size="sm"
-                        >
-                          {o.is_paid ? `Payant · ${priceLabel}` : "Gratuit"}
-                        </Chip>
                         {o.converted_event_id ? (
                           <Chip variant="soft" color="success" size="sm">Converti</Chip>
                         ) : null}
