@@ -194,19 +194,12 @@ export default function MesseForm() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#2d2d83]/80 via-[#2d2d83]/60 to-[#98141f]/40" />
       </div>
 
-      {/* Back button */}
+      {/* Back to home (always) */}
       <div className="absolute top-6 left-6 z-20">
-        {currentStep > 1 ? (
-          <Button variant="ghost" className="text-white/90 hover:text-white bg-white/10 backdrop-blur-sm rounded-xl" onPress={handlePrevStep}>
-            <ArrowLeft size={18} />
-            Retour
-          </Button>
-        ) : (
-          <Link href="/" className="flex items-center gap-2 text-white/90 hover:text-white transition-colors bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl">
-            <ArrowLeft size={18} />
-            <span className="text-sm font-medium">Accueil</span>
-          </Link>
-        )}
+        <Link href="/" className="flex items-center gap-2 text-white/90 hover:text-white transition-colors bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl">
+          <ArrowLeft size={18} />
+          <span className="text-sm font-medium">Accueil</span>
+        </Link>
       </div>
 
       {/* Form card */}
@@ -275,7 +268,10 @@ export default function MesseForm() {
                   <TextArea placeholder="Décrivez votre intention de messe..." rows={3} />
                 </TextField>
 
-                <div className="flex justify-end pt-2">
+                <div className="flex justify-between pt-2">
+                  <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-[#2d2d83] px-4 py-2 rounded-xl">
+                    <ArrowLeft size={16} /> Annuler
+                  </Link>
                   <Button variant="primary" className="bg-[#2d2d83] rounded-xl px-6" onPress={handleNextStep}>
                     Suivant
                   </Button>

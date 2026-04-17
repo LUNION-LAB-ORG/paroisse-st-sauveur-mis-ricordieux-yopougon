@@ -105,9 +105,11 @@ export default function EvenementsPage() {
 
       {/* Add button */}
       <div className="flex justify-end mb-6">
-        <HeroButton variant="primary" className="bg-[#98141f] rounded-xl" onPress={() => setCreateOpen(true)}>
-          <Plus className="w-4 h-4" /> Nouvel événement
-        </HeroButton>
+        <Link href="/dashboard/evenements/new">
+          <HeroButton variant="primary" className="bg-[#98141f] rounded-xl">
+            <Plus className="w-4 h-4" /> Nouvel événement
+          </HeroButton>
+        </Link>
       </div>
 
       {/* Events list - cards with image + details side by side */}
