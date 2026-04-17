@@ -5,12 +5,16 @@ import type {
 } from "../types/organisation.type";
 
 export const organisationAPI = {
-  ajouter(data: IOrganisationCreer): Promise<{ data: IOrganisation }> {
+  ajouter(data: IOrganisationCreer | FormData): Promise<{ data: IOrganisation }> {
+    const isForm = typeof FormData !== "undefined" && data instanceof FormData;
     return apiClient.request({
       endpoint: "/organisations",
       method: "POST",
       data,
       service: "public",
+      config: isForm
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : undefined,
     });
   },
 

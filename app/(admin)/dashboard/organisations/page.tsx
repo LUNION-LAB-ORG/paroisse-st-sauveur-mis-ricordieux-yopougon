@@ -133,7 +133,7 @@ export default function OrganisationsPage() {
 
   return (
     <div>
-      <Header title="Demandes d'Organisation" />
+      <Header title="Demandes d'événements" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard

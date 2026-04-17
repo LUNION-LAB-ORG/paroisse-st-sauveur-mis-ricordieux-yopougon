@@ -28,6 +28,7 @@ import {
 } from "@heroui/react";
 import { PricingTiersEditor, type PricingTier } from "@/components/admin/pricing-tiers-editor";
 import { DateTimePicker } from "@/components/admin/datetime-picker";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import type { DateValue, TimeValue } from "@heroui/react";
 
@@ -39,9 +40,12 @@ export default function OrganisationForm() {
     movement: '',
     email: '',
     eventType: '',
+    title: '',
+    location_at: '',
     description: '',
     estimatedParticipants: '',
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
   const [startTime, setStartTime] = useState<TimeValue | null>(null);
   const [endTime, setEndTime] = useState<TimeValue | null>(null);
@@ -65,6 +69,8 @@ export default function OrganisationForm() {
     }
     if (currentStep === 2) {
       if (!formData.eventType) errors.eventType = "Veuillez sélectionner un type d'activité";
+      if (!formData.title.trim()) errors.title = "Le titre de l'événement est obligatoire";
+      if (!formData.location_at.trim()) errors.location_at = "Le lieu est obligatoire";
     }
     if (currentStep === 3) {
       if (!selectedDate) errors.selectedDate = "Veuillez sélectionner une date";
@@ -86,7 +92,8 @@ export default function OrganisationForm() {
   };
 
   const resetForm = () => {
-    setFormData({ isParishMember: 'yes', movement: '', email: '', eventType: '', description: '', estimatedParticipants: '' });
+    setFormData({ isParishMember: 'yes', movement: '', email: '', eventType: '', title: '', location_at: '', description: '', estimatedParticipants: '' });
+    setImageFile(null);
     setSelectedDate(null);
     setStartTime(null);
     setEndTime(null);
@@ -260,6 +267,26 @@ export default function OrganisationForm() {
                 </Select>
                 {stepErrors.eventType && <p className="text-red-500 text-xs">{stepErrors.eventType}</p>}
 
+                <TextField
+                  value={formData.title}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, title: val }))}
+                  isInvalid={!!stepErrors.title}
+                >
+                  <Label>Titre de l&apos;événement *</Label>
+                  <Input placeholder="Ex : Veillée de prière pour la jeunesse" />
+                  {stepErrors.title && <Description className="text-red-500 text-xs">{stepErrors.title}</Description>}
+                </TextField>
+
+                <TextField
+                  value={formData.location_at}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, location_at: val }))}
+                  isInvalid={!!stepErrors.location_at}
+                >
+                  <Label>Lieu *</Label>
+                  <Input placeholder="Ex : Salle paroissiale, Yopougon" />
+                  {stepErrors.location_at && <Description className="text-red-500 text-xs">{stepErrors.location_at}</Description>}
+                </TextField>
+
                 <div className="flex justify-between pt-2">
                   <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>Précédent</Button>
                   <Button variant="primary" className="bg-[#2d2d83] rounded-xl px-6" onPress={handleNextStep}>Suivant</Button>
@@ -350,6 +377,14 @@ export default function OrganisationForm() {
                   <Input type="number" placeholder="Ex: 50" />
                 </TextField>
 
+                {/* Image */}
+                <div>
+                  <Label>Image (optionnel)</Label>
+                  <div className="mt-1.5">
+                    <ImageUploadField onChange={setImageFile} height={160} />
+                  </div>
+                </div>
+
                 {/* Tarification */}
                 <div className="border-t border-gray-100 pt-4 space-y-3">
                   <p className="text-sm font-semibold text-[#2d2d83] flex items-center gap-2">
@@ -415,17 +450,41 @@ export default function OrganisationForm() {
                       const lowestPrice = isPaid && pricingTiers.length
                         ? Math.min(...pricingTiers.map(t => t.amount))
                         : null;
-                      mutation.mutate({
-                        ...formData,
-                        date: dateStr,
-                        startTime: startTimeStr,
-                        endTime: endTimeStr,
-                        is_paid: isPaid,
-                        price: lowestPrice,
-                        pricing_tiers: isPaid && pricingTiers.length ? pricingTiers : null,
-                        max_participants: maxParticipants ? Number(maxParticipants) : null,
-                        registration_deadline: registrationDeadline || null,
-                      } as any);
+
+                      if (imageFile) {
+                        const fd = new FormData();
+                        Object.entries(formData).forEach(([k, v]) => {
+                          if (v != null && v !== '') fd.append(k, String(v));
+                        });
+                        fd.append('date', dateStr);
+                        fd.append('startTime', startTimeStr);
+                        fd.append('endTime', endTimeStr);
+                        fd.append('is_paid', isPaid ? '1' : '0');
+                        if (lowestPrice !== null) fd.append('price', String(lowestPrice));
+                        if (isPaid && pricingTiers.length) {
+                          pricingTiers.forEach((tier, i) => {
+                            fd.append(`pricing_tiers[${i}][label]`, tier.label);
+                            fd.append(`pricing_tiers[${i}][amount]`, String(tier.amount));
+                            if (tier.description) fd.append(`pricing_tiers[${i}][description]`, tier.description);
+                          });
+                        }
+                        if (maxParticipants) fd.append('max_participants', maxParticipants);
+                        if (registrationDeadline) fd.append('registration_deadline', registrationDeadline);
+                        fd.append('image', imageFile);
+                        mutation.mutate(fd as any);
+                      } else {
+                        mutation.mutate({
+                          ...formData,
+                          date: dateStr,
+                          startTime: startTimeStr,
+                          endTime: endTimeStr,
+                          is_paid: isPaid,
+                          price: lowestPrice,
+                          pricing_tiers: isPaid && pricingTiers.length ? pricingTiers : null,
+                          max_participants: maxParticipants ? Number(maxParticipants) : null,
+                          registration_deadline: registrationDeadline || null,
+                        } as any);
+                      }
                     }}
                   >
                     {mutation.isPending ? 'Envoi...' : 'Soumettre'}

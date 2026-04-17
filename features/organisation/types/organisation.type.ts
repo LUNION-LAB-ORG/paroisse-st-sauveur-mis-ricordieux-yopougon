@@ -3,6 +3,9 @@ export type IOrganisationStatutDemande = "pending" | "accepted" | "canceled";
 
 export interface IOrganisation {
   id?: number;
+  title?: string | null;
+  location_at?: string | null;
+  image?: string | null;
   isParishMember: IOrganisationMembreParoisse;
   movement: string;
   email: string;

@@ -231,7 +231,7 @@ export default function OrganisationDetailPage() {
           </Link>
           <div>
             <h1 className="text-xl font-bold text-[#2d2d83]">
-              Demande d&apos;organisation
+              Demande d&apos;événement
             </h1>
             <p className="text-sm text-gray-500">
               #{organisation.id} · {organisation.email}
