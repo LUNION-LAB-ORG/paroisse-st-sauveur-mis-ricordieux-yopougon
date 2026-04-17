@@ -36,6 +36,14 @@ function toDateInput(iso?: string | null): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Format lisible "sept. 2005" pour l'affichage en carte */
+function toDateFR(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("fr-FR", { month: "short", year: "numeric" });
+}
+
 function buildFormData(state: CureFormState, file: File | null, isUpdate: boolean): FormData {
   const fd = new FormData();
   if (isUpdate) fd.append("_method", "PUT"); // Laravel multipart PUT workaround
@@ -238,7 +246,7 @@ export default function CuresPage() {
 
                 <div className="flex items-center justify-center gap-2 mt-2 text-xs text-gray-500">
                   <Chip variant="soft" color="default" size="sm">
-                    {toDateInput(cure.started_at) || "—"} → {toDateInput(cure.ended_at) || "Présent"}
+                    {toDateFR(cure.started_at) || "—"} → {toDateFR(cure.ended_at) || "Présent"}
                   </Chip>
                 </div>
 
