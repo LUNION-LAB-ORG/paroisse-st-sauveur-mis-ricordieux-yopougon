@@ -259,6 +259,19 @@ export default function OrganisationDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-5">
+          {organisation.image ? (
+            <Card className="overflow-hidden">
+              <div className="relative w-full h-56 bg-gray-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={organisation.image}
+                  alt={organisation.title ?? "Image de la demande"}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </Card>
+          ) : null}
+
           <Card>
             <Card.Header className="px-6 pt-6 pb-3">
               <Card.Title className="text-sm font-semibold text-[#2d2d83] flex items-center gap-2">
