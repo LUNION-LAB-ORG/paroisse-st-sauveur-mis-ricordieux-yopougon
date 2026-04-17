@@ -36,18 +36,18 @@ export function Hero() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
-          <Button
-            variant="primary"
-            className="bg-[#98141f] hover:bg-[#7a1019] text-white text-lg px-8 py-4 md:py-8 rounded-xl shadow-lg shadow-[#98141f]/30 min-w-50"
+          <Link
+            href="/faire-don"
+            className="inline-flex items-center justify-center bg-[#98141f] hover:bg-[#7a1019] text-white text-lg px-8 py-4 md:py-8 rounded-xl shadow-lg shadow-[#98141f]/30 min-w-50 transition-colors"
           >
-            <Link href="/faire-don" >Faire un don</Link>
-          </Button>
-          <Button
-            variant="ghost"
-            className="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white text-lg px-8 py-4 md:py-8 rounded-xl border border-white/20 min-w-50"
+            Faire un don
+          </Link>
+          <Link
+            href="/mouvement"
+            className="inline-flex items-center justify-center bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white text-lg px-8 py-4 md:py-8 rounded-xl border border-white/20 min-w-50 transition-colors"
           >
-            <Link href="/mouvement">Découvrir</Link>
-          </Button>
+            Découvrir
+          </Link>
         </div>
       </div>
 

@@ -137,16 +137,18 @@ export default function Evenements({ event = [] }: { event: Event[] }) {
             className="overflow-hidden hover:shadow-lg transition-shadow flex-shrink-0 snap-start w-[85vw] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]"
           >
             {/* Image avec badge date */}
-            <div className="relative h-[220px] w-full">
-              <Image
-                src={item.image}
-                alt={item.title}
-                fill
-                className="object-cover"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = "/placeholder.jpg";
-                }}
-              />
+            <div className="relative h-[220px] w-full bg-gradient-to-br from-[#2d2d83] to-[#98141f]">
+              {item.image && (
+                <Image
+                  src={item.image}
+                  alt={item.title}
+                  fill
+                  className="object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              )}
               <div className="absolute top-4 left-4">
                 <Chip color="accent" variant="primary" className="bg-white text-[#2d2d83] font-bold text-base px-3 py-1">
                   {formatDate(item.date_at)}
@@ -178,12 +180,12 @@ export default function Evenements({ event = [] }: { event: Event[] }) {
                 </Card.Description>
               )}
 
-              <Button
-                variant="primary"
-                className="w-full bg-[#98141f] rounded-xl"
+              <Link
+                href={`/evenement/${item.id}`}
+                className="flex items-center justify-center w-full bg-[#98141f] hover:bg-[#7a1019] text-white rounded-xl py-3 font-medium transition-colors"
               >
-                <Link href={`/evenement/${item.id}`}>Plus d&apos;info</Link>
-              </Button>
+                Voir les détails
+              </Link>
             </Card.Content>
           </Card>
         ))}
