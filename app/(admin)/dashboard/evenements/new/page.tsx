@@ -24,6 +24,7 @@ import type { DateValue, TimeValue } from "@heroui/react";
 import { evenementAPI } from "@/features/evenement/apis/evenement.api";
 import { PricingTiersEditor, type PricingTier } from "@/components/admin/pricing-tiers-editor";
 import { DateTimePicker } from "@/components/admin/datetime-picker";
+import { ToggleSwitch } from "@/components/admin/toggle-switch";
 
 export default function NewEventPage() {
   const router = useRouter();
@@ -287,10 +288,10 @@ export default function NewEventPage() {
                     Les participants devront payer pour s&apos;inscrire
                   </p>
                 </div>
-                <Switch isSelected={isPaid} onChange={(v) => {
+                <ToggleSwitch isSelected={isPaid} onChange={(v) => {
                   setIsPaid(v);
                   if (!v) setPricingTiers([]);
-                }} />
+                }} aria-label="Activer événement payant" />
               </div>
 
               {isPaid && (

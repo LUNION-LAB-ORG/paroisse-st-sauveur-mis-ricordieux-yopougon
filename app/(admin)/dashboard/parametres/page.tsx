@@ -146,7 +146,11 @@ export default function ParametresPage() {
                     <p className="text-sm font-medium text-gray-800">{item.label}</p>
                     <p className="text-xs text-gray-400">{item.desc}</p>
                   </div>
-                  <Switch defaultSelected className="shrink-0" />
+                  <Switch defaultSelected className="shrink-0">
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                  </Switch>
                 </div>
               ))}
             </div>
@@ -172,7 +176,11 @@ export default function ParametresPage() {
                 <p className="text-sm font-medium text-gray-800">Mode sombre</p>
                 <p className="text-xs text-gray-400">Thème sombre pour le dashboard</p>
               </div>
-              <Switch className="shrink-0" />
+              <Switch className="shrink-0">
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
             </div>
 
             <div>

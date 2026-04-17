@@ -30,6 +30,7 @@ import {
   TextField,
   TimeField,
 } from "@heroui/react";
+import { ToggleSwitch } from "@/components/admin/toggle-switch";
 import {
   CalendarDate,
   Time,
@@ -417,7 +418,7 @@ export default function EditMessePage() {
                     {paid ? "Marqué comme payé" : "Paiement en attente"}
                   </p>
                 </div>
-                <Switch isSelected={paid} onChange={setPaid} />
+                <ToggleSwitch isSelected={paid} onChange={setPaid} aria-label="Paiement reçu" />
               </div>
             </Card.Content>
           </Card>

@@ -29,6 +29,7 @@ import {
 import { PricingTiersEditor, type PricingTier } from "@/components/admin/pricing-tiers-editor";
 import { DateTimePicker } from "@/components/admin/datetime-picker";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
+import { ToggleSwitch } from "@/components/admin/toggle-switch";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import type { DateValue, TimeValue } from "@heroui/react";
 
@@ -397,10 +398,10 @@ export default function OrganisationForm() {
                         Les participants devront payer pour s&apos;inscrire
                       </p>
                     </div>
-                    <Switch isSelected={isPaid} onChange={(v) => {
+                    <ToggleSwitch isSelected={isPaid} onChange={(v) => {
                       setIsPaid(v);
                       if (!v) setPricingTiers([]);
-                    }} />
+                    }} aria-label="Activer événement payant" />
                   </div>
                   {isPaid && (
                     <PricingTiersEditor tiers={pricingTiers} onChange={setPricingTiers} />

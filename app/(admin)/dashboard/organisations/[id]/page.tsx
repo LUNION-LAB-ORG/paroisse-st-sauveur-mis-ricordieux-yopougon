@@ -35,6 +35,7 @@ import { CalendarDate, Time } from "@internationalized/date";
 import type { DateValue, TimeValue } from "@heroui/react";
 import { PricingTiersEditor, type PricingTier } from "@/components/admin/pricing-tiers-editor";
 import { DateTimePicker } from "@/components/admin/datetime-picker";
+import { ToggleSwitch } from "@/components/admin/toggle-switch";
 import {
   Dialog,
   DialogContent,
@@ -391,10 +392,10 @@ export default function OrganisationDetailPage() {
                     Les participants devront payer pour s&apos;inscrire
                   </p>
                 </div>
-                <Switch isSelected={isPaid} onChange={(v) => {
+                <ToggleSwitch isSelected={isPaid} onChange={(v) => {
                   setIsPaid(v);
                   if (!v) setPricingTiers([]);
-                }} />
+                }} aria-label="Activer événement payant" />
               </div>
               {isPaid && (
                 <PricingTiersEditor tiers={pricingTiers} onChange={setPricingTiers} />

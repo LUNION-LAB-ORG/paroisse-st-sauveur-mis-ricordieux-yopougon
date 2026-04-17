@@ -21,6 +21,7 @@ import {
   TextField,
   TimeField,
 } from "@heroui/react";
+import { ToggleSwitch } from "@/components/admin/toggle-switch";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import type { DateValue, TimeValue } from "@heroui/react";
 import { messeAPI } from "@/features/messe/apis/messe.api";
@@ -315,7 +316,7 @@ export default function NewMessePage() {
                     Cochez si le paiement a déjà été réglé à la paroisse
                   </p>
                 </div>
-                <Switch isSelected={markAsPaid} onChange={setMarkAsPaid} />
+                <ToggleSwitch isSelected={markAsPaid} onChange={setMarkAsPaid} aria-label="Marquer comme payé" />
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
