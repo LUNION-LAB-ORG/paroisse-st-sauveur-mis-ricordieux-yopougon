@@ -35,9 +35,9 @@ const menuItems = [
 ]
 
 const contentItems = [
-  { label: "Médiation", icon: FileEdit, href: "/dashboard/mediation" },
+  { label: "Méditations", icon: FileEdit, href: "/dashboard/mediation" },
   { label: "Actualités", icon: Newspaper, href: "/dashboard/actualites" },
-  { label: "Contenu", icon: Users, href: "/dashboard/contenu" },
+  { label: "Mouvements", icon: Users, href: "/dashboard/mouvements" },
 ]
 
 const adminItems = [
