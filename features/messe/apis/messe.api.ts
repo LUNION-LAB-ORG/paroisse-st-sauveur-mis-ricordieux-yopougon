@@ -11,6 +11,13 @@ export const messeAPI = {
       service: "private",
     });
   },
+  obtenirParId(id: string): Promise<{ data: IMesse }> {
+    return apiClient.request({
+      endpoint: `/messes/${id}`,
+      method: "GET",
+      service: "private",
+    });
+  },
   ajouter(data: IMesseCreer): Promise<IMesse> {
     return apiClient.request({
       endpoint: `/messes`,

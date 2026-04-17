@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Volume2, Clock, User, GripVertical, Check, X } from "lucide-react"
+import { Volume2, Clock, User, GripVertical, Check, X, Plus, Edit } from "lucide-react"
+import Link from "next/link"
 import { Header } from "@/components/admin/header"
 import { StatCard } from "@/components/admin/stat-card"
-import { Card, Chip, Separator } from "@heroui/react"
+import { Card, Chip, Separator, Button as HeroButton } from "@heroui/react"
 import { ecouteAPI } from "@/features/ecoute/apis/ecoute.api"
 import type { IEcoute } from "@/features/ecoute/types/ecoute.type"
 import { toast } from "sonner"
@@ -61,6 +62,14 @@ export default function EcoutesPage() {
         <StatCard icon={Volume2} value={String(counts.total)} label="Total demandes" trend="8%" trendUp iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
         <StatCard icon={Clock} value={String(counts.pending).padStart(2, "0")} label="En attente" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
         <StatCard icon={Check} value={String(counts.accepted).padStart(2, "0")} label="Confirmées" trend="12%" trendUp iconBgColor="bg-green-100" iconColor="text-green-600" />
+      </div>
+
+      <div className="flex justify-end mb-6">
+        <Link href="/dashboard/ecoutes/new">
+          <HeroButton variant="primary" className="bg-[#98141f] rounded-xl">
+            <Plus className="w-4 h-4" /> Nouvelle demande
+          </HeroButton>
+        </Link>
       </div>
 
       {loading && <p className="text-center text-gray-400 py-12">Chargement...</p>}
@@ -122,22 +131,32 @@ export default function EcoutesPage() {
                           {item.phone && <span className="truncate max-w-[100px]">{item.phone}</span>}
                         </div>
 
-                        {col.key === "pending" && (
-                          <div className="flex gap-1 mt-2">
-                            <button
-                              onClick={() => item.id && moveToColumn(item.id, "accepted")}
-                              className="flex-1 flex items-center justify-center gap-1 text-xs text-green-600 bg-green-50 hover:bg-green-100 rounded-lg py-1 transition-colors"
+                        <div className="flex gap-1 mt-2">
+                          {col.key === "pending" && (
+                            <>
+                              <button
+                                onClick={() => item.id && moveToColumn(item.id, "accepted")}
+                                className="flex-1 flex items-center justify-center gap-1 text-xs text-green-600 bg-green-50 hover:bg-green-100 rounded-lg py-1 transition-colors"
+                              >
+                                <Check className="w-3 h-3" /> Confirmer
+                              </button>
+                              <button
+                                onClick={() => item.id && moveToColumn(item.id, "canceled")}
+                                className="flex-1 flex items-center justify-center gap-1 text-xs text-red-500 bg-red-50 hover:bg-red-100 rounded-lg py-1 transition-colors"
+                              >
+                                <X className="w-3 h-3" /> Annuler
+                              </button>
+                            </>
+                          )}
+                          {item.id && (
+                            <Link
+                              href={`/dashboard/ecoutes/${item.id}`}
+                              className="flex-1 flex items-center justify-center gap-1 text-xs text-[#2d2d83] bg-white hover:bg-gray-100 border border-gray-200 rounded-lg py-1 transition-colors"
                             >
-                              <Check className="w-3 h-3" /> Confirmer
-                            </button>
-                            <button
-                              onClick={() => item.id && moveToColumn(item.id, "canceled")}
-                              className="flex-1 flex items-center justify-center gap-1 text-xs text-red-500 bg-red-50 hover:bg-red-100 rounded-lg py-1 transition-colors"
-                            >
-                              <X className="w-3 h-3" /> Annuler
-                            </button>
-                          </div>
-                        )}
+                              <Edit className="w-3 h-3" /> Modifier
+                            </Link>
+                          )}
+                        </div>
                       </Card.Content>
                     </Card>
                   ))}

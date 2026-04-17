@@ -1,41 +1,72 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
-  Calendar,
-  Users,
-  Trash2,
   ArrowLeft,
+  Calendar,
+  CalendarPlus,
+  ClipboardList,
+  Clock,
+  DollarSign,
+  ImageIcon,
+  Loader2,
   Mail,
   Phone,
-  Settings,
   Save,
-  Loader2,
-} from "lucide-react"
-import Link from "next/link"
-import { toast } from "sonner"
-import { StatCard } from "@/components/admin/stat-card"
-import { Card } from "@heroui/react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { evenementAPI } from "@/features/evenement/apis/evenement.api"
-import { participantAPI } from "@/features/participant/apis/participant.api"
-import type { IEvenement } from "@/features/evenement/types/evenement.type"
-import type { IParticipant } from "@/features/participant/types/participant.type"
+  Settings,
+  Trash2,
+  Users,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  Button,
+  Card,
+  Description,
+  Input,
+  Label,
+  Switch,
+  TextArea,
+  TextField,
+} from "@heroui/react";
+import { StatCard } from "@/components/admin/stat-card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { evenementAPI } from "@/features/evenement/apis/evenement.api";
+import { participantAPI } from "@/features/participant/apis/participant.api";
+import type { IEvenement } from "@/features/evenement/types/evenement.type";
+import type { IParticipant } from "@/features/participant/types/participant.type";
 
 function formatDate(iso: string) {
   try {
-    return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
-  } catch { return iso }
+    return new Date(iso).toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
 }
 
 function formatDateShort(iso: string) {
   try {
-    return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })
-  } catch { return iso }
+    return new Date(iso).toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
 }
 
-type PaymentStatus = IParticipant["payment_status"]
+type PaymentStatus = IParticipant["payment_status"];
 
 function PaymentBadge({ status }: { status: PaymentStatus }) {
   if (!status || status === "pending") {
@@ -43,111 +74,200 @@ function PaymentBadge({ status }: { status: PaymentStatus }) {
       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
         En attente
       </span>
-    )
+    );
   }
   if (status === "paid" || status === "succeeded") {
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
         Payé
       </span>
-    )
+    );
   }
   if (status === "free") {
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
         Gratuit
       </span>
-    )
+    );
   }
   if (status === "failed") {
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
         Échoué
       </span>
-    )
+    );
   }
-  return null
+  return null;
 }
 
-interface ConfigForm {
-  is_paid: boolean
-  price: string
-  max_participants: string
-  registration_deadline: string
-}
+type Tab = "infos" | "participants" | "config";
 
 export default function EventDetailPage() {
-  const { id } = useParams<{ id: string }>()
-  const [event, setEvent] = useState<IEvenement | null>(null)
-  const [participants, setParticipants] = useState<IParticipant[]>([])
-  const [loading, setLoading] = useState(true)
-  const [deleteId, setDeleteId] = useState<number | null>(null)
-  const [deleting, setDeleting] = useState(false)
-  const [activeTab, setActiveTab] = useState<"participants" | "configuration">("participants")
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
 
-  // Config form state
-  const [config, setConfig] = useState<ConfigForm>({
-    is_paid: false,
-    price: "",
-    max_participants: "",
-    registration_deadline: "",
-  })
-  const [saving, setSaving] = useState(false)
+  const [event, setEvent] = useState<IEvenement | null>(null);
+  const [participants, setParticipants] = useState<IParticipant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<Tab>("infos");
+
+  // Infos form
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [locationAt, setLocationAt] = useState("");
+  const [dateAt, setDateAt] = useState("");
+  const [timeAt, setTimeAt] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  // Config form
+  const [isPaid, setIsPaid] = useState(false);
+  const [price, setPrice] = useState("");
+  const [maxParticipants, setMaxParticipants] = useState("");
+  const [registrationDeadline, setRegistrationDeadline] = useState("");
+
+  // Actions
+  const [savingInfos, setSavingInfos] = useState(false);
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [deleteParticipantId, setDeleteParticipantId] = useState<number | null>(null);
+  const [deletingParticipant, setDeletingParticipant] = useState(false);
+  const [deleteEventOpen, setDeleteEventOpen] = useState(false);
+  const [deletingEvent, setDeletingEvent] = useState(false);
+
+  // Errors
+  const [infosErrors, setInfosErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     Promise.all([
       evenementAPI.obtenirParId(id).catch(() => null),
       participantAPI.obtenirTous({ event_id: id }).catch(() => ({ data: [] as IParticipant[] })),
-    ]).then(([ev, parts]) => {
-      const e = ev as IEvenement | null
-      setEvent(e)
-      setParticipants((parts as { data: IParticipant[] }).data ?? [])
-      if (e) {
-        setConfig({
-          is_paid: e.is_paid ?? false,
-          price: e.price !== null && e.price !== undefined ? String(e.price) : "",
-          max_participants: e.max_participants !== null && e.max_participants !== undefined ? String(e.max_participants) : "",
-          registration_deadline: e.registration_deadline
-            ? e.registration_deadline.slice(0, 16) // "YYYY-MM-DDTHH:mm"
-            : "",
-        })
-      }
-    }).finally(() => setLoading(false))
-  }, [id])
+    ])
+      .then(([ev, parts]) => {
+        const e = ev as IEvenement | null;
+        setEvent(e);
+        setParticipants((parts as { data: IParticipant[] }).data ?? []);
+        if (e) {
+          setTitle(e.title ?? "");
+          setDescription(e.description ?? "");
+          setLocationAt(e.location_at ?? "");
+          setDateAt(e.date_at ? e.date_at.slice(0, 10) : "");
+          setTimeAt(e.time_at ? e.time_at.slice(0, 5) : "");
+          if (e.image) setImagePreview(e.image);
+          setIsPaid(e.is_paid ?? false);
+          setPrice(e.price !== null && e.price !== undefined ? String(e.price) : "");
+          setMaxParticipants(
+            e.max_participants !== null && e.max_participants !== undefined
+              ? String(e.max_participants)
+              : "",
+          );
+          setRegistrationDeadline(
+            e.registration_deadline ? e.registration_deadline.slice(0, 16) : "",
+          );
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
 
-  const handleDelete = async () => {
-    if (!deleteId) return
-    setDeleting(true)
-    try {
-      await participantAPI.supprimer(deleteId)
-      setParticipants((prev) => prev.filter((p) => p.id !== deleteId))
-      toast.success("Participant supprimé")
-      setDeleteId(null)
-    } catch {
-      toast.error("Erreur lors de la suppression")
-    } finally {
-      setDeleting(false)
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) {
+      toast.error("Image trop lourde (max 5 Mo)");
+      return;
     }
-  }
+    setImageFile(f);
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+    reader.readAsDataURL(f);
+  };
 
-  const handleSaveConfig = async () => {
-    setSaving(true)
+  const validateInfos = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!title.trim()) errs.title = "Le titre est obligatoire";
+    if (!description.trim()) errs.description = "La description est obligatoire";
+    if (!locationAt.trim()) errs.locationAt = "Le lieu est obligatoire";
+    if (!dateAt) errs.dateAt = "La date est obligatoire";
+    if (!timeAt) errs.timeAt = "L'heure est obligatoire";
+    setInfosErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleSaveInfos = async () => {
+    if (!validateInfos()) {
+      toast.error("Veuillez corriger les erreurs");
+      return;
+    }
+    setSavingInfos(true);
     try {
       const payload: Record<string, unknown> = {
-        is_paid: config.is_paid,
-        price: config.is_paid && config.price ? Number(config.price) : null,
-        max_participants: config.max_participants ? Number(config.max_participants) : null,
-        registration_deadline: config.registration_deadline || null,
-      }
-      const updated = await evenementAPI.modifier(id, payload)
-      setEvent(updated)
-      toast.success("Configuration enregistrée")
+        title,
+        description,
+        location_at: locationAt,
+        date_at: dateAt,
+        time_at: timeAt,
+      };
+      if (imageFile) payload.image = imageFile;
+      const updated = await evenementAPI.modifier(id, payload);
+      setEvent(updated);
+      toast.success("Informations enregistrées");
     } catch {
-      toast.error("Erreur lors de la sauvegarde")
+      toast.error("Erreur lors de la sauvegarde");
     } finally {
-      setSaving(false)
+      setSavingInfos(false);
     }
-  }
+  };
+
+  const handleSaveConfig = async () => {
+    setSavingConfig(true);
+    try {
+      const payload: Record<string, unknown> = {
+        is_paid: isPaid,
+        price: isPaid && price ? Number(price) : null,
+        max_participants: maxParticipants ? Number(maxParticipants) : null,
+        registration_deadline: registrationDeadline || null,
+      };
+      const updated = await evenementAPI.modifier(id, payload);
+      setEvent(updated);
+      toast.success("Configuration enregistrée");
+    } catch {
+      toast.error("Erreur lors de la sauvegarde");
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  const handleDeleteParticipant = async () => {
+    if (!deleteParticipantId) return;
+    setDeletingParticipant(true);
+    try {
+      await participantAPI.supprimer(deleteParticipantId);
+      setParticipants((prev) => prev.filter((p) => p.id !== deleteParticipantId));
+      toast.success("Participant supprimé");
+      setDeleteParticipantId(null);
+    } catch {
+      toast.error("Erreur lors de la suppression");
+    } finally {
+      setDeletingParticipant(false);
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    setDeletingEvent(true);
+    try {
+      await evenementAPI.supprimer(id);
+      toast.success("Événement supprimé");
+      router.push("/dashboard/evenements");
+    } catch {
+      toast.error("Erreur lors de la suppression");
+      setDeletingEvent(false);
+    }
+  };
+
+  const tabs: Array<{ key: Tab; label: string; icon: typeof Settings }> = [
+    { key: "infos", label: "Informations", icon: CalendarPlus },
+    { key: "participants", label: "Participants", icon: Users },
+    { key: "config", label: "Configuration", icon: Settings },
+  ];
 
   return (
     <div>
@@ -197,44 +317,189 @@ export default function EventDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab("participants")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === "participants"
-              ? "border-[#2d2d83] text-[#2d2d83]"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <Users className="w-4 h-4" /> Participants
-        </button>
-        <button
-          onClick={() => setActiveTab("configuration")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === "configuration"
-              ? "border-[#2d2d83] text-[#2d2d83]"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <Settings className="w-4 h-4" /> Configuration
-        </button>
+      <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          const active = activeTab === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                active
+                  ? "border-[#2d2d83] text-[#2d2d83]"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <Icon className="w-4 h-4" /> {t.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Tab: Participants */}
-      {activeTab === "participants" && (
-        <>
-          {loading && <p className="text-center text-gray-400 py-12">Chargement...</p>}
+      {loading && (
+        <p className="text-center text-gray-400 py-12">Chargement...</p>
+      )}
 
-          {!loading && participants.length === 0 && (
+      {/* Onglet Informations */}
+      {!loading && activeTab === "infos" && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-5">
+            <Card>
+              <Card.Header className="px-6 pt-6 pb-3">
+                <Card.Title className="text-sm font-semibold text-[#2d2d83] flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4" /> Détails de l&apos;événement
+                </Card.Title>
+              </Card.Header>
+              <Card.Content className="p-6 pt-0 space-y-5">
+                <TextField value={title} onChange={setTitle} isInvalid={!!infosErrors.title}>
+                  <Label>Titre *</Label>
+                  <Input placeholder="Titre de l'événement" />
+                  {infosErrors.title && (
+                    <Description className="text-red-500 text-xs">{infosErrors.title}</Description>
+                  )}
+                </TextField>
+
+                <TextField
+                  value={description}
+                  onChange={setDescription}
+                  isInvalid={!!infosErrors.description}
+                >
+                  <Label>Description *</Label>
+                  <TextArea rows={6} />
+                  {infosErrors.description && (
+                    <Description className="text-red-500 text-xs">{infosErrors.description}</Description>
+                  )}
+                </TextField>
+
+                <TextField
+                  value={locationAt}
+                  onChange={setLocationAt}
+                  isInvalid={!!infosErrors.locationAt}
+                >
+                  <Label>Lieu *</Label>
+                  <Input placeholder="Ex : Église Saint-Sauveur, Yopougon" />
+                  {infosErrors.locationAt && (
+                    <Description className="text-red-500 text-xs">{infosErrors.locationAt}</Description>
+                  )}
+                </TextField>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Date *</label>
+                    <input
+                      type="date"
+                      value={dateAt}
+                      onChange={(e) => setDateAt(e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50 ${
+                        infosErrors.dateAt ? "border-red-400" : "border-gray-200"
+                      }`}
+                    />
+                    {infosErrors.dateAt && (
+                      <p className="text-red-500 text-xs mt-1">{infosErrors.dateAt}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Heure *</label>
+                    <input
+                      type="time"
+                      value={timeAt}
+                      onChange={(e) => setTimeAt(e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50 ${
+                        infosErrors.timeAt ? "border-red-400" : "border-gray-200"
+                      }`}
+                    />
+                    {infosErrors.timeAt && (
+                      <p className="text-red-500 text-xs mt-1">{infosErrors.timeAt}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <Button
+                    variant="primary"
+                    className="bg-[#2d2d83] rounded-xl px-6"
+                    isDisabled={savingInfos}
+                    onPress={handleSaveInfos}
+                  >
+                    {savingInfos ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Enregistrement...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" /> Enregistrer
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </Card.Content>
+            </Card>
+          </div>
+
+          <div className="space-y-5">
+            {/* Image */}
+            <Card>
+              <Card.Header className="px-5 pt-5 pb-3">
+                <Card.Title className="text-sm font-semibold text-[#2d2d83]">
+                  Image de l&apos;événement
+                </Card.Title>
+              </Card.Header>
+              <Card.Content className="px-5 pb-5">
+                <label className="block border-2 border-dashed border-gray-200 rounded-xl overflow-hidden hover:border-[#2d2d83]/30 transition-colors cursor-pointer">
+                  {imagePreview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={imagePreview}
+                      alt="Prévisualisation"
+                      className="w-full h-48 object-cover"
+                    />
+                  ) : (
+                    <div className="p-8 text-center">
+                      <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">Cliquez pour ajouter</p>
+                      <p className="text-xs text-gray-400 mt-1">JPG, PNG (max 5Mo)</p>
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
+                {imageFile && (
+                  <p className="mt-2 text-xs text-gray-500 truncate">{imageFile.name}</p>
+                )}
+              </Card.Content>
+            </Card>
+
+            {/* Danger zone */}
+            <Card className="border-red-100">
+              <Card.Content className="p-5">
+                <p className="text-sm font-semibold text-red-600 mb-2">Zone danger</p>
+                <p className="text-xs text-gray-500 mb-3">
+                  Supprimer l&apos;événement entraîne la perte de toutes les inscriptions associées.
+                </p>
+                <Button
+                  variant="ghost"
+                  className="w-full rounded-xl text-red-500 hover:bg-red-50 border border-red-200"
+                  onPress={() => setDeleteEventOpen(true)}
+                >
+                  <Trash2 className="w-4 h-4" /> Supprimer cet événement
+                </Button>
+              </Card.Content>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Onglet Participants */}
+      {!loading && activeTab === "participants" && (
+        <>
+          {participants.length === 0 ? (
             <Card className="p-12 text-center">
               <Card.Content>
                 <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-400">Aucun inscrit pour cet événement.</p>
               </Card.Content>
             </Card>
-          )}
-
-          {!loading && participants.length > 0 && (
+          ) : (
             <Card>
               <Card.Content className="p-0">
                 <div className="overflow-x-auto">
@@ -261,8 +526,9 @@ export default function EventDetailPage() {
                           <td className="px-4 py-3 text-sm text-gray-500">{formatDateShort(p.created_at)}</td>
                           <td className="px-4 py-3">
                             <button
-                              onClick={() => setDeleteId(p.id)}
+                              onClick={() => setDeleteParticipantId(p.id)}
                               className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                              aria-label="Retirer cet inscrit"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -278,104 +544,76 @@ export default function EventDetailPage() {
         </>
       )}
 
-      {/* Tab: Configuration */}
-      {activeTab === "configuration" && (
+      {/* Onglet Configuration */}
+      {!loading && activeTab === "config" && (
         <Card>
-          <Card.Content className="p-6">
-            <h2 className="text-base font-semibold text-[#2d2d83] mb-5">Paramètres de l&apos;événement</h2>
-
-            <div className="space-y-5 max-w-lg">
-              {/* is_paid toggle */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-800">Événement payant</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Active le paiement Wave lors de l&apos;inscription</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setConfig((c) => ({ ...c, is_paid: !c.is_paid }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    config.is_paid ? "bg-[#2d2d83]" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      config.is_paid ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* price */}
-              {config.is_paid && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Prix (XOF)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min={0}
-                      value={config.price}
-                      onChange={(e) => setConfig((c) => ({ ...c, price: e.target.value }))}
-                      placeholder="Ex : 5000"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/30 pr-16"
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">
-                      XOF
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* max_participants */}
+          <Card.Header className="px-6 pt-6 pb-3">
+            <Card.Title className="text-sm font-semibold text-[#2d2d83] flex items-center gap-2">
+              <DollarSign className="w-4 h-4" /> Configuration de l&apos;inscription
+            </Card.Title>
+          </Card.Header>
+          <Card.Content className="p-6 pt-0 space-y-5 max-w-lg">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Nombre maximum de participants
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={config.max_participants}
-                  onChange={(e) => setConfig((c) => ({ ...c, max_participants: e.target.value }))}
-                  placeholder="Laisser vide = illimité"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/30"
-                />
-                <p className="text-xs text-gray-400 mt-1">Laisser vide pour ne pas limiter les inscriptions</p>
+                <p className="text-sm font-medium text-gray-800">Événement payant</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Active le paiement Wave lors de l&apos;inscription
+                </p>
               </div>
+              <Switch isSelected={isPaid} onChange={setIsPaid} />
+            </div>
 
-              {/* registration_deadline */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Date limite d&apos;inscription
-                </label>
-                <input
-                  type="datetime-local"
-                  value={config.registration_deadline}
-                  onChange={(e) => setConfig((c) => ({ ...c, registration_deadline: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/30"
-                />
-                <p className="text-xs text-gray-400 mt-1">Laisser vide pour ne pas définir de date limite</p>
-              </div>
+            {isPaid && (
+              <TextField value={price} onChange={setPrice}>
+                <Label>Prix par participant (XOF)</Label>
+                <Input type="number" placeholder="Ex : 5000" inputMode="numeric" />
+              </TextField>
+            )}
 
-              <button
-                onClick={handleSaveConfig}
-                disabled={saving}
-                className="flex items-center gap-2 bg-[#2d2d83] hover:bg-[#24246b] text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-60"
+            <TextField value={maxParticipants} onChange={setMaxParticipants}>
+              <Label>Nombre max de participants (optionnel)</Label>
+              <Input type="number" placeholder="Laisser vide = illimité" inputMode="numeric" />
+            </TextField>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date limite d&apos;inscription (optionnel)
+              </label>
+              <input
+                type="datetime-local"
+                value={registrationDeadline}
+                onChange={(e) => setRegistrationDeadline(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Les inscriptions seront fermées automatiquement après cette date
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <Button
+                variant="primary"
+                className="bg-[#2d2d83] rounded-xl px-6"
+                isDisabled={savingConfig}
+                onPress={handleSaveConfig}
               >
-                {saving ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Enregistrement...</>
+                {savingConfig ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Enregistrement...
+                  </>
                 ) : (
-                  <><Save className="w-4 h-4" /> Enregistrer</>
+                  <>
+                    <Save className="w-4 h-4" /> Enregistrer
+                  </>
                 )}
-              </button>
+              </Button>
             </div>
           </Card.Content>
         </Card>
       )}
 
-      {/* Delete dialog */}
-      <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+      {/* Delete participant */}
+      <Dialog open={!!deleteParticipantId} onOpenChange={() => setDeleteParticipantId(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-red-600">Retirer cet inscrit ?</DialogTitle>
@@ -383,22 +621,50 @@ export default function EventDetailPage() {
           <p className="text-sm text-gray-500">Cette inscription sera supprimée définitivement.</p>
           <div className="flex justify-end gap-3 mt-4">
             <button
-              onClick={() => setDeleteId(null)}
-              disabled={deleting}
+              onClick={() => setDeleteParticipantId(null)}
+              disabled={deletingParticipant}
               className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
             >
               Annuler
             </button>
             <button
-              onClick={handleDelete}
-              disabled={deleting}
+              onClick={handleDeleteParticipant}
+              disabled={deletingParticipant}
               className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-60"
             >
-              {deleting ? "Suppression..." : "Supprimer"}
+              {deletingParticipant ? "Suppression..." : "Supprimer"}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete event */}
+      <Dialog open={deleteEventOpen} onOpenChange={setDeleteEventOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Supprimer l&apos;événement ?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-500">
+            Cette action est irréversible. Toutes les inscriptions seront également supprimées.
+          </p>
+          <div className="flex justify-end gap-3 mt-4">
+            <button
+              onClick={() => setDeleteEventOpen(false)}
+              disabled={deletingEvent}
+              className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleDeleteEvent}
+              disabled={deletingEvent}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-60"
+            >
+              {deletingEvent ? "Suppression..." : "Supprimer"}
             </button>
           </div>
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

@@ -17,6 +17,14 @@ export const ecouteAPI = {
     });
   },
 
+  obtenirParId(id: number | string): Promise<IEcouteReponse> {
+    return apiClient.request({
+      endpoint: `/listens/${id}`,
+      method: "GET",
+      service: "private",
+    });
+  },
+
   obtenirTous(params?: Record<string, string>): Promise<IEcouteListeReponse> {
     return apiClient.request({
       endpoint: "/listens",

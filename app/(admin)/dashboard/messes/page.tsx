@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Flame, Check, X, Clock, MapPin, User, CreditCard, ChevronDown, ChevronUp, Wallet } from "lucide-react"
+import { Flame, Check, X, Clock, MapPin, User, CreditCard, ChevronDown, ChevronUp, Wallet, Plus, Edit } from "lucide-react"
+import Link from "next/link"
 import { Header } from "@/components/admin/header"
 import { StatCard } from "@/components/admin/stat-card"
 import { StatusBadge } from "@/components/admin/status-badge"
@@ -111,7 +112,7 @@ export default function MessesPage() {
         <StatCard icon={Check} value={String(counts.accepted).padStart(2, "0")} label="Confirmées" trend="12%" trendUp iconBgColor="bg-green-100" iconColor="text-green-600" />
       </div>
 
-      {/* Search + Filter pills */}
+      {/* Search + Filter pills + Nouveau */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <SearchField className="flex-1 sm:max-w-xs" value={search} onChange={setSearch}>
           <SearchField.Group>
@@ -121,7 +122,7 @@ export default function MessesPage() {
           </SearchField.Group>
         </SearchField>
 
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap flex-1">
           {filters.map((f) => (
             <button
               key={f}
@@ -139,6 +140,12 @@ export default function MessesPage() {
             </button>
           ))}
         </div>
+
+        <Link href="/dashboard/messes/new">
+          <Button variant="primary" className="bg-[#98141f] rounded-xl">
+            <Plus className="w-4 h-4" /> Nouvelle messe
+          </Button>
+        </Link>
       </div>
 
       {loading && (
@@ -227,6 +234,15 @@ export default function MessesPage() {
 >
                                 <Wallet className="w-4 h-4" />
                               </Button>
+                            )}
+                            {m.id !== undefined && (
+                              <Link
+                                href={`/dashboard/messes/${m.id}`}
+                                className="inline-flex items-center justify-center h-8 w-8 p-0 text-[#2d2d83] hover:bg-[#2d2d83]/10 rounded-lg"
+                                aria-label="Modifier la messe"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Link>
                             )}
                             {m.request_status === "pending" && m.id !== undefined && (
                               <>
