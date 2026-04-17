@@ -9,6 +9,7 @@ import { Card, Chip, Separator, Button as HeroButton } from "@heroui/react"
 import { ecouteAPI } from "@/features/ecoute/apis/ecoute.api"
 import type { IEcoute } from "@/features/ecoute/types/ecoute.type"
 import { toast } from "sonner"
+import { trendFromItemsByDate } from "@/lib/trend"
 
 const columns = [
   { key: "pending" as const, label: "En attente", color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" },
@@ -59,9 +60,18 @@ export default function EcoutesPage() {
       <Header title="Demandes d'Écoute" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard icon={Volume2} value={String(counts.total)} label="Total demandes" trend="8%" trendUp iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
-        <StatCard icon={Clock} value={String(counts.pending).padStart(2, "0")} label="En attente" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
-        <StatCard icon={Check} value={String(counts.accepted).padStart(2, "0")} label="Confirmées" trend="12%" trendUp iconBgColor="bg-green-100" iconColor="text-green-600" />
+        {(() => {
+          const items = data as unknown as Record<string, unknown>[]
+          const totalTrend = trendFromItemsByDate(items, "created_at")
+          const acceptedTrend = trendFromItemsByDate(items.filter((e) => e.request_status === "accepted"), "created_at")
+          return (
+            <>
+              <StatCard icon={Volume2} value={String(counts.total)} label="Total demandes" trend={totalTrend.trend ?? undefined} trendUp={totalTrend.trendUp} iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
+              <StatCard icon={Clock} value={String(counts.pending).padStart(2, "0")} label="En attente" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
+              <StatCard icon={Check} value={String(counts.accepted).padStart(2, "0")} label="Confirmées" trend={acceptedTrend.trend ?? undefined} trendUp={acceptedTrend.trendUp} iconBgColor="bg-green-100" iconColor="text-green-600" />
+            </>
+          )
+        })()}
       </div>
 
       <div className="flex justify-end mb-6">

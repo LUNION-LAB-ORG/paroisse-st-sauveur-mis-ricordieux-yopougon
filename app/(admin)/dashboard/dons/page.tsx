@@ -19,6 +19,7 @@ import {
 
 import { donAPI } from "@/features/don/apis/don.api"
 import type { IDon, IDonCreer, IDonPaymethod, IDonType } from "@/features/don/types/don.type"
+import { trendFromItemsByDate, trendFromItemsByDateSum } from "@/lib/trend"
 
 const MONTHS_FR = ["Jan", "Fév", "Mars", "Avr", "Mai", "Jun", "Jul", "Août", "Sep", "Oct", "Nov", "Déc"] as const
 const PIE_PALETTE = ["#2d2d83", "#98141f", "#c49a2a", "#6b7280", "#10b981", "#f59e0b", "#3b82f6"]
@@ -260,37 +261,53 @@ export default function DonsPage() {
     <div>
       <Header title="Gestion des Dons" />
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          icon={Heart}
-          value={totalAmount >= 1000000 ? `${(totalAmount / 1000000).toFixed(1)}M F` : `${formatAmount(totalAmount)} F`}
-          label="Total dons (monétaires)"
-          iconBgColor="bg-[#98141f]/10"
-          iconColor="text-[#98141f]"
-        />
-        <StatCard
-          icon={TrendingUp}
-          value={String(donsThisMonth)}
-          label="Ce mois-ci"
-          iconBgColor="bg-green-100"
-          iconColor="text-green-600"
-        />
-        <StatCard
-          icon={Users}
-          value={String(new Set(dons.map((d) => d.donator)).size)}
-          label="Donateurs"
-          iconBgColor="bg-[#2d2d83]/10"
-          iconColor="text-[#2d2d83]"
-        />
-        <StatCard
-          icon={Gift}
-          value={String(natureDons.length)}
-          label="Dons en nature"
-          iconBgColor="bg-amber-100"
-          iconColor="text-amber-600"
-        />
-      </div>
+      {/* Stats avec trends réels */}
+      {(() => {
+        const monetaryItems = monetaryDons as unknown as Record<string, unknown>[]
+        const allItems = dons as unknown as Record<string, unknown>[]
+        const natureItems = natureDons as unknown as Record<string, unknown>[]
+        const totalTrend = trendFromItemsByDateSum(monetaryItems, "donation_at", "amount")
+        const thisMonthTrend = trendFromItemsByDate(allItems, "donation_at")
+        const natureTrend = trendFromItemsByDate(natureItems, "donation_at")
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard
+              icon={Heart}
+              value={totalAmount >= 1000000 ? `${(totalAmount / 1000000).toFixed(1)}M F` : `${formatAmount(totalAmount)} F`}
+              label="Total dons (monétaires)"
+              trend={totalTrend.trend ?? undefined}
+              trendUp={totalTrend.trendUp}
+              iconBgColor="bg-[#98141f]/10"
+              iconColor="text-[#98141f]"
+            />
+            <StatCard
+              icon={TrendingUp}
+              value={String(donsThisMonth)}
+              label="Ce mois-ci"
+              trend={thisMonthTrend.trend ?? undefined}
+              trendUp={thisMonthTrend.trendUp}
+              iconBgColor="bg-green-100"
+              iconColor="text-green-600"
+            />
+            <StatCard
+              icon={Users}
+              value={String(new Set(dons.map((d) => d.donator)).size)}
+              label="Donateurs"
+              iconBgColor="bg-[#2d2d83]/10"
+              iconColor="text-[#2d2d83]"
+            />
+            <StatCard
+              icon={Gift}
+              value={String(natureDons.length)}
+              label="Dons en nature"
+              trend={natureTrend.trend ?? undefined}
+              trendUp={natureTrend.trendUp}
+              iconBgColor="bg-amber-100"
+              iconColor="text-amber-600"
+            />
+          </div>
+        )
+      })()}
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">

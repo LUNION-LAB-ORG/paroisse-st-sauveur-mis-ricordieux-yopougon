@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { actualiteAPI } from "@/features/actualite/apis/actualite.api"
 import type { IActualite } from "@/features/actualite/types/actualite.type"
 import { toast } from "sonner"
+import { trendFromItemsByDate } from "@/lib/trend"
 
 function formatDate(iso: string | null) {
   if (!iso) return "—"
@@ -59,9 +60,17 @@ export default function ActualitesPage() {
       <Header title="Actualités" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard icon={Newspaper} value={String(articles.length)} label="Total articles" trend="12%" trendUp iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
-        <StatCard icon={Eye} value={String(articles.reduce((s, a) => s + (a.views ?? 0), 0))} label="Vues totales" trend="8%" trendUp iconBgColor="bg-green-100" iconColor="text-green-600" />
-        <StatCard icon={Newspaper} value={String(articles.filter((a) => a.status === "draft").length)} label="Brouillons" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
+        {(() => {
+          const items = articles as unknown as Record<string, unknown>[]
+          const articlesTrend = trendFromItemsByDate(items, "created_at")
+          return (
+            <>
+              <StatCard icon={Newspaper} value={String(articles.length)} label="Total articles" trend={articlesTrend.trend ?? undefined} trendUp={articlesTrend.trendUp} iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
+              <StatCard icon={Eye} value={String(articles.reduce((s, a) => s + (a.views ?? 0), 0))} label="Vues totales" iconBgColor="bg-green-100" iconColor="text-green-600" />
+              <StatCard icon={Newspaper} value={String(articles.filter((a) => a.status === "draft").length)} label="Brouillons" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
+            </>
+          )
+        })()}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6">

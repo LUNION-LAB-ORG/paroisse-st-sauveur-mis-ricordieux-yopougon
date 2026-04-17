@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { messeAPI } from "@/features/messe/apis/messe.api"
 import type { IMesse } from "@/features/messe/types/messe.type"
 import { toast } from "sonner"
+import { trendFromItemsByDate } from "@/lib/trend"
 
 const filters = ["all", "pending", "accepted", "canceled"] as const
 const filterLabels: Record<string, string> = { all: "Toutes", pending: "En attente", accepted: "Confirmées", canceled: "Annulées" }
@@ -107,9 +108,18 @@ export default function MessesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard icon={Flame} value={String(counts.total)} label="Total ce mois" trend="12%" trendUp iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
-        <StatCard icon={Clock} value={String(counts.pending).padStart(2, "0")} label="En attente" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
-        <StatCard icon={Check} value={String(counts.accepted).padStart(2, "0")} label="Confirmées" trend="12%" trendUp iconBgColor="bg-green-100" iconColor="text-green-600" />
+        {(() => {
+          const messesItems = messes as unknown as Record<string, unknown>[]
+          const totalTrend = trendFromItemsByDate(messesItems, "created_at")
+          const acceptedTrend = trendFromItemsByDate(messesItems.filter((m) => m.request_status === "accepted"), "created_at")
+          return (
+            <>
+              <StatCard icon={Flame} value={String(counts.total)} label="Total ce mois" trend={totalTrend.trend ?? undefined} trendUp={totalTrend.trendUp} iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
+              <StatCard icon={Clock} value={String(counts.pending).padStart(2, "0")} label="En attente" iconBgColor="bg-amber-100" iconColor="text-amber-600" />
+              <StatCard icon={Check} value={String(counts.accepted).padStart(2, "0")} label="Confirmées" trend={acceptedTrend.trend ?? undefined} trendUp={acceptedTrend.trendUp} iconBgColor="bg-green-100" iconColor="text-green-600" />
+            </>
+          )
+        })()}
       </div>
 
       {/* Search + Filter pills + Nouveau */}

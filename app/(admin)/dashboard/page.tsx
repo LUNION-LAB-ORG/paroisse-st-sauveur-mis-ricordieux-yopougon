@@ -17,6 +17,7 @@ import type { IEvenement } from "@/features/evenement/types/evenement.type"
 import type { IMesse } from "@/features/messe/types/messe.type"
 import { Calendar, Check, Flame, Heart, Volume2, X } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
+import { trendFromItemsByDate, trendFromItemsByDateSum } from "@/lib/trend"
 
 const MONTHS_FR = ["Jan", "Fév", "Mars", "Avr", "Mai", "Jun", "Jul", "Août", "Sep", "Oct", "Nov", "Déc"] as const
 
@@ -241,37 +242,53 @@ export default function DashboardPage() {
     <div>
       <Header title="Tableau de bord" showSearch />
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-8">
-        <StatCard
-          icon={Flame}
-          value={loading ? "…" : String(messesPendingCount).padStart(2, "0")}
-          label="Demandes de messes"
-          iconBgColor="bg-[#2d2d83]/10"
-          iconColor="text-[#2d2d83]"
-        />
-        <StatCard
-          icon={Volume2}
-          value={loading ? "…" : String(ecoutesPendingCount).padStart(2, "0")}
-          label="Écoutes en attente"
-          iconBgColor="bg-[#98141f]/10"
-          iconColor="text-[#98141f]"
-        />
-        <StatCard
-          icon={Heart}
-          value={loading ? "…" : formatAmount(donsMonthTotal)}
-          label="Dons ce mois-ci"
-          iconBgColor="bg-green-100"
-          iconColor="text-green-600"
-        />
-        <StatCard
-          icon={Calendar}
-          value={loading ? "…" : String(evenementsUpcomingCount).padStart(2, "0")}
-          label="Événements à venir"
-          iconBgColor="bg-amber-100"
-          iconColor="text-amber-600"
-        />
-      </div>
+      {/* Stat cards — trends réels mois courant vs mois précédent */}
+      {(() => {
+        const messesTrend = trendFromItemsByDate(messes as unknown as Record<string, unknown>[], "created_at")
+        const ecoutesTrend = trendFromItemsByDate(ecoutes as unknown as Record<string, unknown>[], "created_at")
+        const donsTrend = trendFromItemsByDateSum(dons as unknown as Record<string, unknown>[], "donation_at", "amount")
+        const eventsTrend = trendFromItemsByDate(evenements as unknown as Record<string, unknown>[], "created_at")
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-8">
+            <StatCard
+              icon={Flame}
+              value={loading ? "…" : String(messesPendingCount).padStart(2, "0")}
+              label="Demandes de messes"
+              trend={messesTrend.trend ?? undefined}
+              trendUp={messesTrend.trendUp}
+              iconBgColor="bg-[#2d2d83]/10"
+              iconColor="text-[#2d2d83]"
+            />
+            <StatCard
+              icon={Volume2}
+              value={loading ? "…" : String(ecoutesPendingCount).padStart(2, "0")}
+              label="Écoutes en attente"
+              trend={ecoutesTrend.trend ?? undefined}
+              trendUp={ecoutesTrend.trendUp}
+              iconBgColor="bg-[#98141f]/10"
+              iconColor="text-[#98141f]"
+            />
+            <StatCard
+              icon={Heart}
+              value={loading ? "…" : formatAmount(donsMonthTotal)}
+              label="Dons ce mois-ci"
+              trend={donsTrend.trend ?? undefined}
+              trendUp={donsTrend.trendUp}
+              iconBgColor="bg-green-100"
+              iconColor="text-green-600"
+            />
+            <StatCard
+              icon={Calendar}
+              value={loading ? "…" : String(evenementsUpcomingCount).padStart(2, "0")}
+              label="Événements à venir"
+              trend={eventsTrend.trend ?? undefined}
+              trendUp={eventsTrend.trendUp}
+              iconBgColor="bg-amber-100"
+              iconColor="text-amber-600"
+            />
+          </div>
+        )
+      })()}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 mb-8">
