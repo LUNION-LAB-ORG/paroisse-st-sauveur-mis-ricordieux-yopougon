@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { signOut } from "next-auth/react"
+import { notificationAPI } from "@/features/notification/apis/notification.api"
 
 const menuItems = [
   { label: "Tableau de bord", icon: LayoutGrid, href: "/dashboard" },
@@ -48,6 +49,33 @@ const adminItems = [
 export function Sidebar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const [unreadNotifs, setUnreadNotifs] = useState<number>(0)
+
+  // Poll le nombre de notifications non lues
+  useEffect(() => {
+    let mounted = true
+    const tick = async () => {
+      try {
+        const res = await notificationAPI.nombreNonLues()
+        if (mounted) setUnreadNotifs(res.count ?? 0)
+      } catch {
+        // silencieux — l'admin peut être déconnecté
+      }
+    }
+    tick()
+    const interval = setInterval(tick, 30000) // toutes les 30s
+    return () => {
+      mounted = false
+      clearInterval(interval)
+    }
+  }, [])
+
+  // Refresh quand on arrive sur la page notifications (probable: marquage lus)
+  useEffect(() => {
+    if (pathname === "/dashboard/notifications") {
+      notificationAPI.nombreNonLues().then((r) => setUnreadNotifs(r.count ?? 0)).catch(() => {})
+    }
+  }, [pathname])
 
   useEffect(() => {
     setIsOpen(false)
@@ -166,19 +194,28 @@ export function Sidebar() {
             <ul className="space-y-0.5">
               {adminItems.map((item) => {
                 const isActive = pathname === item.href
+                const badge =
+                  item.href === "/dashboard/notifications" && unreadNotifs > 0
+                    ? unreadNotifs
+                    : null
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-[10px] transition-all text-sm font-medium",
+                        "flex items-center gap-3 px-3 py-2.5 rounded-[10px] transition-all text-sm font-medium relative",
                         isActive
                           ? "bg-[#98141f] text-white shadow-md shadow-black/20"
                           : "text-white/75 hover:bg-white/10 hover:text-white",
                       )}
                     >
                       <item.icon className="w-[18px] h-[18px]" />
-                      <span>{item.label}</span>
+                      <span className="flex-1">{item.label}</span>
+                      {badge !== null && (
+                        <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-[#98141f] text-white text-[11px] font-semibold border border-white/10 shadow-sm">
+                          {badge > 99 ? "99+" : badge}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 )
