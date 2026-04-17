@@ -19,7 +19,7 @@ const columns = [
 function formatDate(iso?: string) {
   if (!iso) return "—"
   try {
-    return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })
+    return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })
   } catch { return iso }
 }
 

@@ -1,101 +1,48 @@
 "use client"
 
-import { ArrowLeft, Save, Trash2 } from "lucide-react"
+import { ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { toast } from "sonner"
 import { Card, Button } from "@heroui/react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
 import { mediationAPI } from "@/features/mediation/apis/mediation.api"
-import type { IMediation } from "@/features/mediation/types/mediation.type"
 
 const CATEGORIES = ["Prière", "Évangile", "Témoignage", "Réflexion", "Mariologie", "Temps liturgique", "Autre"] as const
 
-export default function MeditationDetailPage() {
-  const { id } = useParams<{ id: string }>()
+export default function NouvelleMeditationPage() {
   const router = useRouter()
-
-  const [mediation, setMediation] = useState<IMediation | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-
   const [title, setTitle] = useState("")
   const [author, setAuthor] = useState("")
-  const [category, setCategory] = useState("Évangile")
-  const [dateAt, setDateAt] = useState<string>("")
+  const [category, setCategory] = useState<string>("Évangile")
+  const [dateAt, setDateAt] = useState<string>(new Date().toISOString().slice(0, 10))
   const [status, setStatus] = useState<"published" | "draft">("draft")
+  const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    if (!id) return
-    mediationAPI
-      .obtenirUn(id)
-      .then((res) => {
-        const m = res.data
-        setMediation(m)
-        setTitle(m.title ?? "")
-        setAuthor(m.author ?? "")
-        setCategory(m.category ?? "Évangile")
-        setDateAt(m.date_at ? new Date(m.date_at).toISOString().slice(0, 10) : "")
-        setStatus(m.status === "published" ? "published" : "draft")
-      })
-      .catch(() => toast.error("Impossible de charger la méditation"))
-      .finally(() => setLoading(false))
-  }, [id])
-
-  const save = async () => {
+  const submit = async (finalStatus: "published" | "draft") => {
     if (!title.trim() || !author.trim()) {
-      toast.error("Titre et auteur sont obligatoires")
+      toast.error("Titre et auteur sont obligatoires.")
       return
     }
     setSaving(true)
     try {
-      await mediationAPI.modifier(Number(id), {
+      await mediationAPI.ajouter({
         title,
         author,
         category,
         date_at: dateAt,
-        mediation_status: status,
+        mediation_status: finalStatus,
       })
-      toast.success("Méditation mise à jour")
+      toast.success(finalStatus === "published" ? "Méditation publiée" : "Brouillon enregistré")
       router.push("/dashboard/mediation")
     } catch (e) {
       console.error(e)
-      const msg = e instanceof Error ? e.message : "Erreur lors de la mise à jour"
+      const msg = e instanceof Error ? e.message : "Erreur lors de la création"
       toast.error(msg)
     } finally {
       setSaving(false)
     }
   }
-
-  const remove = async () => {
-    try {
-      await mediationAPI.supprimer(Number(id))
-      toast.success("Méditation supprimée")
-      router.push("/dashboard/mediation")
-    } catch (e) {
-      console.error(e)
-      toast.error("Erreur lors de la suppression")
-    }
-  }
-
-  if (loading) return <div className="text-gray-400 py-24 text-center">Chargement...</div>
-  if (!mediation)
-    return (
-      <div className="text-gray-500 py-24 text-center">
-        Méditation introuvable.{" "}
-        <Link href="/dashboard/mediation" className="text-[#2d2d83] underline">
-          Retour
-        </Link>
-      </div>
-    )
 
   return (
     <div>
@@ -108,28 +55,26 @@ export default function MeditationDetailPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-[#2d2d83]">Modifier la méditation</h1>
-            <p className="text-sm text-gray-500">
-              {mediation.views ?? 0} vue{(mediation.views ?? 0) > 1 ? "s" : ""}
-            </p>
+            <h1 className="text-xl font-bold text-[#2d2d83]">Nouvelle méditation</h1>
+            <p className="text-sm text-gray-500">Ajoutez une méditation spirituelle</p>
           </div>
         </div>
         <div className="flex gap-2">
           <Button
             variant="secondary"
             isDisabled={saving}
-            onPress={() => setDeleteOpen(true)}
-            className="rounded-xl text-red-600"
+            onPress={() => submit("draft")}
+            className="rounded-xl text-gray-600"
           >
-            <Trash2 className="w-4 h-4" /> Supprimer
+            Enregistrer brouillon
           </Button>
           <Button
             variant="primary"
             isDisabled={saving}
-            onPress={save}
+            onPress={() => submit("published")}
             className="bg-[#98141f] rounded-xl"
           >
-            <Save className="w-4 h-4" /> Enregistrer
+            <Save className="w-4 h-4" /> Publier
           </Button>
         </div>
       </div>
@@ -138,18 +83,20 @@ export default function MeditationDetailPage() {
         <Card>
           <Card.Content className="p-6 space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Titre *</label>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                placeholder="Titre de la méditation"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Auteur</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Auteur *</label>
               <input
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
+                placeholder="Ex: Père Joseph"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
               />
             </div>
@@ -196,23 +143,6 @@ export default function MeditationDetailPage() {
           </Card.Content>
         </Card>
       </div>
-
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Supprimer cette méditation ?</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-gray-600">Cette action est irréversible.</p>
-          <DialogFooter>
-            <Button variant="secondary" onPress={() => setDeleteOpen(false)}>
-              Annuler
-            </Button>
-            <Button variant="primary" className="bg-red-600" onPress={remove}>
-              Confirmer la suppression
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

@@ -78,7 +78,15 @@ export default function ActualiteDetail({ actualite, onBack }: ActualiteDetailPr
           <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 mb-6">
             <div className="flex items-center gap-2">
               <CalendarClock className="w-4 h-4 text-blue-600" />
-              <span>{actualite.published_at || "Date non spécifiée"}</span>
+              <span>
+                {actualite.published_at
+                  ? new Date(actualite.published_at).toLocaleDateString("fr-FR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "Date non spécifiée"}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-blue-600" />

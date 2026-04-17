@@ -1,9 +1,7 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Edit, Plus, Trash2, User, Calendar, ChurchIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Edit, Plus, Trash2, User, Calendar, ChurchIcon, ImageIcon, X as XIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Header } from "@/components/admin/header";
@@ -14,104 +12,160 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 
-import { Card, Avatar, Chip, Separator, TextField, Label, Input as HeroInput, TextArea as HeroTextArea } from "@heroui/react";
-import { Button as HeroButton } from "@heroui/react";
+import { Card, Avatar, Chip, Separator, Button as HeroButton } from "@heroui/react";
 
 import { cureAPI } from "@/features/cure/apis/cure.api";
-import {
-  CureSchema,
-  CureType,
-  UpdateCureSchema,
-  UpdateCureType,
-} from "@/features/cure/schemas/cure.schema";
+import type { ICure } from "@/features/cure/types/cure.type";
+
+interface CureFormState {
+  fullname: string;
+  started_at: string;
+  ended_at: string;
+  description: string;
+}
+
+const EMPTY: CureFormState = { fullname: "", started_at: "", ended_at: "", description: "" };
+
+function toDateInput(iso?: string | null): string {
+  if (!iso) return "";
+  // Accept "YYYY-MM-DD" directly, otherwise parse Date.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
+function buildFormData(state: CureFormState, file: File | null, isUpdate: boolean): FormData {
+  const fd = new FormData();
+  if (isUpdate) fd.append("_method", "PUT"); // Laravel multipart PUT workaround
+  fd.append("fullname", state.fullname);
+  fd.append("started_at", state.started_at);
+  // ended_at may be empty → ne pas envoyer pour indiquer "en poste"
+  if (state.ended_at) fd.append("ended_at", state.ended_at);
+  fd.append("description", state.description);
+  if (file) fd.append("photo", file);
+  return fd;
+}
 
 export default function CuresPage() {
-  const [cures, setCures] = useState<any[]>([]);
+  const [cures, setCures] = useState<ICure[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Create modal
   const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState<CureFormState>(EMPTY);
+  const [createFile, setCreateFile] = useState<File | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  // Edit modal
   const [editOpen, setEditOpen] = useState(false);
-  const [cureToEdit, setCureToEdit] = useState<any | null>(null);
+  const [cureToEdit, setCureToEdit] = useState<ICure | null>(null);
+  const [editForm, setEditForm] = useState<CureFormState>(EMPTY);
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const [editing, setEditing] = useState(false);
+
+  // Delete modal
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [cureToDelete, setCureToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
 
   const actifs = cures.filter((c) => !c.ended_at);
   const anciens = cures.filter((c) => !!c.ended_at);
 
-  /* ================= FETCH ================= */
   useEffect(() => {
-    const fetchCures = async () => {
+    (async () => {
       try {
         const res = await cureAPI.obtenirTous();
-        setCures(res.data ?? []);
-      } catch (err: any) {
-        toast.error(err.message || "Erreur lors du chargement");
+        setCures((res.data ?? []) as ICure[]);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Erreur lors du chargement");
       } finally {
         setLoading(false);
       }
-    };
-    fetchCures();
+    })();
   }, []);
 
   /* ================= CREATE ================= */
-  const createForm = useForm<CureType>({ resolver: zodResolver(CureSchema) });
+  const openCreate = () => {
+    setCreateForm(EMPTY);
+    setCreateFile(null);
+    setCreateOpen(true);
+  };
 
-  const onCreateSubmit = async (data: CureType) => {
-    const payload: CureType = { ...data, photo: file ?? undefined };
+  const onCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createForm.fullname.trim() || !createForm.started_at || !createForm.description.trim()) {
+      toast.error("Nom complet, début de ministère et description sont obligatoires.");
+      return;
+    }
+    setCreating(true);
     try {
-      const res = await cureAPI.ajouter(payload);
-      toast.success("Curé ajouté avec succès");
-      if (res) setCures((prev) => [...prev, res]);
-      createForm.reset();
-      setFile(null);
+      const res = await cureAPI.ajouter(buildFormData(createForm, createFile, false));
+      toast.success("Curé ajouté");
+      const added = (res as unknown as { data?: ICure }).data ?? (res as unknown as ICure);
+      if (added) setCures((prev) => [...prev, added]);
       setCreateOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || "Erreur lors de la création");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la création");
+    } finally {
+      setCreating(false);
     }
   };
 
   /* ================= UPDATE ================= */
-  const updateForm = useForm<UpdateCureType>({ resolver: zodResolver(UpdateCureSchema) });
+  const openEdit = (cure: ICure) => {
+    setCureToEdit(cure);
+    setEditForm({
+      fullname: cure.fullname ?? "",
+      started_at: toDateInput(cure.started_at),
+      ended_at: toDateInput(cure.ended_at),
+      description: cure.description ?? "",
+    });
+    setEditFile(null);
+    setEditOpen(true);
+  };
 
-  useEffect(() => {
-    if (cureToEdit) {
-      updateForm.reset({
-        fullname: cureToEdit.fullname,
-        started_at: cureToEdit.started_at,
-        ended_at: cureToEdit.ended_at,
-        description: cureToEdit.description,
-      });
-    }
-  }, [cureToEdit, updateForm]);
-
-  const onUpdateSubmit = async (data: UpdateCureType) => {
+  const onUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!cureToEdit) return;
+    if (!editForm.fullname.trim() || !editForm.started_at || !editForm.description.trim()) {
+      toast.error("Nom, début de ministère et description sont obligatoires.");
+      return;
+    }
+    setEditing(true);
     try {
-      const res = await cureAPI.modifier(String(cureToEdit.id), data);
+      const res = await cureAPI.modifier(String(cureToEdit.id), buildFormData(editForm, editFile, true));
       toast.success("Curé mis à jour");
-      setCures((prev) => prev.map((c) => (c.id === cureToEdit.id ? (res as any) : c)));
+      const updated = (res as unknown as { data?: ICure }).data ?? (res as unknown as ICure);
+      if (updated) setCures((prev) => prev.map((c) => (c.id === cureToEdit.id ? updated : c)));
       setEditOpen(false);
       setCureToEdit(null);
-    } catch (err: any) {
-      toast.error(err.message || "Erreur lors de la mise à jour");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la mise à jour");
+    } finally {
+      setEditing(false);
     }
   };
 
-  /* ================= TOGGLE EN POSTE ================= */
-  const toggleEnPoste = async (cure: any) => {
+  /* ================= TOGGLE ================= */
+  const toggleEnPoste = async (cure: ICure) => {
     const isCurrentlyActive = !cure.ended_at;
-    const payload: UpdateCureType = isCurrentlyActive
-      ? { ended_at: new Date().toISOString().slice(0, 10) }
-      : { ended_at: null };
+    const fd = new FormData();
+    fd.append("_method", "PUT");
+    fd.append("fullname", cure.fullname);
+    fd.append("started_at", toDateInput(cure.started_at));
+    fd.append("description", cure.description ?? "");
+    if (isCurrentlyActive) {
+      fd.append("ended_at", new Date().toISOString().slice(0, 10));
+    }
     try {
-      const res = await cureAPI.modifier(String(cure.id), payload);
+      const res = await cureAPI.modifier(String(cure.id), fd);
       toast.success(isCurrentlyActive ? "Marqué comme ancien curé" : "Remis en poste");
-      setCures((prev) => prev.map((c) => (c.id === cure.id ? (res as any) : c)));
-    } catch (err: any) {
-      toast.error(err.message || "Erreur");
+      const updated = (res as unknown as { data?: ICure }).data ?? (res as unknown as ICure);
+      if (updated) setCures((prev) => prev.map((c) => (c.id === cure.id ? updated : c)));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur");
     }
   };
 
@@ -124,14 +178,13 @@ export default function CuresPage() {
       toast.success("Curé supprimé");
       setCures((prev) => prev.filter((c) => c.id !== cureToDelete));
       setDeleteOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || "Erreur lors de la suppression");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la suppression");
     } finally {
       setIsDeleting(false);
     }
   };
 
-  /* ================= RENDER ================= */
   return (
     <div>
       <Header title="Nos Curés" />
@@ -143,23 +196,15 @@ export default function CuresPage() {
         <StatCard icon={Calendar} value={String(anciens.length)} label="Anciens curés" iconBgColor="bg-gray-100" iconColor="text-gray-500" />
       </div>
 
-      {/* Add button */}
       <div className="flex justify-end mb-6">
-        <HeroButton
-          variant="primary"
-          className="bg-[#98141f] rounded-xl"
-          onPress={() => setCreateOpen(true)}
-        >
+        <HeroButton variant="primary" className="bg-[#98141f] rounded-xl" onPress={openCreate}>
           <Plus className="w-4 h-4" /> Nouveau curé
         </HeroButton>
       </div>
 
-      {/* Profile cards grid */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse h-64" />
-          ))}
+          {[1, 2, 3].map((i) => <Card key={i} className="animate-pulse h-64" />)}
         </div>
       ) : cures.length === 0 ? (
         <Card className="p-12 text-center">
@@ -172,24 +217,15 @@ export default function CuresPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {cures.map((cure) => (
             <Card key={cure.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              {/* Photo header */}
               <div className="relative h-40 bg-gradient-to-br from-[#2d2d83] to-[#98141f]">
-                {/* Status badge */}
                 <div className="absolute top-3 right-3">
-                  <Chip
-                    variant="soft"
-                    color={cure.ended_at ? "default" : "success"}
-                    size="sm"
-                  >
+                  <Chip variant="soft" color={cure.ended_at ? "default" : "success"} size="sm">
                     {cure.ended_at ? "Ancien" : "En poste"}
                   </Chip>
                 </div>
                 <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
                   <Avatar className="w-20 h-20 ring-4 ring-white">
-                    <Avatar.Image
-                      src={cure.photo || "/avatar-placeholder.png"}
-                      alt={cure.fullname}
-                    />
+                    <Avatar.Image src={cure.photo || "/avatar-placeholder.png"} alt={cure.fullname} />
                     <Avatar.Fallback className="bg-[#2d2d83] text-white text-xl">
                       {cure.fullname?.charAt(0) || "?"}
                     </Avatar.Fallback>
@@ -198,26 +234,19 @@ export default function CuresPage() {
               </div>
 
               <Card.Content className="pt-14 pb-5 px-5 text-center">
-                <Card.Title className="text-lg font-bold text-[#2d2d83]">
-                  {cure.fullname}
-                </Card.Title>
+                <Card.Title className="text-lg font-bold text-[#2d2d83]">{cure.fullname}</Card.Title>
 
                 <div className="flex items-center justify-center gap-2 mt-2 text-xs text-gray-500">
                   <Chip variant="soft" color="default" size="sm">
-                    {cure.started_at || "—"} → {cure.ended_at || "Présent"}
+                    {toDateInput(cure.started_at) || "—"} → {toDateInput(cure.ended_at) || "Présent"}
                   </Chip>
                 </div>
 
-                {cure.description && (
-                  <p className="text-sm text-gray-500 mt-3 line-clamp-2">
-                    {cure.description}
-                  </p>
-                )}
+                {cure.description && <p className="text-sm text-gray-500 mt-3 line-clamp-2">{cure.description}</p>}
 
                 <Separator className="my-4" />
 
                 <div className="flex flex-col gap-2">
-                  {/* Toggle En poste / Ancien */}
                   <HeroButton
                     variant="ghost"
                     className={`w-full rounded-lg text-sm ${cure.ended_at ? "text-green-700 bg-green-50" : "text-gray-600 bg-gray-50"}`}
@@ -230,7 +259,7 @@ export default function CuresPage() {
                     <HeroButton
                       variant="outline"
                       className="rounded-lg text-[#2d2d83] border-[#2d2d83]/20"
-                      onPress={() => { setCureToEdit(cure); setEditOpen(true); }}
+                      onPress={() => openEdit(cure)}
                     >
                       <Edit className="w-4 h-4" /> Modifier
                     </HeroButton>
@@ -249,102 +278,47 @@ export default function CuresPage() {
         </div>
       )}
 
-      {/* ================= CREATE MODAL ================= */}
+      {/* CREATE MODAL */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-[#2d2d83]">Nouveau curé</DialogTitle>
           </DialogHeader>
-          <form className="space-y-4" onSubmit={createForm.handleSubmit(onCreateSubmit)}>
-            {/* Photo upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Photo du curé</label>
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-[#2d2d83]/30 transition-colors">
-                {file ? (
-                  <div className="flex items-center gap-3 justify-center">
-                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                      <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-gray-800">{file.name}</p>
-                      <button type="button" onClick={() => setFile(null)} className="text-xs text-red-500 hover:underline">Supprimer</button>
-                    </div>
-                  </div>
-                ) : (
-                  <label className="cursor-pointer">
-                    <User className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">Cliquez pour ajouter une photo</p>
-                    <p className="text-xs text-gray-400 mt-1">JPG, PNG (max 2MB)</p>
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files && setFile(e.target.files[0])} />
-                  </label>
-                )}
-              </div>
-            </div>
-
-            <TextField>
-              <Label>Nom complet</Label>
-              <HeroInput {...createForm.register("fullname")} placeholder="Père Jean-Baptiste KOFFI" />
-            </TextField>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Début de ministère</label>
-                <Input type="date" {...createForm.register("started_at")} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fin (vide si en cours)</label>
-                <Input type="date" {...createForm.register("ended_at")} />
-              </div>
-            </div>
-
-            <TextField>
-              <Label>Description</Label>
-              <HeroTextArea {...createForm.register("description")} placeholder="Biographie courte du curé..." rows={3} />
-            </TextField>
-
-            <button type="submit" className="w-full bg-[#98141f] hover:bg-[#7a1019] text-white rounded-xl py-3 font-medium transition-colors">
-              Ajouter le curé
-            </button>
-          </form>
+          <CureFormFields
+            form={createForm}
+            setForm={setCreateForm}
+            file={createFile}
+            setFile={setCreateFile}
+            existingPhotoUrl={null}
+            onSubmit={onCreateSubmit}
+            submitLabel={creating ? "Ajout en cours..." : "Ajouter le curé"}
+            disabled={creating}
+            submitColor="bg-[#98141f] hover:bg-[#7a1019]"
+          />
         </DialogContent>
       </Dialog>
 
-      {/* ================= UPDATE MODAL ================= */}
+      {/* EDIT MODAL */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-[#2d2d83]">Modifier le curé</DialogTitle>
           </DialogHeader>
-          <form className="space-y-4" onSubmit={updateForm.handleSubmit(onUpdateSubmit)}>
-            <TextField>
-              <Label>Nom complet</Label>
-              <HeroInput {...updateForm.register("fullname")} />
-            </TextField>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Début</label>
-                <Input type="date" {...updateForm.register("started_at")} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fin</label>
-                <Input type="date" {...updateForm.register("ended_at")} />
-              </div>
-            </div>
-
-            <TextField>
-              <Label>Description</Label>
-              <HeroTextArea {...updateForm.register("description")} rows={3} />
-            </TextField>
-
-            <button type="submit" className="w-full bg-[#2d2d83] hover:bg-[#232370] text-white rounded-xl py-3 font-medium transition-colors">
-              Mettre à jour
-            </button>
-          </form>
+          <CureFormFields
+            form={editForm}
+            setForm={setEditForm}
+            file={editFile}
+            setFile={setEditFile}
+            existingPhotoUrl={cureToEdit?.photo ?? null}
+            onSubmit={onUpdateSubmit}
+            submitLabel={editing ? "Mise à jour..." : "Mettre à jour"}
+            disabled={editing}
+            submitColor="bg-[#2d2d83] hover:bg-[#232370]"
+          />
         </DialogContent>
       </Dialog>
 
-      {/* ================= DELETE MODAL ================= */}
+      {/* DELETE MODAL */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -371,5 +345,142 @@ export default function CuresPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/* ================= Reusable form ================= */
+function CureFormFields(props: {
+  form: CureFormState;
+  setForm: React.Dispatch<React.SetStateAction<CureFormState>>;
+  file: File | null;
+  setFile: React.Dispatch<React.SetStateAction<File | null>>;
+  existingPhotoUrl?: string | null;
+  onSubmit: (e: React.FormEvent) => void;
+  submitLabel: string;
+  disabled?: boolean;
+  submitColor: string;
+}) {
+  const { form, setForm, file, setFile, existingPhotoUrl, onSubmit, submitLabel, disabled, submitColor } = props;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  useEffect(() => {
+    if (!file) {
+      setLocalPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setLocalPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const previewUrl = localPreview || existingPhotoUrl || null;
+
+  return (
+    <form className="space-y-4" onSubmit={onSubmit}>
+      {/* Photo upload */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Photo du curé</label>
+        <div className="border-2 border-dashed border-gray-200 rounded-xl p-5 hover:border-[#2d2d83]/30 transition-colors">
+          {previewUrl ? (
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+                <img src={previewUrl} alt="Aperçu" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-800">
+                  {file ? file.name : "Photo actuelle"}
+                </p>
+                <div className="flex gap-3 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-xs text-[#2d2d83] hover:underline"
+                  >
+                    Changer
+                  </button>
+                  {file && (
+                    <button
+                      type="button"
+                      onClick={() => setFile(null)}
+                      className="text-xs text-red-500 hover:underline inline-flex items-center gap-1"
+                    >
+                      <XIcon className="w-3 h-3" /> Retirer
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex flex-col items-center justify-center py-4 text-gray-500"
+            >
+              <ImageIcon className="w-10 h-10 text-gray-300 mb-2" />
+              <p className="text-sm">Cliquez pour ajouter une photo</p>
+              <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP (max 2MB)</p>
+            </button>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => e.target.files && setFile(e.target.files[0])}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
+        <input
+          value={form.fullname}
+          onChange={(e) => setForm((f) => ({ ...f, fullname: e.target.value }))}
+          placeholder="Père Jean-Baptiste KOFFI"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Début de ministère *</label>
+          <input
+            type="date"
+            value={form.started_at}
+            onChange={(e) => setForm((f) => ({ ...f, started_at: e.target.value }))}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Fin (vide si en cours)</label>
+          <input
+            type="date"
+            value={form.ended_at}
+            onChange={(e) => setForm((f) => ({ ...f, ended_at: e.target.value }))}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+        <textarea
+          value={form.description}
+          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+          placeholder="Biographie courte du curé..."
+          rows={3}
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={disabled}
+        className={`w-full ${submitColor} text-white rounded-xl py-3 font-medium transition-colors disabled:opacity-50`}
+      >
+        {submitLabel}
+      </button>
+    </form>
   );
 }

@@ -1,118 +1,61 @@
 "use client"
 
-import { ArrowLeft, Save, Trash2 } from "lucide-react"
+import { ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { toast } from "sonner"
 import { Card, Button } from "@heroui/react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
 import { ImageUploadField } from "@/components/admin/image-upload-field"
 import { actualiteAPI } from "@/features/actualite/apis/actualite.api"
-import type { IActualite } from "@/features/actualite/types/actualite.type"
 
 const CATEGORIES = ["Annonce", "Événement", "Liturgie", "Vie paroissiale", "Autre"] as const
 
-export default function ActualiteDetailPage() {
-  const { id } = useParams<{ id: string }>()
+export default function NouvelArticlePage() {
   const router = useRouter()
-
-  const [actualite, setActualite] = useState<IActualite | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-
   const [title, setTitle] = useState("")
-  const [category, setCategory] = useState("Annonce")
+  const [category, setCategory] = useState<string>("Annonce")
   const [resume, setResume] = useState("")
   const [content, setContent] = useState("")
   const [location, setLocation] = useState("")
   const [author, setAuthor] = useState("")
   const [status, setStatus] = useState<"published" | "draft">("draft")
-  const [publishedAt, setPublishedAt] = useState<string>("")
+  const [publishedAt, setPublishedAt] = useState<string>(new Date().toISOString().slice(0, 10))
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    if (!id) return
-    actualiteAPI
-      .obtenirParId(String(id))
-      .then((res) => {
-        const a = res.data
-        setActualite(a)
-        setTitle(a.title ?? "")
-        setCategory(a.category ?? "Annonce")
-        setResume(a.new_resume ?? "")
-        setContent(a.content ?? "")
-        setLocation(a.location ?? "")
-        setAuthor(a.author ?? "")
-        setStatus(a.status === "published" ? "published" : "draft")
-        setPublishedAt(a.published_at ? new Date(a.published_at).toISOString().slice(0, 10) : "")
-      })
-      .catch(() => toast.error("Impossible de charger l'article"))
-      .finally(() => setLoading(false))
-  }, [id])
-
-  const save = async (finalStatus?: "published" | "draft") => {
-    if (!title.trim()) {
-      toast.error("Le titre est requis")
+  const submit = async (finalStatus: "published" | "draft") => {
+    if (!title.trim() || !resume.trim() || !content.trim() || !location.trim() || !author.trim()) {
+      toast.error("Merci de remplir tous les champs obligatoires (titre, résumé, contenu, lieu, auteur).")
+      return
+    }
+    if (!imageFile) {
+      toast.error("Une image est requise pour publier un article.")
       return
     }
     setSaving(true)
     try {
       const fd = new FormData()
-      fd.append("_method", "PUT") // Laravel multipart + PUT workaround
       fd.append("title", title)
       fd.append("category", category)
       fd.append("new_resume", resume)
       fd.append("content", content)
       fd.append("location", location)
       fd.append("author", author)
-      fd.append("new_status", finalStatus ?? status)
-      if (publishedAt) fd.append("published_at", publishedAt)
-      if (imageFile) fd.append("image", imageFile)
+      fd.append("new_status", finalStatus)
+      fd.append("published_at", publishedAt)
+      fd.append("image", imageFile)
 
-      await actualiteAPI.modifier(String(id), fd)
-      toast.success("Article mis à jour")
+      await actualiteAPI.ajouter(fd)
+      toast.success(finalStatus === "published" ? "Article publié" : "Brouillon enregistré")
       router.push("/dashboard/actualites")
-    } catch (e) {
+    } catch (e: unknown) {
       console.error(e)
-      const msg = e instanceof Error ? e.message : "Erreur lors de la mise à jour"
+      const msg = e instanceof Error ? e.message : "Erreur lors de la création"
       toast.error(msg)
     } finally {
       setSaving(false)
     }
-  }
-
-  const remove = async () => {
-    try {
-      await actualiteAPI.supprimer(String(id))
-      toast.success("Article supprimé")
-      router.push("/dashboard/actualites")
-    } catch (e) {
-      console.error(e)
-      toast.error("Erreur lors de la suppression")
-    }
-  }
-
-  if (loading) {
-    return <div className="text-gray-400 py-24 text-center">Chargement...</div>
-  }
-
-  if (!actualite) {
-    return (
-      <div className="text-gray-500 py-24 text-center">
-        Article introuvable.{" "}
-        <Link href="/dashboard/actualites" className="text-[#2d2d83] underline">
-          Retour
-        </Link>
-      </div>
-    )
   }
 
   return (
@@ -126,31 +69,26 @@ export default function ActualiteDetailPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-[#2d2d83]">Modifier l&apos;article</h1>
-            <p className="text-sm text-gray-500">
-              Dernière modification :{" "}
-              {actualite.created_at
-                ? new Date(actualite.created_at).toLocaleDateString("fr-FR")
-                : "—"}
-            </p>
+            <h1 className="text-xl font-bold text-[#2d2d83]">Nouvel article</h1>
+            <p className="text-sm text-gray-500">Rédigez puis publiez ou enregistrez comme brouillon.</p>
           </div>
         </div>
         <div className="flex gap-2">
           <Button
             variant="secondary"
             isDisabled={saving}
-            onPress={() => setDeleteOpen(true)}
-            className="rounded-xl text-red-600"
+            onPress={() => submit("draft")}
+            className="rounded-xl text-gray-600"
           >
-            <Trash2 className="w-4 h-4" /> Supprimer
+            Enregistrer brouillon
           </Button>
           <Button
             variant="primary"
             isDisabled={saving}
-            onPress={() => save()}
+            onPress={() => submit("published")}
             className="bg-[#98141f] rounded-xl"
           >
-            <Save className="w-4 h-4" /> Enregistrer
+            <Save className="w-4 h-4" /> Publier
           </Button>
         </div>
       </div>
@@ -160,28 +98,31 @@ export default function ActualiteDetailPage() {
           <Card>
             <Card.Content className="p-6 space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Titre *</label>
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Titre de l'article"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Résumé</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Résumé *</label>
                 <textarea
                   value={resume}
                   onChange={(e) => setResume(e.target.value)}
                   rows={2}
+                  placeholder="Un court résumé (affiché sur la liste)"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contenu</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contenu *</label>
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   rows={10}
+                  placeholder="Contenu détaillé de l'article"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
                 />
               </div>
@@ -228,9 +169,7 @@ export default function ActualiteDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date de publication
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date de publication</label>
                 <input
                   type="date"
                   value={publishedAt}
@@ -240,19 +179,21 @@ export default function ActualiteDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Lieu</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Lieu *</label>
                 <input
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Ex: Église paroissiale"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Auteur</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Auteur *</label>
                 <input
                   value={author}
                   onChange={(e) => setAuthor(e.target.value)}
+                  placeholder="Ex: Père Joseph"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
                 />
               </div>
@@ -261,34 +202,11 @@ export default function ActualiteDetailPage() {
 
           <Card>
             <Card.Content className="p-6">
-              <ImageUploadField
-                initialImageUrl={actualite.image ?? null}
-                onChange={setImageFile}
-                title="Image principale"
-              />
+              <ImageUploadField onChange={setImageFile} title="Image principale *" />
             </Card.Content>
           </Card>
         </div>
       </div>
-
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Supprimer cet article ?</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-gray-600">
-            Cette action est irréversible. L&apos;article sera définitivement supprimé.
-          </p>
-          <DialogFooter>
-            <Button variant="secondary" onPress={() => setDeleteOpen(false)}>
-              Annuler
-            </Button>
-            <Button variant="primary" className="bg-red-600" onPress={remove}>
-              Confirmer la suppression
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

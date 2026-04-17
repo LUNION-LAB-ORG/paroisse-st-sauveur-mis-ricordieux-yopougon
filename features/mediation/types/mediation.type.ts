@@ -16,7 +16,8 @@ export interface IMediationCreer {
   date_at: string;
   author: string;
   category: string;
-  status?: IMediationStatus;
+  /** backend expects `mediation_status` on create/update (NewsResource returns `status`) */
+  mediation_status?: IMediationStatus;
 }
 
 export interface IMediationModifier extends Partial<IMediationCreer> {}

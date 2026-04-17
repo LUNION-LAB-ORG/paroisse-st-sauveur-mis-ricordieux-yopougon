@@ -11,21 +11,36 @@ export const actualiteAPI = {
       service: "public",
     });
   },
-  ajouter(data: FormData | IActualiteCreer): Promise<IActualite> {
+  obtenirParId(id: string): Promise<{ data: IActualite }> {
     return apiClient.request({
+      endpoint: `/news/${id}`,
+      method: "GET",
+      service: "public",
+    });
+  },
+  async ajouter(data: FormData | IActualiteCreer): Promise<IActualite> {
+    const isForm = typeof FormData !== "undefined" && data instanceof FormData;
+    const res = await apiClient.request({
       endpoint: `/news`,
       method: "POST",
       data,
       service: "private",
+      config: isForm ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
     });
+    return ((res as any)?.data ?? res) as IActualite;
   },
-  modifier(id: string, data: FormData | IActualiteModifier): Promise<IActualite> {
-    return apiClient.request({
+  async modifier(id: string, data: FormData | IActualiteModifier): Promise<IActualite> {
+    const isForm = typeof FormData !== "undefined" && data instanceof FormData;
+    // Laravel ne parse pas le multipart sur PUT → POST avec _method=PUT
+    const method = isForm ? "POST" : "PUT";
+    const res = await apiClient.request({
       endpoint: `/news/${id}`,
-      method: "PUT",
+      method,
       data,
       service: "private",
+      config: isForm ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
     });
+    return ((res as any)?.data ?? res) as IActualite;
   },
   supprimer(id: string): Promise<void> {
     return apiClient.request({

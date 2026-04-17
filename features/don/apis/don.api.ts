@@ -6,13 +6,14 @@ import type {
 } from "../types/don.type";
 
 export const donAPI = {
-  ajouter(data: IDonCreer): Promise<{ data: IDon }> {
-    return apiClient.request({
+  async ajouter(data: IDonCreer): Promise<{ data: IDon }> {
+    const res = await apiClient.request<{ data: IDon }>({
       endpoint: "/donations",
       method: "POST",
       data,
-      service: "public",
+      service: "private",
     });
+    return res;
   },
 
   obtenirTous(params?: Record<string, string>): Promise<{ data: IDon[] }> {
@@ -24,18 +25,26 @@ export const donAPI = {
     });
   },
 
+  obtenirParId(id: number): Promise<{ data: IDon }> {
+    return apiClient.request({
+      endpoint: `/donations/${id}`,
+      method: "GET",
+      service: "private",
+    });
+  },
+
   modifier(id: number, data: IDonModifier): Promise<{ data: IDon }> {
     return apiClient.request({
-      endpoint: `/dons/${id}`,
+      endpoint: `/donations/${id}`,
       method: "PUT",
       data,
       service: "private",
     });
   },
 
-  supprimer(id: number): Promise<{ data: IDon }> {
+  supprimer(id: number): Promise<void> {
     return apiClient.request({
-      endpoint: `/dons/${id}`,
+      endpoint: `/donations/${id}`,
       method: "DELETE",
       service: "private",
     });

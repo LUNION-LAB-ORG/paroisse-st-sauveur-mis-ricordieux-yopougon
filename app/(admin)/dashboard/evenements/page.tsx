@@ -157,7 +157,17 @@ export default function EvenementsPage() {
                         <h3 className="text-lg font-bold text-[#2d2d83] mb-2">{ev.title}</h3>
                         <div className="flex flex-wrap gap-3 text-sm text-gray-500 mb-3">
                           {ev.time_at && (
-                            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {ev.time_at}</span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5" />
+                              {(() => {
+                                const t = ev.time_at as string
+                                if (t.includes("T") || t.includes("-")) {
+                                  const d = new Date(t)
+                                  if (!isNaN(d.getTime())) return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", hour12: false })
+                                }
+                                return t.length >= 5 ? t.slice(0, 5) : t
+                              })()}
+                            </span>
                           )}
                           {ev.location_at && (
                             <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {ev.location_at}</span>
