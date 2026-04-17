@@ -94,6 +94,8 @@ export default function MesseForm() {
         date_at: isoDateTime,
         time_at: isoDateTime,
         request_status: formData.request_status,
+        // Paiement espèces à la paroisse → en attente tant que non validé dans le dashboard
+        payment_status: "pending",
       };
 
       if (formData.paymentMethod === "online") {

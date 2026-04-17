@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Flame, Check, X, Clock, MapPin, User, CreditCard, ChevronDown, ChevronUp } from "lucide-react"
+import { Flame, Check, X, Clock, MapPin, User, CreditCard, ChevronDown, ChevronUp, Wallet } from "lucide-react"
 import { Header } from "@/components/admin/header"
 import { StatCard } from "@/components/admin/stat-card"
 import { StatusBadge } from "@/components/admin/status-badge"
@@ -46,7 +46,7 @@ export default function MessesPage() {
   const [filter, setFilter] = useState<string>("all")
   const [search, setSearch] = useState("")
   const [expandedId, setExpandedId] = useState<number | null>(null)
-  const [confirmAction, setConfirmAction] = useState<{ id: number; action: "accept" | "reject" } | null>(null)
+  const [confirmAction, setConfirmAction] = useState<{ id: number; action: "accept" | "reject" | "mark_paid" } | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
@@ -78,12 +78,20 @@ export default function MessesPage() {
     if (!confirmAction) return
     setActionLoading(true)
     try {
-      const newStatus = confirmAction.action === "accept" ? "accepted" : "canceled"
-      await messeAPI.modifier(String(confirmAction.id), { request_status: newStatus })
-      setMesses((prev) =>
-        prev.map((m) => (m.id === confirmAction.id ? { ...m, request_status: newStatus } : m)),
-      )
-      toast.success(confirmAction.action === "accept" ? "Messe confirmée" : "Demande annulée")
+      if (confirmAction.action === "mark_paid") {
+        await messeAPI.modifier(String(confirmAction.id), { payment_status: "succeeded" } as any)
+        setMesses((prev) =>
+          prev.map((m) => (m.id === confirmAction.id ? { ...m, payment_status: "succeeded" } : m)),
+        )
+        toast.success("Paiement enregistré")
+      } else {
+        const newStatus = confirmAction.action === "accept" ? "accepted" : "canceled"
+        await messeAPI.modifier(String(confirmAction.id), { request_status: newStatus })
+        setMesses((prev) =>
+          prev.map((m) => (m.id === confirmAction.id ? { ...m, request_status: newStatus } : m)),
+        )
+        toast.success(confirmAction.action === "accept" ? "Messe confirmée" : "Demande annulée")
+      }
     } catch {
       toast.error("Erreur lors de la mise à jour")
     } finally {
@@ -185,30 +193,57 @@ export default function MessesPage() {
                             <span className="text-sm font-medium text-gray-800 truncate">{m.fullname}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <StatusBadge
-                              status={m.amount > 0 ? "paid" : "unpaid"}
-                              label={m.amount > 0 ? "Payé" : "Non payé"}
-                            />
+                            {(() => {
+                              const payStatus = m.payment_status
+                              const payLabel =
+                                payStatus === "succeeded" ? "Payé"
+                                : payStatus === "failed" ? "Échec"
+                                : payStatus === "pending" ? "Paiement en attente"
+                                : m.amount > 0 ? "Non payé"
+                                : "Gratuit"
+                              const payKey =
+                                payStatus === "succeeded" ? "paid"
+                                : payStatus === "failed" ? "cancelled"
+                                : "unpaid"
+                              return (
+                                <StatusBadge
+                                  status={payKey as "paid" | "unpaid" | "cancelled"}
+                                  label={payLabel}
+                                />
+                              )
+                            })()}
                             <StatusBadge
                               status={statusMap[m.request_status] ?? "pending"}
                               label={labelMap[m.request_status] ?? m.request_status}
                             />
                           </div>
                           <div className="flex items-center gap-1.5">
+                            {m.payment_status !== "succeeded" && m.amount > 0 && m.id !== undefined && (
+                              <Button
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 rounded-lg"
+                                onPress={() => setConfirmAction({ id: m.id!, action: "mark_paid" })}
+                                aria-label="Marquer comme payé"
+>
+                                <Wallet className="w-4 h-4" />
+                              </Button>
+                            )}
                             {m.request_status === "pending" && m.id !== undefined && (
                               <>
                                 <Button
                                   variant="ghost"
                                   className="h-8 w-8 p-0 text-green-600 hover:bg-green-50 rounded-lg"
                                   onPress={() => setConfirmAction({ id: m.id!, action: "accept" })}
-                                >
+                                  aria-label="Confirmer la messe"
+>
                                   <Check className="w-4 h-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   className="h-8 w-8 p-0 text-red-500 hover:bg-red-50 rounded-lg"
                                   onPress={() => setConfirmAction({ id: m.id!, action: "reject" })}
-                                >
+                                  aria-label="Refuser la demande"
+>
                                   <X className="w-4 h-4" />
                                 </Button>
                               </>
@@ -258,17 +293,31 @@ export default function MessesPage() {
         </div>
       )}
 
-      {/* Modal confirmation accepter/refuser */}
+      {/* Modal confirmation (accepter / refuser / marquer payé) */}
       <Dialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className={confirmAction?.action === "accept" ? "text-green-600" : "text-red-600"}>
-              {confirmAction?.action === "accept" ? "Confirmer cette messe ?" : "Refuser cette demande ?"}
+            <DialogTitle
+              className={
+                confirmAction?.action === "accept"
+                  ? "text-green-600"
+                  : confirmAction?.action === "mark_paid"
+                  ? "text-emerald-600"
+                  : "text-red-600"
+              }
+            >
+              {confirmAction?.action === "accept"
+                ? "Confirmer cette messe ?"
+                : confirmAction?.action === "mark_paid"
+                ? "Marquer comme payé ?"
+                : "Refuser cette demande ?"}
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-gray-500">
             {confirmAction?.action === "accept"
               ? "La demande sera marquée comme confirmée."
+              : confirmAction?.action === "mark_paid"
+              ? "Confirme que le paiement en espèces a bien été reçu à la paroisse."
               : "La demande sera annulée."}
           </p>
           <div className="flex justify-end gap-3 mt-4">
@@ -285,10 +334,18 @@ export default function MessesPage() {
               className={`px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors disabled:opacity-60 ${
                 confirmAction?.action === "accept"
                   ? "bg-green-600 hover:bg-green-700"
+                  : confirmAction?.action === "mark_paid"
+                  ? "bg-emerald-600 hover:bg-emerald-700"
                   : "bg-red-600 hover:bg-red-700"
               }`}
             >
-              {actionLoading ? "..." : confirmAction?.action === "accept" ? "Confirmer" : "Refuser"}
+              {actionLoading
+                ? "..."
+                : confirmAction?.action === "accept"
+                ? "Confirmer"
+                : confirmAction?.action === "mark_paid"
+                ? "Marquer payé"
+                : "Refuser"}
             </button>
           </div>
         </DialogContent>

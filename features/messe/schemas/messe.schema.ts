@@ -17,6 +17,8 @@ export const MesseSchema = z.object({
 
   request_status: z.enum(["pending", "accepted", "canceled"]),
 
+  payment_status: z.enum(["pending", "succeeded", "failed"]).nullable().optional(),
+
   amount: z.number().positive({ message: "Le montant doit etre superieur a 0" }),
 
   date_at: z.string().datetime({ message: "Date invalide" }),
