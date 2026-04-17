@@ -1,3 +1,9 @@
+export interface IPricingTier {
+  label: string;
+  amount: number;
+  description?: string;
+}
+
 export interface IEvenement {
   id: number;
   title: string;
@@ -9,6 +15,7 @@ export interface IEvenement {
   status: string | null;
   is_paid: boolean;
   price: number | null;
+  pricing_tiers?: IPricingTier[] | null;
   max_participants: number | null;
   registration_deadline: string | null;
   participants_count: number | null;

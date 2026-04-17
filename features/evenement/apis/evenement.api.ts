@@ -11,16 +11,18 @@ export const evenementAPI = {
       service: "public",
     });
   },
-  obtenirParId(id: string): Promise<IEvenement> {
-    return apiClient.request({
+  async obtenirParId(id: string): Promise<IEvenement> {
+    const res = await apiClient.request<{ data: IEvenement }>({
       endpoint: `/events/${id}`,
       method: "GET",
       service: "public",
     });
+    // Le backend retourne { data: ... } via EventResource, on extrait
+    return (res as any)?.data ?? (res as any as IEvenement);
   },
-  ajouter(data: FormData | Record<string, unknown>): Promise<IEvenement> {
+  async ajouter(data: FormData | Record<string, unknown>): Promise<IEvenement> {
     const isForm = typeof FormData !== "undefined" && data instanceof FormData;
-    return apiClient.request({
+    const res = await apiClient.request({
       endpoint: `/events`,
       method: "POST",
       data,
@@ -29,12 +31,12 @@ export const evenementAPI = {
         ? { headers: { "Content-Type": "multipart/form-data" } }
         : undefined,
     });
+    return (res as any)?.data ?? (res as any);
   },
-  modifier(id: string, data: FormData | Record<string, unknown>): Promise<IEvenement> {
+  async modifier(id: string, data: FormData | Record<string, unknown>): Promise<IEvenement> {
     const isForm = typeof FormData !== "undefined" && data instanceof FormData;
-    // Laravel + FormData + PUT : utiliser POST + _method=PUT (méthode override)
     const method = isForm ? "POST" : "PUT";
-    return apiClient.request({
+    const res = await apiClient.request({
       endpoint: `/events/${id}`,
       method,
       data,
@@ -43,6 +45,7 @@ export const evenementAPI = {
         ? { headers: { "Content-Type": "multipart/form-data" } }
         : undefined,
     });
+    return (res as any)?.data ?? (res as any);
   },
   supprimer(id: string): Promise<void> {
     return apiClient.request({

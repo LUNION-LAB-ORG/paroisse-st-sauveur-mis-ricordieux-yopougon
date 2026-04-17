@@ -176,9 +176,11 @@ export default function EvenementsPage() {
                         <Eye className="w-3.5 h-3.5" /> Voir les inscrits
                       </Link>
                       <div className="flex gap-2">
-                        <HeroButton variant="outline" className="rounded-lg text-sm text-[#2d2d83] border-[#2d2d83]/20" onPress={() => { setEventToEdit(ev); setEditOpen(true); }}>
-                          <Edit className="w-3.5 h-3.5" /> Modifier
-                        </HeroButton>
+                        <Link href={`/dashboard/evenements/${ev.id}`}>
+                          <HeroButton variant="outline" className="rounded-lg text-sm text-[#2d2d83] border-[#2d2d83]/20">
+                            <Edit className="w-3.5 h-3.5" /> Modifier
+                          </HeroButton>
+                        </Link>
                         <HeroButton variant="ghost" className="rounded-lg text-red-500 hover:bg-red-50" onPress={() => { setEventToDelete(ev.id); setDeleteOpen(true); }}>
                           <Trash2 className="w-3.5 h-3.5" />
                         </HeroButton>

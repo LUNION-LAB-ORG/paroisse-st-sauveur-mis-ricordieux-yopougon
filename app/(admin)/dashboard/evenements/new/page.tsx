@@ -22,6 +22,7 @@ import {
 import { today, getLocalTimeZone } from "@internationalized/date";
 import type { DateValue, TimeValue } from "@heroui/react";
 import { evenementAPI } from "@/features/evenement/apis/evenement.api";
+import { PricingTiersEditor, type PricingTier } from "@/components/admin/pricing-tiers-editor";
 
 export default function NewEventPage() {
   const router = useRouter();
@@ -35,9 +36,11 @@ export default function NewEventPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Config paiement
+  // Config paiement (indépendant)
   const [isPaid, setIsPaid] = useState(false);
-  const [price, setPrice] = useState<string>("");
+  const [pricingTiers, setPricingTiers] = useState<PricingTier[]>([]);
+
+  // Inscription (indépendant du paiement)
   const [maxParticipants, setMaxParticipants] = useState<string>("");
   const [registrationDeadline, setRegistrationDeadline] = useState("");
 
@@ -66,8 +69,12 @@ export default function NewEventPage() {
     if (!selectedDate) errs.selectedDate = "La date est obligatoire";
     if (!selectedTime) errs.selectedTime = "L'heure est obligatoire";
     if (isPaid) {
-      const p = Number(price);
-      if (!price || isNaN(p) || p < 100) errs.price = "Prix minimum 100 XOF";
+      if (pricingTiers.length === 0) {
+        errs.pricing = "Ajoutez au moins un tarif pour un événement payant";
+      } else {
+        const invalid = pricingTiers.find(t => !t.label.trim() || t.amount < 100);
+        if (invalid) errs.pricing = "Chaque tarif doit avoir un nom et un montant ≥ 100 XOF";
+      }
     }
     if (maxParticipants && (isNaN(Number(maxParticipants)) || Number(maxParticipants) < 1)) {
       errs.maxParticipants = "Nombre invalide";
@@ -90,7 +97,10 @@ export default function NewEventPage() {
         ? `${String(selectedTime.hour).padStart(2, "0")}:${String(selectedTime.minute).padStart(2, "0")}`
         : "";
 
-      // Si une image est sélectionnée → FormData (multipart), sinon JSON
+      const lowestPrice = isPaid && pricingTiers.length
+        ? Math.min(...pricingTiers.map(t => t.amount))
+        : null;
+
       if (imageFile) {
         const fd = new FormData();
         fd.append("title", title);
@@ -99,7 +109,14 @@ export default function NewEventPage() {
         fd.append("date_at", dateStr);
         fd.append("time_at", timeStr);
         fd.append("is_paid", isPaid ? "1" : "0");
-        if (isPaid && price) fd.append("price", price);
+        if (lowestPrice !== null) fd.append("price", String(lowestPrice));
+        if (isPaid && pricingTiers.length) {
+          pricingTiers.forEach((tier, i) => {
+            fd.append(`pricing_tiers[${i}][label]`, tier.label);
+            fd.append(`pricing_tiers[${i}][amount]`, String(tier.amount));
+            if (tier.description) fd.append(`pricing_tiers[${i}][description]`, tier.description);
+          });
+        }
         if (maxParticipants) fd.append("max_participants", maxParticipants);
         if (registrationDeadline) fd.append("registration_deadline", registrationDeadline);
         fd.append("image", imageFile);
@@ -112,7 +129,8 @@ export default function NewEventPage() {
           date_at: dateStr,
           time_at: timeStr,
           is_paid: isPaid,
-          price: isPaid && price ? Number(price) : null,
+          price: lowestPrice,
+          pricing_tiers: isPaid && pricingTiers.length ? pricingTiers : null,
           max_participants: maxParticipants ? Number(maxParticipants) : null,
           registration_deadline: registrationDeadline || null,
         });
@@ -253,11 +271,11 @@ export default function NewEventPage() {
             </Card.Content>
           </Card>
 
-          {/* Paiement */}
+          {/* Tarifs */}
           <Card>
             <Card.Header className="px-6 pt-6 pb-3">
               <Card.Title className="text-sm font-semibold text-[#2d2d83] flex items-center gap-2">
-                <DollarSign className="w-4 h-4" /> Configuration de l&apos;inscription
+                <DollarSign className="w-4 h-4" /> Tarification
               </Card.Title>
             </Card.Header>
             <Card.Content className="p-6 pt-0 space-y-5">
@@ -265,20 +283,34 @@ export default function NewEventPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-800">Événement payant</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Les participants paieront via Wave Money avant d&apos;être inscrits
+                    Active la billetterie Wave avec un ou plusieurs tarifs (Standard / VIP / VVIP…)
                   </p>
                 </div>
-                <Switch isSelected={isPaid} onChange={setIsPaid} />
+                <Switch isSelected={isPaid} onChange={(v) => {
+                  setIsPaid(v);
+                  if (!v) setPricingTiers([]);
+                }} />
               </div>
 
               {isPaid && (
-                <TextField value={price} onChange={setPrice} isInvalid={!!errors.price}>
-                  <Label>Prix par participant (XOF) *</Label>
-                  <Input type="number" placeholder="Ex : 2000" inputMode="numeric" />
-                  {errors.price && <Description className="text-red-500 text-xs">{errors.price}</Description>}
-                </TextField>
+                <>
+                  <PricingTiersEditor tiers={pricingTiers} onChange={setPricingTiers} />
+                  {errors.pricing && (
+                    <p className="text-red-500 text-xs">{errors.pricing}</p>
+                  )}
+                </>
               )}
+            </Card.Content>
+          </Card>
 
+          {/* Inscription & places (indépendant du paiement) */}
+          <Card>
+            <Card.Header className="px-6 pt-6 pb-3">
+              <Card.Title className="text-sm font-semibold text-[#2d2d83] flex items-center gap-2">
+                <Users className="w-4 h-4" /> Inscription & places
+              </Card.Title>
+            </Card.Header>
+            <Card.Content className="p-6 pt-0 space-y-5">
               <TextField
                 value={maxParticipants}
                 onChange={setMaxParticipants}
@@ -376,7 +408,9 @@ export default function NewEventPage() {
               <div className="flex items-start gap-2 text-gray-500">
                 <Users className="w-4 h-4 mt-0.5 shrink-0" />
                 <p>
-                  {isPaid ? `Payant • ${price || "?"} XOF` : "Gratuit"}
+                  {isPaid && pricingTiers.length
+                    ? `Payant • ${pricingTiers.map(t => `${t.label} ${t.amount} XOF`).join(" / ")}`
+                    : "Gratuit"}
                   {maxParticipants && ` • ${maxParticipants} places max`}
                 </p>
               </div>

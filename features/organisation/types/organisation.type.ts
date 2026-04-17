@@ -13,6 +13,11 @@ export interface IOrganisation {
   description: string;
   estimatedParticipants?: string;
   request_status?: IOrganisationStatutDemande;
+  is_paid?: boolean;
+  price?: number | null;
+  max_participants?: number | null;
+  registration_deadline?: string | null;
+  converted_event_id?: number | null;
   created_at?: string;
 }
 

@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
+  CalendarCheck,
   CalendarPlus,
+  DollarSign,
   Loader2,
   Mail,
   Save,
@@ -21,9 +23,11 @@ import {
   Label,
   ListBox,
   Select,
+  Switch,
   TextArea,
   TextField,
 } from "@heroui/react";
+import { PricingTiersEditor, type PricingTier } from "@/components/admin/pricing-tiers-editor";
 import {
   Dialog,
   DialogContent,
@@ -68,7 +72,14 @@ export default function OrganisationDetailPage() {
   const [requestStatus, setRequestStatus] =
     useState<IOrganisationStatutDemande>("pending");
 
+  // Paiement & places
+  const [isPaid, setIsPaid] = useState(false);
+  const [pricingTiers, setPricingTiers] = useState<PricingTier[]>([]);
+  const [maxParticipants, setMaxParticipants] = useState("");
+  const [registrationDeadline, setRegistrationDeadline] = useState("");
+
   const [saving, setSaving] = useState(false);
+  const [converting, setConverting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -88,14 +99,25 @@ export default function OrganisationDetailPage() {
         setDescription(o.description ?? "");
         setEstimatedParticipants(o.estimatedParticipants ?? "");
         setRequestStatus(o.request_status ?? "pending");
+        setIsPaid(Boolean(o.is_paid));
+        setPricingTiers(Array.isArray((o as any).pricing_tiers) ? (o as any).pricing_tiers : []);
+        setMaxParticipants(o.max_participants != null ? String(o.max_participants) : "");
+        setRegistrationDeadline(o.registration_deadline ? String(o.registration_deadline).slice(0, 16) : "");
       })
       .catch(() => toast.error("Demande introuvable"))
       .finally(() => setLoading(false));
   }, [id]);
 
   const handleSave = async () => {
+    if (isPaid && pricingTiers.length === 0) {
+      toast.error("Ajoutez au moins un tarif pour une demande payante");
+      return;
+    }
     setSaving(true);
     try {
+      const lowestPrice = isPaid && pricingTiers.length
+        ? Math.min(...pricingTiers.map(t => t.amount))
+        : null;
       await organisationAPI.modifier(id, {
         email,
         movement,
@@ -106,6 +128,11 @@ export default function OrganisationDetailPage() {
         description,
         estimatedParticipants,
         request_status: requestStatus,
+        is_paid: isPaid,
+        price: lowestPrice,
+        pricing_tiers: isPaid && pricingTiers.length ? pricingTiers : null,
+        max_participants: maxParticipants ? Number(maxParticipants) : null,
+        registration_deadline: registrationDeadline || null,
       } as any);
       toast.success("Demande mise à jour");
       router.push("/dashboard/organisations");
@@ -113,6 +140,23 @@ export default function OrganisationDetailPage() {
       toast.error("Erreur lors de la sauvegarde");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleConvertToEvent = async () => {
+    if (requestStatus !== "accepted") {
+      toast.error("La demande doit être acceptée avant d'être convertie");
+      return;
+    }
+    setConverting(true);
+    try {
+      await organisationAPI.convertToEvent(id);
+      toast.success("Demande convertie en événement officiel");
+      router.push("/dashboard/evenements");
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de la conversion");
+    } finally {
+      setConverting(false);
     }
   };
 
@@ -293,6 +337,58 @@ export default function OrganisationDetailPage() {
               </TextField>
             </Card.Content>
           </Card>
+
+          {/* Tarification */}
+          <Card>
+            <Card.Header className="px-6 pt-6 pb-3">
+              <Card.Title className="text-sm font-semibold text-[#2d2d83] flex items-center gap-2">
+                <DollarSign className="w-4 h-4" /> Tarification
+              </Card.Title>
+            </Card.Header>
+            <Card.Content className="p-6 pt-0 space-y-5">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">Événement payant</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Un ou plusieurs tarifs (Standard / VIP / VVIP…) via Wave
+                  </p>
+                </div>
+                <Switch isSelected={isPaid} onChange={(v) => {
+                  setIsPaid(v);
+                  if (!v) setPricingTiers([]);
+                }} />
+              </div>
+              {isPaid && (
+                <PricingTiersEditor tiers={pricingTiers} onChange={setPricingTiers} />
+              )}
+            </Card.Content>
+          </Card>
+
+          {/* Inscription & places */}
+          <Card>
+            <Card.Header className="px-6 pt-6 pb-3">
+              <Card.Title className="text-sm font-semibold text-[#2d2d83] flex items-center gap-2">
+                <Users className="w-4 h-4" /> Inscription & places
+              </Card.Title>
+            </Card.Header>
+            <Card.Content className="p-6 pt-0 space-y-5">
+              <TextField value={maxParticipants} onChange={setMaxParticipants}>
+                <Label>Nombre max de participants (optionnel)</Label>
+                <Input type="number" inputMode="numeric" placeholder="Laisser vide = illimité" />
+              </TextField>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Date limite d&apos;inscription (optionnel)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={registrationDeadline}
+                  onChange={(e) => setRegistrationDeadline(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50"
+                />
+              </div>
+            </Card.Content>
+          </Card>
         </div>
 
         <div className="space-y-5">
@@ -326,11 +422,53 @@ export default function OrganisationDetailPage() {
               </Select>
 
               <Description className="text-xs text-gray-500">
-                Quand la demande est acceptée, vous pouvez créer manuellement
-                l&apos;événement correspondant depuis la page Événements.
+                Quand la demande est acceptée, vous pouvez la convertir en événement
+                officiel en 1 clic ci-dessous.
               </Description>
             </Card.Content>
           </Card>
+
+          {/* Convertir en événement */}
+          {requestStatus === "accepted" && !organisation.converted_event_id && (
+            <Card className="border-green-200 bg-green-50/30">
+              <Card.Content className="p-5">
+                <p className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-2">
+                  <CalendarCheck className="w-4 h-4" /> Demande acceptée
+                </p>
+                <p className="text-xs text-gray-600 mb-3">
+                  Convertissez cette demande en événement officiel (visible public,
+                  inscriptions possibles). Les tarifs et places configurés seront reportés.
+                </p>
+                <Button
+                  variant="primary"
+                  className="w-full bg-green-600 rounded-xl"
+                  isDisabled={converting}
+                  onPress={handleConvertToEvent}
+                >
+                  <CalendarCheck className="w-4 h-4" /> {converting ? "Conversion..." : "Convertir en événement"}
+                </Button>
+              </Card.Content>
+            </Card>
+          )}
+
+          {organisation.converted_event_id && (
+            <Card className="border-blue-200 bg-blue-50/30">
+              <Card.Content className="p-5">
+                <p className="text-sm font-semibold text-blue-700 mb-1 flex items-center gap-2">
+                  <CalendarCheck className="w-4 h-4" /> Déjà convertie
+                </p>
+                <p className="text-xs text-gray-600">
+                  Événement #{organisation.converted_event_id} créé à partir de cette demande.
+                </p>
+                <Link
+                  href={`/dashboard/evenements/${organisation.converted_event_id}`}
+                  className="text-xs text-blue-600 underline mt-2 inline-block"
+                >
+                  Voir l&apos;événement →
+                </Link>
+              </Card.Content>
+            </Card>
+          )}
 
           <Card className="border-red-100">
             <Card.Content className="p-5">

@@ -52,4 +52,12 @@ export const organisationAPI = {
       service: "private",
     });
   },
+
+  convertToEvent(id: number | string): Promise<{ event: { data: unknown }; organisation: { data: unknown } }> {
+    return apiClient.request({
+      endpoint: `/organisations/${id}/convert-to-event`,
+      method: "POST",
+      service: "private",
+    });
+  },
 };

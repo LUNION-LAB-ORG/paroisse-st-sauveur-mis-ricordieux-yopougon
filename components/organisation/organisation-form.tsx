@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react';
-import { ArrowLeft, CheckCircle, CalendarPlus } from 'lucide-react';
+import { ArrowLeft, CheckCircle, CalendarPlus, DollarSign, Users } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { organisationAPI } from '@/features/organisation/apis/organisation.api';
 import { OrganisationType } from '@/features/organisation/schemas/organisation.schema';
@@ -24,7 +24,9 @@ import {
   DateField,
   Calendar,
   TimeField,
+  Switch,
 } from "@heroui/react";
+import { PricingTiersEditor, type PricingTier } from "@/components/admin/pricing-tiers-editor";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import type { DateValue, TimeValue } from "@heroui/react";
 
@@ -43,6 +45,12 @@ export default function OrganisationForm() {
   const [startTime, setStartTime] = useState<TimeValue | null>(null);
   const [endTime, setEndTime] = useState<TimeValue | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Paiement et places (étape 4)
+  const [isPaid, setIsPaid] = useState(false);
+  const [pricingTiers, setPricingTiers] = useState<PricingTier[]>([]);
+  const [maxParticipants, setMaxParticipants] = useState('');
+  const [registrationDeadline, setRegistrationDeadline] = useState('');
 
   const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
 
@@ -341,6 +349,50 @@ export default function OrganisationForm() {
                   <Input type="number" placeholder="Ex: 50" />
                 </TextField>
 
+                {/* Tarification */}
+                <div className="border-t border-gray-100 pt-4 space-y-3">
+                  <p className="text-sm font-semibold text-[#2d2d83] flex items-center gap-2">
+                    <DollarSign className="w-4 h-4" /> Tarification (optionnel)
+                  </p>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">Événement payant</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Ajoutez un ou plusieurs tarifs (Standard/VIP/VVIP…)
+                      </p>
+                    </div>
+                    <Switch isSelected={isPaid} onChange={(v) => {
+                      setIsPaid(v);
+                      if (!v) setPricingTiers([]);
+                    }} />
+                  </div>
+                  {isPaid && (
+                    <PricingTiersEditor tiers={pricingTiers} onChange={setPricingTiers} />
+                  )}
+                </div>
+
+                {/* Places & deadline (indépendant) */}
+                <div className="border-t border-gray-100 pt-4 space-y-3">
+                  <p className="text-sm font-semibold text-[#2d2d83] flex items-center gap-2">
+                    <Users className="w-4 h-4" /> Inscription (optionnel)
+                  </p>
+                  <TextField value={maxParticipants} onChange={setMaxParticipants}>
+                    <Label>Nombre max de participants</Label>
+                    <Input type="number" inputMode="numeric" placeholder="Laisser vide = illimité" />
+                  </TextField>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Date limite d&apos;inscription
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={registrationDeadline}
+                      onChange={(e) => setRegistrationDeadline(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex justify-between pt-2">
                   <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>Précédent</Button>
                   <Button
@@ -352,6 +404,10 @@ export default function OrganisationForm() {
                         setStepErrors({ description: "La description doit contenir au moins 10 caractères" });
                         return;
                       }
+                      if (isPaid && pricingTiers.length === 0) {
+                        toast.error("Ajoutez au moins un tarif ou désactivez 'Événement payant'");
+                        return;
+                      }
                       const dateStr = selectedDate
                         ? `${selectedDate.year}-${String(selectedDate.month).padStart(2, "0")}-${String(selectedDate.day).padStart(2, "0")}`
                         : "";
@@ -361,12 +417,20 @@ export default function OrganisationForm() {
                       const endTimeStr = endTime
                         ? `${String(endTime.hour).padStart(2, "0")}:${String(endTime.minute).padStart(2, "0")}`
                         : "";
+                      const lowestPrice = isPaid && pricingTiers.length
+                        ? Math.min(...pricingTiers.map(t => t.amount))
+                        : null;
                       mutation.mutate({
                         ...formData,
                         date: dateStr,
                         startTime: startTimeStr,
                         endTime: endTimeStr,
-                      } as OrganisationType);
+                        is_paid: isPaid,
+                        price: lowestPrice,
+                        pricing_tiers: isPaid && pricingTiers.length ? pricingTiers : null,
+                        max_participants: maxParticipants ? Number(maxParticipants) : null,
+                        registration_deadline: registrationDeadline || null,
+                      } as any);
                     }}
                   >
                     {mutation.isPending ? 'Envoi...' : 'Soumettre'}
