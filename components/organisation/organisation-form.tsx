@@ -44,8 +44,37 @@ export default function OrganisationForm() {
   const [endTime, setEndTime] = useState<TimeValue | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleNextStep = () => { if (currentStep < 4) setCurrentStep(currentStep + 1); };
-  const handlePrevStep = () => { if (currentStep > 1) setCurrentStep(currentStep - 1); };
+  const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
+
+  const handleNextStep = () => {
+    const errors: Record<string, string> = {};
+
+    if (currentStep === 1) {
+      if (!formData.movement) errors.movement = "Veuillez sélectionner un mouvement";
+      if (!formData.email.trim()) errors.email = "L'e-mail est obligatoire";
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = "Adresse email invalide";
+    }
+    if (currentStep === 2) {
+      if (!formData.eventType) errors.eventType = "Veuillez sélectionner un type d'activité";
+    }
+    if (currentStep === 3) {
+      if (!selectedDate) errors.selectedDate = "Veuillez sélectionner une date";
+      if (!startTime) errors.startTime = "Veuillez renseigner l'heure de début";
+      if (!endTime) errors.endTime = "Veuillez renseigner l'heure de fin";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setStepErrors(errors);
+      return;
+    }
+    setStepErrors({});
+    if (currentStep < 4) setCurrentStep(currentStep + 1);
+  };
+
+  const handlePrevStep = () => {
+    setStepErrors({});
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
+  };
 
   const resetForm = () => {
     setFormData({ isParishMember: 'yes', movement: '', email: '', eventType: '', description: '', estimatedParticipants: '' });
@@ -186,13 +215,16 @@ export default function OrganisationForm() {
                     </ListBox>
                   </Select.Popover>
                 </Select>
+                {stepErrors.movement && <p className="text-red-500 text-xs">{stepErrors.movement}</p>}
 
                 <TextField
                   value={formData.email}
                   onChange={(val) => setFormData((prev) => ({ ...prev, email: val }))}
+                  isInvalid={!!stepErrors.email}
                 >
                   <Label>E-mail</Label>
                   <Input type="email" placeholder="jean@exemple.com" />
+                  {stepErrors.email && <Description className="text-red-500 text-xs">{stepErrors.email}</Description>}
                 </TextField>
 
                 <div className="flex justify-end pt-2">
@@ -220,6 +252,7 @@ export default function OrganisationForm() {
                     </ListBox>
                   </Select.Popover>
                 </Select>
+                {stepErrors.eventType && <p className="text-red-500 text-xs">{stepErrors.eventType}</p>}
 
                 <div className="flex justify-between pt-2">
                   <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>Précédent</Button>
@@ -274,6 +307,14 @@ export default function OrganisationForm() {
                   </TimeField>
                 </div>
 
+                {(stepErrors.selectedDate || stepErrors.startTime || stepErrors.endTime) && (
+                  <div className="space-y-1">
+                    {stepErrors.selectedDate && <p className="text-red-500 text-xs">{stepErrors.selectedDate}</p>}
+                    {stepErrors.startTime && <p className="text-red-500 text-xs">{stepErrors.startTime}</p>}
+                    {stepErrors.endTime && <p className="text-red-500 text-xs">{stepErrors.endTime}</p>}
+                  </div>
+                )}
+
                 <div className="flex justify-between pt-2">
                   <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>Précédent</Button>
                   <Button variant="primary" className="bg-[#2d2d83] rounded-xl px-6" onPress={handleNextStep}>Suivant</Button>
@@ -286,9 +327,13 @@ export default function OrganisationForm() {
                 <TextField
                   value={formData.description}
                   onChange={(val) => setFormData((prev) => ({ ...prev, description: val }))}
+                  isInvalid={!!stepErrors.description}
                 >
                   <Label>Description de l&apos;événement</Label>
                   <TextArea placeholder="Décrivez votre événement et vos besoins..." rows={4} />
+                  {stepErrors.description && (
+                    <Description className="text-red-500 text-xs">{stepErrors.description}</Description>
+                  )}
                 </TextField>
 
                 <TextField
@@ -305,7 +350,27 @@ export default function OrganisationForm() {
                     variant="primary"
                     className="bg-[#98141f] rounded-xl px-6"
                     isDisabled={mutation.isPending}
-                    onPress={() => mutation.mutate(formData as unknown as OrganisationType)}
+                    onPress={() => {
+                      if (!formData.description.trim() || formData.description.trim().length < 10) {
+                        setStepErrors({ description: "La description doit contenir au moins 10 caractères" });
+                        return;
+                      }
+                      const dateStr = selectedDate
+                        ? `${selectedDate.year}-${String(selectedDate.month).padStart(2, "0")}-${String(selectedDate.day).padStart(2, "0")}`
+                        : "";
+                      const startTimeStr = startTime
+                        ? `${String(startTime.hour).padStart(2, "0")}:${String(startTime.minute).padStart(2, "0")}`
+                        : "";
+                      const endTimeStr = endTime
+                        ? `${String(endTime.hour).padStart(2, "0")}:${String(endTime.minute).padStart(2, "0")}`
+                        : "";
+                      mutation.mutate({
+                        ...formData,
+                        date: dateStr,
+                        startTime: startTimeStr,
+                        endTime: endTimeStr,
+                      } as OrganisationType);
+                    }}
                   >
                     {mutation.isPending ? 'Envoi...' : 'Soumettre'}
                   </Button>

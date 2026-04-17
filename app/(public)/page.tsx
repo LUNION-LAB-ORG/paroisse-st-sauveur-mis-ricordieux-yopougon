@@ -18,7 +18,7 @@ export default async function Home() {
     <div className="overflow-hidden flex flex-col">
       <Hero />
       <SelectProgramme />
-      <div className="flex flex-col gap-12 pb-16">
+      <div className="flex flex-col gap-12 pb-16 pt-10">
         <Services />
         <Cure />
         <Evenements event={events} />

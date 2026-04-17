@@ -138,7 +138,7 @@ export default function LoginPage() {
         </form>
 
         {/* FOOTER */}
-        <div className="bg-muted rounded-b-2xl -mt-4 pt-8 pb-4 text-center px-4">
+        <div className="bg-gray-100 rounded-b-2xl -mt-4 pt-8 pb-4 text-center px-4">
           <p className="text-sm text-muted-foreground">
             Besoin d&apos;aide ?{" "}
             <Link href="#" className="underline text-foreground">

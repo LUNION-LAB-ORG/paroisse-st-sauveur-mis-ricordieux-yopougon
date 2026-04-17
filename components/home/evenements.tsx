@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MapPin, CalendarX, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -52,11 +52,44 @@ export default function Evenements({ event = [] }: { event: Event[] }) {
             Prochains Événements
           </h2>
         </div>
-        <Card className="p-12 text-center">
-          <Card.Content>
-            <p className="text-muted">Aucun événement pour le moment.</p>
-          </Card.Content>
-        </Card>
+        {/* Empty state professionnel */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2d2d83]/5 via-white to-[#98141f]/5 border border-[#2d2d83]/10 py-16 px-8 text-center">
+          {/* Décoration */}
+          <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-[#2d2d83]/5" />
+          <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-[#98141f]/5" />
+
+          <div className="relative z-10 flex flex-col items-center gap-5">
+            <div className="w-20 h-20 rounded-full bg-[#2d2d83]/10 flex items-center justify-center">
+              <CalendarX className="w-10 h-10 text-[#2d2d83]/50" />
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-[#2d2d83] mb-2">
+                Aucun événement planifié
+              </h3>
+              <p className="text-gray-500 max-w-sm mx-auto leading-relaxed text-sm">
+                La paroisse prépare de nouveaux événements pour vous.
+                Revenez bientôt pour découvrir notre prochain programme.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 mt-2">
+              <Link
+                href="/demande-messe"
+                className="inline-flex items-center gap-2 bg-[#2d2d83] hover:bg-[#1e1e6b] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors"
+              >
+                Demander une messe
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/ecoute"
+                className="inline-flex items-center gap-2 border border-[#2d2d83] text-[#2d2d83] hover:bg-[#2d2d83]/5 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors"
+              >
+                Demander une écoute
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
     );
   }

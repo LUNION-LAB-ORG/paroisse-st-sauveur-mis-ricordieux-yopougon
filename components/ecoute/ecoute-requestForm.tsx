@@ -70,7 +70,10 @@ const EcouteRequestForm = () => {
         toast.error("Veuillez corriger les erreurs", { id: toastId });
         return;
       }
-      await ecouteAPI.ajouter(result.data);
+      // Strip acceptConditions before sending to API
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { acceptConditions, ...apiPayload } = result.data;
+      await ecouteAPI.ajouter(apiPayload);
       toast.success("Demande envoyée avec succès", { id: toastId });
       setShowSuccess(true);
     } catch (err) {

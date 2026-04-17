@@ -44,11 +44,31 @@ export default function MesseForm() {
   const [selectedTime, setSelectedTime] = useState<TimeValue | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
+
   const handleNextStep = () => {
+    const errors: Record<string, string> = {};
+
+    if (currentStep === 1) {
+      if (!formData.intentionType) errors.intentionType = "Veuillez sélectionner un type d'intention";
+    }
+    if (currentStep === 2) {
+      if (!formData.firstName.trim()) errors.firstName = "Le nom est obligatoire";
+    }
+    if (currentStep === 3) {
+      if (!selectedDate) errors.selectedDate = "Veuillez sélectionner une date";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setStepErrors(errors);
+      return;
+    }
+    setStepErrors({});
     if (currentStep < 4) setCurrentStep(currentStep + 1);
   };
 
   const handlePrevStep = () => {
+    setStepErrors({});
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
@@ -236,6 +256,9 @@ export default function MesseForm() {
                     </ListBox>
                   </Select.Popover>
                 </Select>
+                {stepErrors.intentionType && (
+                  <p className="text-red-500 text-xs mt-1">{stepErrors.intentionType}</p>
+                )}
 
                 <TextField
                   value={formData.message}
@@ -258,9 +281,13 @@ export default function MesseForm() {
                 <TextField
                   value={formData.firstName}
                   onChange={(val) => setFormData((prev) => ({ ...prev, firstName: val }))}
+                  isInvalid={!!stepErrors.firstName}
                 >
                   <Label>Nom et prénom</Label>
                   <Input placeholder="Jean Dupont" />
+                  {stepErrors.firstName && (
+                    <Description className="text-red-500 text-xs">{stepErrors.firstName}</Description>
+                  )}
                 </TextField>
 
                 <TextField
@@ -287,6 +314,7 @@ export default function MesseForm() {
             )}
 
             {currentStep === 3 && (
+
               <div className="space-y-5">
                 <DatePicker
                   className="w-full"
@@ -336,6 +364,9 @@ export default function MesseForm() {
                     </TimeField.Input>
                   </TimeField.Group>
                 </TimeField>
+                {stepErrors.selectedDate && (
+                  <p className="text-red-500 text-xs mt-1">{stepErrors.selectedDate}</p>
+                )}
 
                 <div className="flex justify-between pt-2">
                   <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>Précédent</Button>
@@ -355,7 +386,7 @@ export default function MesseForm() {
                     <Radio.Control><Radio.Indicator /></Radio.Control>
                     <Radio.Content>
                       <Label>Paiement en ligne</Label>
-                      <Description>Par carte bancaire (sécurisé)</Description>
+                      <Description>Via Wave Money (paiement mobile sécurisé)</Description>
                     </Radio.Content>
                   </Radio>
                   <Radio value="parish">
