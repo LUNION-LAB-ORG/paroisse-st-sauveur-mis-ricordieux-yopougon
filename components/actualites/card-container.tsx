@@ -44,15 +44,17 @@ export default function CardContainer({ txt1, dataContainer }: Props) {
               key={item.id ?? index}
               className="flex flex-col bg-white rounded-xl shadow-md overflow-hidden"
             >
-              {/* Image & date tag */}
-              <div className="relative">
+              {/* Image HD & date tag */}
+              <div className="relative w-full aspect-[16/10] overflow-hidden bg-gray-100">
                 <Image
                   src={imgSrc}
                   alt={item.title}
-                  width={500}
-                  height={300}
-                  className="w-full h-64 object-cover"
+                  width={1200}
+                  height={750}
+                  quality={90}
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
+                <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/30 to-transparent pointer-events-none" />
                 <div className="absolute top-4 left-4 bg-white rounded-lg px-4 py-2 shadow text-blue-900 font-bold text-sm uppercase">
                   {formatShort(displayDate)}
                 </div>

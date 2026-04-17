@@ -261,12 +261,14 @@ export default function OrganisationDetailPage() {
         <div className="lg:col-span-2 space-y-5">
           {organisation.image ? (
             <Card className="overflow-hidden">
-              <div className="relative w-full h-56 bg-gray-100">
+              <div className="relative w-full aspect-[16/9] bg-gray-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={organisation.image}
                   alt={organisation.title ?? "Image de la demande"}
-                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
             </Card>

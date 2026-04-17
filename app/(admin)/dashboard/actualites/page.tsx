@@ -106,24 +106,28 @@ export default function ActualitesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((article) => (
             <Card key={article.id} className="overflow-hidden hover:shadow-md transition-shadow">
-              {/* Image hero */}
-              <div className="relative w-full h-40 bg-gray-100">
+              {/* Image hero HD */}
+              <div className="relative w-full aspect-[16/10] bg-gray-100">
                 {article.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={article.image}
                     alt={article.title}
-                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).src = "/assets/images/evenement.jpg"
                     }}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-300">
-                    <Newspaper className="w-10 h-10" />
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-300">
+                    <Newspaper className="w-12 h-12" />
                   </div>
                 )}
-                <div className="absolute top-2 right-2">
+                {/* Overlay gradient subtil pour lisibilité badge */}
+                <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/30 to-transparent pointer-events-none" />
+                <div className="absolute top-3 right-3">
                   <StatusBadge
                     status={article.status === "published" ? "confirmed" : "pending"}
                     label={article.status === "published" ? "Publié" : "Brouillon"}
