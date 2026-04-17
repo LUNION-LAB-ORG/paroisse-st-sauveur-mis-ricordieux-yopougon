@@ -19,19 +19,29 @@ export const evenementAPI = {
     });
   },
   ajouter(data: FormData | Record<string, unknown>): Promise<IEvenement> {
+    const isForm = typeof FormData !== "undefined" && data instanceof FormData;
     return apiClient.request({
       endpoint: `/events`,
       method: "POST",
       data,
       service: "private",
+      config: isForm
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : undefined,
     });
   },
   modifier(id: string, data: FormData | Record<string, unknown>): Promise<IEvenement> {
+    const isForm = typeof FormData !== "undefined" && data instanceof FormData;
+    // Laravel + FormData + PUT : utiliser POST + _method=PUT (méthode override)
+    const method = isForm ? "POST" : "PUT";
     return apiClient.request({
       endpoint: `/events/${id}`,
-      method: "PUT",
+      method,
       data,
       service: "private",
+      config: isForm
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : undefined,
     });
   },
   supprimer(id: string): Promise<void> {

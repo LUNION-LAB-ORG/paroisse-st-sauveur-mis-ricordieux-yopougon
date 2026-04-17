@@ -14,7 +14,13 @@ import {
   TextArea,
   Description,
   Switch,
+  DatePicker,
+  DateField,
+  Calendar as HeroCalendar,
+  TimeField,
 } from "@heroui/react";
+import { today, getLocalTimeZone } from "@internationalized/date";
+import type { DateValue, TimeValue } from "@heroui/react";
 import { evenementAPI } from "@/features/evenement/apis/evenement.api";
 
 export default function NewEventPage() {
@@ -24,8 +30,8 @@ export default function NewEventPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [locationAt, setLocationAt] = useState("");
-  const [dateAt, setDateAt] = useState("");
-  const [timeAt, setTimeAt] = useState("");
+  const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
+  const [selectedTime, setSelectedTime] = useState<TimeValue | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -57,8 +63,8 @@ export default function NewEventPage() {
     if (!title.trim()) errs.title = "Le titre est obligatoire";
     if (!description.trim()) errs.description = "La description est obligatoire";
     if (!locationAt.trim()) errs.locationAt = "Le lieu est obligatoire";
-    if (!dateAt) errs.dateAt = "La date est obligatoire";
-    if (!timeAt) errs.timeAt = "L'heure est obligatoire";
+    if (!selectedDate) errs.selectedDate = "La date est obligatoire";
+    if (!selectedTime) errs.selectedTime = "L'heure est obligatoire";
     if (isPaid) {
       const p = Number(price);
       if (!price || isNaN(p) || p < 100) errs.price = "Prix minimum 100 XOF";
@@ -77,25 +83,45 @@ export default function NewEventPage() {
     }
     setSubmitting(true);
     try {
-      const payload: Record<string, unknown> = {
-        title,
-        description,
-        location_at: locationAt,
-        date_at: dateAt,
-        time_at: timeAt,
-        is_paid: isPaid,
-        price: isPaid ? Number(price) : null,
-        max_participants: maxParticipants ? Number(maxParticipants) : null,
-        registration_deadline: registrationDeadline || null,
-      };
-      if (imageFile) payload.image = imageFile;
+      const dateStr = selectedDate
+        ? `${selectedDate.year}-${String(selectedDate.month).padStart(2, "0")}-${String(selectedDate.day).padStart(2, "0")}`
+        : "";
+      const timeStr = selectedTime
+        ? `${String(selectedTime.hour).padStart(2, "0")}:${String(selectedTime.minute).padStart(2, "0")}`
+        : "";
 
-      await evenementAPI.ajouter(payload);
+      // Si une image est sélectionnée → FormData (multipart), sinon JSON
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append("title", title);
+        fd.append("description", description);
+        fd.append("location_at", locationAt);
+        fd.append("date_at", dateStr);
+        fd.append("time_at", timeStr);
+        fd.append("is_paid", isPaid ? "1" : "0");
+        if (isPaid && price) fd.append("price", price);
+        if (maxParticipants) fd.append("max_participants", maxParticipants);
+        if (registrationDeadline) fd.append("registration_deadline", registrationDeadline);
+        fd.append("image", imageFile);
+        await evenementAPI.ajouter(fd);
+      } else {
+        await evenementAPI.ajouter({
+          title,
+          description,
+          location_at: locationAt,
+          date_at: dateStr,
+          time_at: timeStr,
+          is_paid: isPaid,
+          price: isPaid && price ? Number(price) : null,
+          max_participants: maxParticipants ? Number(maxParticipants) : null,
+          registration_deadline: registrationDeadline || null,
+        });
+      }
       toast.success("Événement créé avec succès");
       router.push("/dashboard/evenements");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Erreur lors de la création");
+      toast.error(err?.message || "Erreur lors de la création");
     } finally {
       setSubmitting(false);
     }
@@ -167,30 +193,62 @@ export default function NewEventPage() {
               </TextField>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date *</label>
-                  <input
-                    type="date"
-                    value={dateAt}
-                    onChange={(e) => setDateAt(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50 ${
-                      errors.dateAt ? "border-red-400" : "border-gray-200"
-                    }`}
-                  />
-                  {errors.dateAt && <p className="text-red-500 text-xs mt-1">{errors.dateAt}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Heure *</label>
-                  <input
-                    type="time"
-                    value={timeAt}
-                    onChange={(e) => setTimeAt(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50 ${
-                      errors.timeAt ? "border-red-400" : "border-gray-200"
-                    }`}
-                  />
-                  {errors.timeAt && <p className="text-red-500 text-xs mt-1">{errors.timeAt}</p>}
-                </div>
+                <DatePicker
+                  className="w-full"
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                  minValue={today(getLocalTimeZone())}
+                  isInvalid={!!errors.selectedDate}
+                >
+                  <Label>Date *</Label>
+                  <DateField.Group fullWidth>
+                    <DateField.Input>
+                      {(segment) => <DateField.Segment segment={segment} />}
+                    </DateField.Input>
+                    <DateField.Suffix>
+                      <DatePicker.Trigger>
+                        <DatePicker.TriggerIndicator />
+                      </DatePicker.Trigger>
+                    </DateField.Suffix>
+                  </DateField.Group>
+                  <DatePicker.Popover>
+                    <HeroCalendar aria-label="Date de l'événement">
+                      <HeroCalendar.Header>
+                        <HeroCalendar.NavButton slot="previous" />
+                        <HeroCalendar.Heading />
+                        <HeroCalendar.NavButton slot="next" />
+                      </HeroCalendar.Header>
+                      <HeroCalendar.Grid>
+                        <HeroCalendar.GridHeader>
+                          {(day) => <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>}
+                        </HeroCalendar.GridHeader>
+                        <HeroCalendar.GridBody>
+                          {(date) => <HeroCalendar.Cell date={date} />}
+                        </HeroCalendar.GridBody>
+                      </HeroCalendar.Grid>
+                    </HeroCalendar>
+                  </DatePicker.Popover>
+                  {errors.selectedDate && (
+                    <Description className="text-red-500 text-xs">{errors.selectedDate}</Description>
+                  )}
+                </DatePicker>
+
+                <TimeField
+                  className="w-full"
+                  value={selectedTime}
+                  onChange={setSelectedTime}
+                  isInvalid={!!errors.selectedTime}
+                >
+                  <Label>Heure *</Label>
+                  <TimeField.Group>
+                    <TimeField.Input>
+                      {(segment) => <TimeField.Segment segment={segment} />}
+                    </TimeField.Input>
+                  </TimeField.Group>
+                  {errors.selectedTime && (
+                    <Description className="text-red-500 text-xs">{errors.selectedTime}</Description>
+                  )}
+                </TimeField>
               </div>
             </Card.Content>
           </Card>
@@ -307,7 +365,11 @@ export default function NewEventPage() {
                 <div>
                   <p className="font-medium text-gray-700">{title || "(titre)"}</p>
                   <p>
-                    {dateAt || "—"} {timeAt && `à ${timeAt}`}
+                    {selectedDate
+                      ? `${String(selectedDate.day).padStart(2, "0")}/${String(selectedDate.month).padStart(2, "0")}/${selectedDate.year}`
+                      : "—"}
+                    {selectedTime &&
+                      ` à ${String(selectedTime.hour).padStart(2, "0")}:${String(selectedTime.minute).padStart(2, "0")}`}
                   </p>
                 </div>
               </div>

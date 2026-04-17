@@ -24,4 +24,32 @@ export const organisationAPI = {
       service: "private",
     });
   },
+
+  obtenirParId(id: number | string): Promise<{ data: IOrganisation }> {
+    return apiClient.request({
+      endpoint: `/organisations/${id}`,
+      method: "GET",
+      service: "private",
+    });
+  },
+
+  modifier(
+    id: number | string,
+    data: Partial<IOrganisationCreer> & { request_status?: "pending" | "accepted" | "canceled" },
+  ): Promise<{ data: IOrganisation }> {
+    return apiClient.request({
+      endpoint: `/organisations/${id}`,
+      method: "PUT",
+      data,
+      service: "private",
+    });
+  },
+
+  supprimer(id: number | string): Promise<void> {
+    return apiClient.request({
+      endpoint: `/organisations/${id}`,
+      method: "DELETE",
+      service: "private",
+    });
+  },
 };

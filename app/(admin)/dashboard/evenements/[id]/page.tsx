@@ -23,13 +23,19 @@ import { toast } from "sonner";
 import {
   Button,
   Card,
+  Calendar as HeroCalendar,
+  DateField,
+  DatePicker,
   Description,
   Input,
   Label,
   Switch,
   TextArea,
   TextField,
+  TimeField,
 } from "@heroui/react";
+import { CalendarDate, Time } from "@internationalized/date";
+import type { DateValue, TimeValue } from "@heroui/react";
 import { StatCard } from "@/components/admin/stat-card";
 import {
   Dialog,
@@ -115,8 +121,8 @@ export default function EventDetailPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [locationAt, setLocationAt] = useState("");
-  const [dateAt, setDateAt] = useState("");
-  const [timeAt, setTimeAt] = useState("");
+  const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
+  const [selectedTime, setSelectedTime] = useState<TimeValue | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -150,8 +156,18 @@ export default function EventDetailPage() {
           setTitle(e.title ?? "");
           setDescription(e.description ?? "");
           setLocationAt(e.location_at ?? "");
-          setDateAt(e.date_at ? e.date_at.slice(0, 10) : "");
-          setTimeAt(e.time_at ? e.time_at.slice(0, 5) : "");
+          if (e.date_at) {
+            const d = new Date(e.date_at);
+            setSelectedDate(new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate()));
+          }
+          if (e.time_at) {
+            // time_at peut être "HH:mm" ou ISO
+            const timeStr = typeof e.time_at === "string" ? e.time_at : "";
+            const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+            if (match) {
+              setSelectedTime(new Time(Number(match[1]), Number(match[2])));
+            }
+          }
           if (e.image) setImagePreview(e.image);
           setIsPaid(e.is_paid ?? false);
           setPrice(e.price !== null && e.price !== undefined ? String(e.price) : "");
@@ -186,8 +202,8 @@ export default function EventDetailPage() {
     if (!title.trim()) errs.title = "Le titre est obligatoire";
     if (!description.trim()) errs.description = "La description est obligatoire";
     if (!locationAt.trim()) errs.locationAt = "Le lieu est obligatoire";
-    if (!dateAt) errs.dateAt = "La date est obligatoire";
-    if (!timeAt) errs.timeAt = "L'heure est obligatoire";
+    if (!selectedDate) errs.selectedDate = "La date est obligatoire";
+    if (!selectedTime) errs.selectedTime = "L'heure est obligatoire";
     setInfosErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -199,19 +215,38 @@ export default function EventDetailPage() {
     }
     setSavingInfos(true);
     try {
-      const payload: Record<string, unknown> = {
-        title,
-        description,
-        location_at: locationAt,
-        date_at: dateAt,
-        time_at: timeAt,
-      };
-      if (imageFile) payload.image = imageFile;
-      const updated = await evenementAPI.modifier(id, payload);
+      const dateStr = selectedDate
+        ? `${selectedDate.year}-${String(selectedDate.month).padStart(2, "0")}-${String(selectedDate.day).padStart(2, "0")}`
+        : "";
+      const timeStr = selectedTime
+        ? `${String(selectedTime.hour).padStart(2, "0")}:${String(selectedTime.minute).padStart(2, "0")}`
+        : "";
+
+      let updated;
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append("_method", "PUT");
+        fd.append("title", title);
+        fd.append("description", description);
+        fd.append("location_at", locationAt);
+        fd.append("date_at", dateStr);
+        fd.append("time_at", timeStr);
+        fd.append("image", imageFile);
+        updated = await evenementAPI.modifier(id, fd);
+      } else {
+        updated = await evenementAPI.modifier(id, {
+          title,
+          description,
+          location_at: locationAt,
+          date_at: dateStr,
+          time_at: timeStr,
+        });
+      }
       setEvent(updated);
       toast.success("Informations enregistrées");
-    } catch {
-      toast.error("Erreur lors de la sauvegarde");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Erreur lors de la sauvegarde");
     } finally {
       setSavingInfos(false);
     }
@@ -385,34 +420,61 @@ export default function EventDetailPage() {
                 </TextField>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Date *</label>
-                    <input
-                      type="date"
-                      value={dateAt}
-                      onChange={(e) => setDateAt(e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50 ${
-                        infosErrors.dateAt ? "border-red-400" : "border-gray-200"
-                      }`}
-                    />
-                    {infosErrors.dateAt && (
-                      <p className="text-red-500 text-xs mt-1">{infosErrors.dateAt}</p>
+                  <DatePicker
+                    className="w-full"
+                    value={selectedDate}
+                    onChange={setSelectedDate}
+                    isInvalid={!!infosErrors.selectedDate}
+                  >
+                    <Label>Date *</Label>
+                    <DateField.Group fullWidth>
+                      <DateField.Input>
+                        {(segment) => <DateField.Segment segment={segment} />}
+                      </DateField.Input>
+                      <DateField.Suffix>
+                        <DatePicker.Trigger>
+                          <DatePicker.TriggerIndicator />
+                        </DatePicker.Trigger>
+                      </DateField.Suffix>
+                    </DateField.Group>
+                    <DatePicker.Popover>
+                      <HeroCalendar aria-label="Date de l'événement">
+                        <HeroCalendar.Header>
+                          <HeroCalendar.NavButton slot="previous" />
+                          <HeroCalendar.Heading />
+                          <HeroCalendar.NavButton slot="next" />
+                        </HeroCalendar.Header>
+                        <HeroCalendar.Grid>
+                          <HeroCalendar.GridHeader>
+                            {(day) => <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>}
+                          </HeroCalendar.GridHeader>
+                          <HeroCalendar.GridBody>
+                            {(date) => <HeroCalendar.Cell date={date} />}
+                          </HeroCalendar.GridBody>
+                        </HeroCalendar.Grid>
+                      </HeroCalendar>
+                    </DatePicker.Popover>
+                    {infosErrors.selectedDate && (
+                      <Description className="text-red-500 text-xs">{infosErrors.selectedDate}</Description>
                     )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Heure *</label>
-                    <input
-                      type="time"
-                      value={timeAt}
-                      onChange={(e) => setTimeAt(e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50 ${
-                        infosErrors.timeAt ? "border-red-400" : "border-gray-200"
-                      }`}
-                    />
-                    {infosErrors.timeAt && (
-                      <p className="text-red-500 text-xs mt-1">{infosErrors.timeAt}</p>
+                  </DatePicker>
+
+                  <TimeField
+                    className="w-full"
+                    value={selectedTime}
+                    onChange={setSelectedTime}
+                    isInvalid={!!infosErrors.selectedTime}
+                  >
+                    <Label>Heure *</Label>
+                    <TimeField.Group>
+                      <TimeField.Input>
+                        {(segment) => <TimeField.Segment segment={segment} />}
+                      </TimeField.Input>
+                    </TimeField.Group>
+                    {infosErrors.selectedTime && (
+                      <Description className="text-red-500 text-xs">{infosErrors.selectedTime}</Description>
                     )}
-                  </div>
+                  </TimeField>
                 </div>
 
                 <div className="flex justify-end pt-2">

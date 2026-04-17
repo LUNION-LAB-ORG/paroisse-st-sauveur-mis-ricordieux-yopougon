@@ -1,4 +1,5 @@
 export type IOrganisationMembreParoisse = "yes" | "no";
+export type IOrganisationStatutDemande = "pending" | "accepted" | "canceled";
 
 export interface IOrganisation {
   id?: number;
@@ -11,6 +12,7 @@ export interface IOrganisation {
   endTime: string;
   description: string;
   estimatedParticipants?: string;
+  request_status?: IOrganisationStatutDemande;
   created_at?: string;
 }
 

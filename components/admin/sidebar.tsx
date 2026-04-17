@@ -9,6 +9,7 @@ import {
   Flame,
   Volume2,
   Calendar,
+  CalendarPlus,
   Heart,
   FileEdit,
   Newspaper,
@@ -28,6 +29,7 @@ const menuItems = [
   { label: "Messes", icon: Flame, href: "/dashboard/messes" },
   { label: "Écoutes", icon: Volume2, href: "/dashboard/ecoutes" },
   { label: "Événements", icon: Calendar, href: "/dashboard/evenements" },
+  { label: "Organisations", icon: CalendarPlus, href: "/dashboard/organisations" },
   { label: "Dons", icon: Heart, href: "/dashboard/dons" },
   { label: "Curés", icon: Church, href: "/dashboard/cure" },
 ]
