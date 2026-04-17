@@ -17,6 +17,9 @@ import { toast } from "sonner";
 import {
   Button,
   Card,
+  Calendar as HeroCalendar,
+  DateField,
+  DatePicker,
   Description,
   Input,
   Label,
@@ -25,7 +28,15 @@ import {
   Switch,
   TextArea,
   TextField,
+  TimeField,
 } from "@heroui/react";
+import {
+  CalendarDate,
+  Time,
+  getLocalTimeZone,
+  today,
+} from "@internationalized/date";
+import type { DateValue, TimeValue } from "@heroui/react";
 import {
   Dialog,
   DialogContent,
@@ -62,8 +73,8 @@ export default function EditMessePage() {
   const [phone, setPhone] = useState("");
   const [messageText, setMessageText] = useState("");
   const [intentionType, setIntentionType] = useState("");
-  const [dateAt, setDateAt] = useState("");
-  const [timeAt, setTimeAt] = useState("");
+  const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
+  const [selectedTime, setSelectedTime] = useState<TimeValue | null>(null);
   const [amount, setAmount] = useState("");
   const [requestStatus, setRequestStatus] = useState<IMesseStatutDemande>("pending");
   const [paid, setPaid] = useState(false);
@@ -87,13 +98,11 @@ export default function EditMessePage() {
         // m.date_at et m.time_at peuvent venir en ISO
         if (m.date_at) {
           const d = new Date(m.date_at);
-          setDateAt(d.toISOString().slice(0, 10));
+          setSelectedDate(new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate()));
         }
         if (m.time_at) {
           const t = new Date(m.time_at);
-          const hh = String(t.getHours()).padStart(2, "0");
-          const mm = String(t.getMinutes()).padStart(2, "0");
-          setTimeAt(`${hh}:${mm}`);
+          setSelectedTime(new Time(t.getHours(), t.getMinutes()));
         }
         setAmount(m.amount ? String(m.amount) : "");
         setRequestStatus(m.request_status ?? "pending");
@@ -109,8 +118,8 @@ export default function EditMessePage() {
     if (!fullname.trim()) errs.fullname = "Nom obligatoire";
     if (!phone.trim()) errs.phone = "Téléphone obligatoire";
     if (!messageText.trim()) errs.messageText = "Intention obligatoire";
-    if (!dateAt) errs.dateAt = "Date obligatoire";
-    if (!timeAt) errs.timeAt = "Heure obligatoire";
+    if (!selectedDate) errs.selectedDate = "Date obligatoire";
+    if (!selectedTime) errs.selectedTime = "Heure obligatoire";
     if (!amount || Number(amount) < 0) errs.amount = "Montant invalide";
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -123,7 +132,13 @@ export default function EditMessePage() {
     }
     setSaving(true);
     try {
-      const isoDateTime = new Date(`${dateAt}T${timeAt}`).toISOString();
+      const dateStr = selectedDate
+        ? `${selectedDate.year}-${String(selectedDate.month).padStart(2, "0")}-${String(selectedDate.day).padStart(2, "0")}`
+        : "";
+      const timeStr = selectedTime
+        ? `${String(selectedTime.hour).padStart(2, "0")}:${String(selectedTime.minute).padStart(2, "0")}`
+        : "00:00";
+      const isoDateTime = new Date(`${dateStr}T${timeStr}`).toISOString();
       const payload: IMesseModifier = {
         type: intentionType,
         fullname,
@@ -298,30 +313,61 @@ export default function EditMessePage() {
             </Card.Header>
             <Card.Content className="p-6 pt-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date *</label>
-                  <input
-                    type="date"
-                    value={dateAt}
-                    onChange={(e) => setDateAt(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50 ${
-                      errors.dateAt ? "border-red-400" : "border-gray-200"
-                    }`}
-                  />
-                  {errors.dateAt && <p className="text-red-500 text-xs mt-1">{errors.dateAt}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Heure *</label>
-                  <input
-                    type="time"
-                    value={timeAt}
-                    onChange={(e) => setTimeAt(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50 ${
-                      errors.timeAt ? "border-red-400" : "border-gray-200"
-                    }`}
-                  />
-                  {errors.timeAt && <p className="text-red-500 text-xs mt-1">{errors.timeAt}</p>}
-                </div>
+                <DatePicker
+                  className="w-full"
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                  isInvalid={!!errors.selectedDate}
+                >
+                  <Label>Date *</Label>
+                  <DateField.Group fullWidth>
+                    <DateField.Input>
+                      {(segment) => <DateField.Segment segment={segment} />}
+                    </DateField.Input>
+                    <DateField.Suffix>
+                      <DatePicker.Trigger>
+                        <DatePicker.TriggerIndicator />
+                      </DatePicker.Trigger>
+                    </DateField.Suffix>
+                  </DateField.Group>
+                  <DatePicker.Popover>
+                    <HeroCalendar aria-label="Date de messe">
+                      <HeroCalendar.Header>
+                        <HeroCalendar.NavButton slot="previous" />
+                        <HeroCalendar.Heading />
+                        <HeroCalendar.NavButton slot="next" />
+                      </HeroCalendar.Header>
+                      <HeroCalendar.Grid>
+                        <HeroCalendar.GridHeader>
+                          {(day) => <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>}
+                        </HeroCalendar.GridHeader>
+                        <HeroCalendar.GridBody>
+                          {(date) => <HeroCalendar.Cell date={date} />}
+                        </HeroCalendar.GridBody>
+                      </HeroCalendar.Grid>
+                    </HeroCalendar>
+                  </DatePicker.Popover>
+                  {errors.selectedDate && (
+                    <Description className="text-red-500 text-xs">{errors.selectedDate}</Description>
+                  )}
+                </DatePicker>
+
+                <TimeField
+                  className="w-full"
+                  value={selectedTime}
+                  onChange={setSelectedTime}
+                  isInvalid={!!errors.selectedTime}
+                >
+                  <Label>Heure *</Label>
+                  <TimeField.Group>
+                    <TimeField.Input>
+                      {(segment) => <TimeField.Segment segment={segment} />}
+                    </TimeField.Input>
+                  </TimeField.Group>
+                  {errors.selectedTime && (
+                    <Description className="text-red-500 text-xs">{errors.selectedTime}</Description>
+                  )}
+                </TimeField>
               </div>
             </Card.Content>
           </Card>
