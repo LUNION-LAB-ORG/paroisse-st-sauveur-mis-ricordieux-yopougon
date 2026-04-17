@@ -61,15 +61,15 @@ export function PricingTiersEditor({ tiers, onChange, disabled }: PricingTiersEd
             <p className="text-xs font-semibold text-[#2d2d83] uppercase tracking-wider">
               Tarif {index + 1}
             </p>
-            <button
-              type="button"
-              onClick={() => removeTier(index)}
-              disabled={disabled}
-              className="p-1 rounded-lg text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+            <Button
+              variant="ghost"
+              className="h-7 w-7 p-0 rounded-lg text-red-500 hover:bg-red-50"
+              onPress={() => removeTier(index)}
+              isDisabled={disabled}
               aria-label="Retirer ce tarif"
             >
               <Trash2 className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -27,6 +27,7 @@ import {
   Switch,
 } from "@heroui/react";
 import { PricingTiersEditor, type PricingTier } from "@/components/admin/pricing-tiers-editor";
+import { DateTimePicker } from "@/components/admin/datetime-picker";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import type { DateValue, TimeValue } from "@heroui/react";
 
@@ -358,7 +359,7 @@ export default function OrganisationForm() {
                     <div>
                       <p className="text-sm font-medium text-gray-800">Événement payant</p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Ajoutez un ou plusieurs tarifs (Standard/VIP/VVIP…)
+                        Les participants devront payer pour s&apos;inscrire
                       </p>
                     </div>
                     <Switch isSelected={isPaid} onChange={(v) => {
@@ -380,17 +381,11 @@ export default function OrganisationForm() {
                     <Label>Nombre max de participants</Label>
                     <Input type="number" inputMode="numeric" placeholder="Laisser vide = illimité" />
                   </TextField>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Date limite d&apos;inscription
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={registrationDeadline}
-                      onChange={(e) => setRegistrationDeadline(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50"
-                    />
-                  </div>
+                  <DateTimePicker
+                    label="Date limite d'inscription"
+                    value={registrationDeadline}
+                    onChange={setRegistrationDeadline}
+                  />
                 </div>
 
                 <div className="flex justify-between pt-2">

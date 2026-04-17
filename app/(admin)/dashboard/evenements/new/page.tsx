@@ -23,6 +23,7 @@ import { today, getLocalTimeZone } from "@internationalized/date";
 import type { DateValue, TimeValue } from "@heroui/react";
 import { evenementAPI } from "@/features/evenement/apis/evenement.api";
 import { PricingTiersEditor, type PricingTier } from "@/components/admin/pricing-tiers-editor";
+import { DateTimePicker } from "@/components/admin/datetime-picker";
 
 export default function NewEventPage() {
   const router = useRouter();
@@ -283,7 +284,7 @@ export default function NewEventPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-800">Événement payant</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Active la billetterie Wave avec un ou plusieurs tarifs (Standard / VIP / VVIP…)
+                    Les participants devront payer pour s&apos;inscrire
                   </p>
                 </div>
                 <Switch isSelected={isPaid} onChange={(v) => {
@@ -323,20 +324,13 @@ export default function NewEventPage() {
                 )}
               </TextField>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date limite d&apos;inscription (optionnel)
-                </label>
-                <input
-                  type="datetime-local"
-                  value={registrationDeadline}
-                  onChange={(e) => setRegistrationDeadline(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Les inscriptions seront fermées automatiquement après cette date
-                </p>
-              </div>
+              <DateTimePicker
+                label="Date limite d'inscription (optionnel)"
+                value={registrationDeadline}
+                onChange={setRegistrationDeadline}
+                disableBeforeToday
+                helper="Les inscriptions seront fermées automatiquement après cette date"
+              />
             </Card.Content>
           </Card>
         </div>

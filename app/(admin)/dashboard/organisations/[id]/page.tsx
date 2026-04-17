@@ -18,6 +18,9 @@ import { toast } from "sonner";
 import {
   Button,
   Card,
+  Calendar as HeroCalendar,
+  DateField,
+  DatePicker,
   Description,
   Input,
   Label,
@@ -26,8 +29,12 @@ import {
   Switch,
   TextArea,
   TextField,
+  TimeField,
 } from "@heroui/react";
+import { CalendarDate, Time } from "@internationalized/date";
+import type { DateValue, TimeValue } from "@heroui/react";
 import { PricingTiersEditor, type PricingTier } from "@/components/admin/pricing-tiers-editor";
+import { DateTimePicker } from "@/components/admin/datetime-picker";
 import {
   Dialog,
   DialogContent,
@@ -64,9 +71,9 @@ export default function OrganisationDetailPage() {
   const [email, setEmail] = useState("");
   const [movement, setMovement] = useState("");
   const [eventType, setEventType] = useState("");
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
+  const [startTime, setStartTime] = useState<TimeValue | null>(null);
+  const [endTime, setEndTime] = useState<TimeValue | null>(null);
   const [description, setDescription] = useState("");
   const [estimatedParticipants, setEstimatedParticipants] = useState("");
   const [requestStatus, setRequestStatus] =
@@ -93,9 +100,18 @@ export default function OrganisationDetailPage() {
         setEmail(o.email ?? "");
         setMovement(o.movement ?? "");
         setEventType(o.eventType ?? "");
-        setDate(o.date ? o.date.slice(0, 10) : "");
-        setStartTime(o.startTime ?? "");
-        setEndTime(o.endTime ?? "");
+        if (o.date) {
+          const d = new Date(o.date);
+          setSelectedDate(new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate()));
+        }
+        if (o.startTime) {
+          const [h, m] = o.startTime.split(":").map(Number);
+          setStartTime(new Time(h || 0, m || 0));
+        }
+        if (o.endTime) {
+          const [h, m] = o.endTime.split(":").map(Number);
+          setEndTime(new Time(h || 0, m || 0));
+        }
         setDescription(o.description ?? "");
         setEstimatedParticipants(o.estimatedParticipants ?? "");
         setRequestStatus(o.request_status ?? "pending");
@@ -118,13 +134,22 @@ export default function OrganisationDetailPage() {
       const lowestPrice = isPaid && pricingTiers.length
         ? Math.min(...pricingTiers.map(t => t.amount))
         : null;
+      const dateStr = selectedDate
+        ? `${selectedDate.year}-${String(selectedDate.month).padStart(2, "0")}-${String(selectedDate.day).padStart(2, "0")}`
+        : "";
+      const startTimeStr = startTime
+        ? `${String(startTime.hour).padStart(2, "0")}:${String(startTime.minute).padStart(2, "0")}`
+        : "";
+      const endTimeStr = endTime
+        ? `${String(endTime.hour).padStart(2, "0")}:${String(endTime.minute).padStart(2, "0")}`
+        : "";
       await organisationAPI.modifier(id, {
         email,
         movement,
         eventType,
-        date,
-        startTime,
-        endTime,
+        date: dateStr,
+        startTime: startTimeStr,
+        endTime: endTimeStr,
         description,
         estimatedParticipants,
         request_status: requestStatus,
@@ -286,41 +311,54 @@ export default function OrganisationDetailPage() {
                 </Select.Popover>
               </Select>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50"
-                />
-              </div>
+              <DatePicker className="w-full" value={selectedDate} onChange={setSelectedDate}>
+                <Label>Date</Label>
+                <DateField.Group fullWidth>
+                  <DateField.Input>
+                    {(segment) => <DateField.Segment segment={segment} />}
+                  </DateField.Input>
+                  <DateField.Suffix>
+                    <DatePicker.Trigger>
+                      <DatePicker.TriggerIndicator />
+                    </DatePicker.Trigger>
+                  </DateField.Suffix>
+                </DateField.Group>
+                <DatePicker.Popover>
+                  <HeroCalendar aria-label="Date">
+                    <HeroCalendar.Header>
+                      <HeroCalendar.NavButton slot="previous" />
+                      <HeroCalendar.Heading />
+                      <HeroCalendar.NavButton slot="next" />
+                    </HeroCalendar.Header>
+                    <HeroCalendar.Grid>
+                      <HeroCalendar.GridHeader>
+                        {(day) => <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>}
+                      </HeroCalendar.GridHeader>
+                      <HeroCalendar.GridBody>
+                        {(d) => <HeroCalendar.Cell date={d} />}
+                      </HeroCalendar.GridBody>
+                    </HeroCalendar.Grid>
+                  </HeroCalendar>
+                </DatePicker.Popover>
+              </DatePicker>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Début
-                  </label>
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Fin
-                  </label>
-                  <input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50"
-                  />
-                </div>
+                <TimeField className="w-full" value={startTime} onChange={setStartTime}>
+                  <Label>Début</Label>
+                  <TimeField.Group>
+                    <TimeField.Input>
+                      {(segment) => <TimeField.Segment segment={segment} />}
+                    </TimeField.Input>
+                  </TimeField.Group>
+                </TimeField>
+                <TimeField className="w-full" value={endTime} onChange={setEndTime}>
+                  <Label>Fin</Label>
+                  <TimeField.Group>
+                    <TimeField.Input>
+                      {(segment) => <TimeField.Segment segment={segment} />}
+                    </TimeField.Input>
+                  </TimeField.Group>
+                </TimeField>
               </div>
 
               <TextField value={description} onChange={setDescription}>
@@ -350,7 +388,7 @@ export default function OrganisationDetailPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-800">Événement payant</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Un ou plusieurs tarifs (Standard / VIP / VVIP…) via Wave
+                    Les participants devront payer pour s&apos;inscrire
                   </p>
                 </div>
                 <Switch isSelected={isPaid} onChange={(v) => {
@@ -376,17 +414,11 @@ export default function OrganisationDetailPage() {
                 <Label>Nombre max de participants (optionnel)</Label>
                 <Input type="number" inputMode="numeric" placeholder="Laisser vide = illimité" />
               </TextField>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date limite d&apos;inscription (optionnel)
-                </label>
-                <input
-                  type="datetime-local"
-                  value={registrationDeadline}
-                  onChange={(e) => setRegistrationDeadline(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/50"
-                />
-              </div>
+              <DateTimePicker
+                label="Date limite d'inscription (optionnel)"
+                value={registrationDeadline}
+                onChange={setRegistrationDeadline}
+              />
             </Card.Content>
           </Card>
         </div>
