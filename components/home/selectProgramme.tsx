@@ -101,17 +101,18 @@ export default function SelectProgramme() {
                   value={selectedDate}
                   onChange={handleSelect}
                   visibleDuration={{ months: visibleMonths }}
+                  className="w-full"
                 >
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between w-full mb-4 px-2">
                     <HeroCalendar.NavButton slot="previous" />
-                    <HeroCalendar.Heading className="font-semibold text-[#2d2d83] capitalize" />
+                    <HeroCalendar.Heading className="font-semibold text-[#2d2d83] capitalize text-center" />
                     <HeroCalendar.NavButton slot="next" />
                   </div>
                   <div
                     className={
                       visibleMonths === 2
-                        ? "flex gap-6 justify-center"
-                        : "flex justify-center"
+                        ? "flex gap-8 justify-center w-full"
+                        : "flex justify-center w-full"
                     }
                   >
                     <HeroCalendar.Grid>
