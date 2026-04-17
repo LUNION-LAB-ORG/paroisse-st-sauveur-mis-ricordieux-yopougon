@@ -88,22 +88,48 @@ export default function MediationPage() {
       {loading && <p className="text-center text-gray-400 py-12">Chargement...</p>}
 
       {!loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((m) => (
-            <Card key={m.id} className="hover:shadow-md transition-shadow">
-              <Card.Content className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <Chip variant="soft" color="default" size="sm">{m.category}</Chip>
+            <Card key={m.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              {/* Image hero HD ou fallback gradient */}
+              <div className="relative w-full aspect-[16/10] bg-gradient-to-br from-[#2d2d83] to-[#2d2d83]/70">
+                {m.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={m.image}
+                    alt={m.title}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = "none"
+                    }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <BookOpen className="w-14 h-14 text-white/80" />
+                  </div>
+                )}
+                <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/30 to-transparent pointer-events-none" />
+                <div className="absolute top-3 right-3">
                   <StatusBadge
                     status={m.status === "published" ? "confirmed" : "pending"}
                     label={m.status === "published" ? "Publiée" : "Brouillon"}
                   />
                 </div>
+              </div>
+
+              <Card.Content className="p-5">
+                <div className="mb-2">
+                  <Chip variant="soft" color="default" size="sm">{m.category}</Chip>
+                </div>
                 <Card.Title className="text-base font-bold text-[#2d2d83] mb-2 line-clamp-2">{m.title}</Card.Title>
-                <div className="flex items-center gap-3 text-xs text-gray-400 mb-2">
+                <div className="flex items-center flex-wrap gap-3 text-xs text-gray-400 mb-3">
                   <span className="flex items-center gap-1"><User className="w-3 h-3" /> {m.author}</span>
                   <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {formatDate(m.date_at)}</span>
-                  {(m.views ?? 0) > 0 && <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {m.views}</span>}
+                  <span className="flex items-center gap-1" title="Vues">
+                    <Eye className="w-3 h-3" /> {m.views ?? 0}
+                  </span>
                 </div>
                 <Separator className="mb-3" />
                 <div className="flex gap-2">

@@ -25,25 +25,39 @@ export const mediationAPI = {
     });
   },
 
-  ajouter(data: IMediationCreer): Promise<{ data: IMediation }> {
-    return apiClient.request({
+  async ajouter(data: FormData | IMediationCreer): Promise<{ data: IMediation }> {
+    const isForm = typeof FormData !== "undefined" && data instanceof FormData;
+    const res = await apiClient.request<{ data: IMediation } | IMediation>({
       endpoint: "/mediations",
       method: "POST",
       data,
       service: "private",
+      config: isForm ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
     });
+    const wrapped = (res as { data?: IMediation })?.data
+      ? (res as { data: IMediation })
+      : { data: res as IMediation };
+    return wrapped;
   },
 
-  modifier(
+  async modifier(
     id: number,
-    data: IMediationModifier,
+    data: FormData | IMediationModifier,
   ): Promise<{ data: IMediation }> {
-    return apiClient.request({
+    const isForm = typeof FormData !== "undefined" && data instanceof FormData;
+    // Laravel ne parse pas multipart sur PUT → POST + _method=PUT
+    const method = isForm ? "POST" : "PUT";
+    const res = await apiClient.request<{ data: IMediation } | IMediation>({
       endpoint: `/mediations/${id}`,
-      method: "PUT",
+      method,
       data,
       service: "private",
+      config: isForm ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
     });
+    const wrapped = (res as { data?: IMediation })?.data
+      ? (res as { data: IMediation })
+      : { data: res as IMediation };
+    return wrapped;
   },
 
   supprimer(id: number): Promise<void> {

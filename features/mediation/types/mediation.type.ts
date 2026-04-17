@@ -1,4 +1,4 @@
-export type IMediationStatus = "draft" | "published";
+export type IMediationStatus = "draft" | "published" | "archived";
 
 export interface IMediation {
   id: number;
@@ -6,6 +6,8 @@ export interface IMediation {
   date_at: string;
   author: string;
   category: string;
+  image: string | null;
+  content: string | null;
   status: IMediationStatus;
   views: number | null;
   created_at: string;
@@ -16,7 +18,8 @@ export interface IMediationCreer {
   date_at: string;
   author: string;
   category: string;
-  /** backend expects `mediation_status` on create/update (NewsResource returns `status`) */
+  content?: string;
+  image?: File | null;
   mediation_status?: IMediationStatus;
 }
 

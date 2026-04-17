@@ -13,10 +13,19 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { ImageUploadField } from "@/components/admin/image-upload-field"
 import { mediationAPI } from "@/features/mediation/apis/mediation.api"
 import type { IMediation } from "@/features/mediation/types/mediation.type"
 
-const CATEGORIES = ["Prière", "Évangile", "Témoignage", "Réflexion", "Mariologie", "Temps liturgique", "Autre"] as const
+const CATEGORIES = [
+  "Prière",
+  "Évangile",
+  "Témoignage",
+  "Réflexion",
+  "Mariologie",
+  "Temps liturgique",
+  "Autre",
+] as const
 
 export default function MeditationDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -31,7 +40,9 @@ export default function MeditationDetailPage() {
   const [author, setAuthor] = useState("")
   const [category, setCategory] = useState("Évangile")
   const [dateAt, setDateAt] = useState<string>("")
+  const [content, setContent] = useState("")
   const [status, setStatus] = useState<"published" | "draft">("draft")
+  const [imageFile, setImageFile] = useState<File | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -44,6 +55,7 @@ export default function MeditationDetailPage() {
         setAuthor(m.author ?? "")
         setCategory(m.category ?? "Évangile")
         setDateAt(m.date_at ? new Date(m.date_at).toISOString().slice(0, 10) : "")
+        setContent(m.content ?? "")
         setStatus(m.status === "published" ? "published" : "draft")
       })
       .catch(() => toast.error("Impossible de charger la méditation"))
@@ -57,17 +69,20 @@ export default function MeditationDetailPage() {
     }
     setSaving(true)
     try {
-      await mediationAPI.modifier(Number(id), {
-        title,
-        author,
-        category,
-        date_at: dateAt,
-        mediation_status: status,
-      })
+      const fd = new FormData()
+      fd.append("_method", "PUT")
+      fd.append("title", title)
+      fd.append("author", author)
+      fd.append("category", category)
+      if (dateAt) fd.append("date_at", dateAt)
+      fd.append("content", content)
+      fd.append("mediation_status", status)
+      if (imageFile) fd.append("image", imageFile)
+
+      await mediationAPI.modifier(Number(id), fd)
       toast.success("Méditation mise à jour")
       router.push("/dashboard/mediation")
     } catch (e) {
-      console.error(e)
       const msg = e instanceof Error ? e.message : "Erreur lors de la mise à jour"
       toast.error(msg)
     } finally {
@@ -80,8 +95,7 @@ export default function MeditationDetailPage() {
       await mediationAPI.supprimer(Number(id))
       toast.success("Méditation supprimée")
       router.push("/dashboard/mediation")
-    } catch (e) {
-      console.error(e)
+    } catch {
       toast.error("Erreur lors de la suppression")
     }
   }
@@ -134,67 +148,101 @@ export default function MeditationDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-2xl">
-        <Card>
-          <Card.Content className="p-6 space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Auteur</label>
-              <input
-                value={author}
-                onChange={(e) => setAuthor(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-              <input
-                type="date"
-                value={dateAt}
-                onChange={(e) => setDateAt(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setStatus("published")}
-                  className={`flex-1 py-2 rounded-xl text-sm font-medium ${status === "published" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
-                >
-                  Publié
-                </button>
-                <button
-                  onClick={() => setStatus("draft")}
-                  className={`flex-1 py-2 rounded-xl text-sm font-medium ${status === "draft" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-600"}`}
-                >
-                  Brouillon
-                </button>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-5">
+          <Card>
+            <Card.Content className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
+                />
               </div>
-            </div>
-          </Card.Content>
-        </Card>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contenu</label>
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={14}
+                  placeholder="Le texte complet de la méditation..."
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 leading-relaxed"
+                />
+              </div>
+            </Card.Content>
+          </Card>
+        </div>
+
+        <div className="space-y-5">
+          <Card>
+            <Card.Content className="p-6 space-y-4">
+              <h3 className="font-semibold text-[#2d2d83]">Paramètres</h3>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Auteur</label>
+                <input
+                  value={author}
+                  onChange={(e) => setAuthor(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 bg-white"
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={dateAt}
+                  onChange={(e) => setDateAt(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setStatus("published")}
+                    className={`flex-1 py-2 rounded-xl text-sm font-medium ${status === "published" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
+                  >
+                    Publié
+                  </button>
+                  <button
+                    onClick={() => setStatus("draft")}
+                    className={`flex-1 py-2 rounded-xl text-sm font-medium ${status === "draft" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-600"}`}
+                  >
+                    Brouillon
+                  </button>
+                </div>
+              </div>
+            </Card.Content>
+          </Card>
+
+          <Card>
+            <Card.Content className="p-6">
+              <ImageUploadField
+                initialImageUrl={mediation.image ?? null}
+                onChange={setImageFile}
+                title="Image de couverture"
+              />
+            </Card.Content>
+          </Card>
+        </div>
       </div>
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>

@@ -212,9 +212,25 @@ export default function CardMeditation() {
                 key={item.id}
                 className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col hover:shadow-lg transition-shadow"
               >
-                {/* Header gradient (pas d'image dans le modèle) */}
-                <div className="bg-gradient-to-br from-[#2d2d83] to-[#2d2d83]/70 p-6 flex items-center justify-center min-h-[140px]">
-                  <BookOpen className="w-14 h-14 text-white/80" />
+                {/* Image HD ou fallback gradient */}
+                <div className="relative w-full aspect-[16/10] bg-gradient-to-br from-[#2d2d83] to-[#2d2d83]/70">
+                  {item.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none"
+                      }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <BookOpen className="w-14 h-14 text-white/80" />
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-6 flex flex-col flex-1">

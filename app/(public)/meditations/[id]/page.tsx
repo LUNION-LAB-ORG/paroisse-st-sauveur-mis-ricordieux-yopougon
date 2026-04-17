@@ -58,34 +58,50 @@ export default function MeditationDetailPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero */}
-      <div className="bg-gradient-to-br from-[#2d2d83] to-[#2d2d83]/70 py-16 px-4">
-        <div className="max-w-3xl mx-auto">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-white/70 hover:text-white mb-8 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" /> Retour
-          </button>
-          <div className="flex items-center gap-2 mb-4">
-            <span className="bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full">
-              {meditation.category}
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-6 leading-tight">
-            {meditation.title}
-          </h1>
-          <div className="flex flex-wrap items-center gap-4 text-white/70 text-sm">
-            <span className="flex items-center gap-1.5">
-              <User className="w-4 h-4" /> {meditation.author}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4" /> {formatDate(meditation.date_at)}
-            </span>
-            {meditation.views != null && (
-              <span className="flex items-center gap-1.5">
-                <Eye className="w-4 h-4" /> {meditation.views} lecture{meditation.views !== 1 ? "s" : ""}
+      <div className="relative overflow-hidden">
+        {meditation.image ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={meditation.image}
+              alt={meditation.title}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#2d2d83]/80 to-[#2d2d83]/60" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-[#2d2d83] to-[#2d2d83]/70" />
+        )}
+
+        <div className="relative py-16 px-4">
+          <div className="max-w-3xl mx-auto">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-white/70 hover:text-white mb-8 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" /> Retour
+            </button>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full">
+                {meditation.category}
               </span>
-            )}
+            </div>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-6 leading-tight">
+              {meditation.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-4 text-white/80 text-sm">
+              <span className="flex items-center gap-1.5">
+                <User className="w-4 h-4" /> {meditation.author}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Calendar className="w-4 h-4" /> {formatDate(meditation.date_at)}
+              </span>
+              {meditation.views != null && (
+                <span className="flex items-center gap-1.5">
+                  <Eye className="w-4 h-4" /> {meditation.views} lecture{meditation.views !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -97,10 +113,15 @@ export default function MeditationDetailPage() {
             <BookOpen className="w-5 h-5" />
             <span className="text-sm font-semibold uppercase tracking-wide">Méditation</span>
           </div>
-          {/* No body field in model — display title as content placeholder */}
-          <p className="text-gray-500 italic text-center py-8">
-            Le contenu complet de cette méditation est disponible à la paroisse.
-          </p>
+          {meditation.content ? (
+            <div className="prose prose-slate max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">
+              {meditation.content}
+            </div>
+          ) : (
+            <p className="text-gray-500 italic text-center py-8">
+              Le contenu complet de cette méditation sera bientôt disponible.
+            </p>
+          )}
         </div>
 
         {/* Share */}
