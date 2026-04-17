@@ -38,7 +38,32 @@ function formatDate(dateStr: string) {
   }
 }
 
+function formatTime(timeStr: string | null | undefined): string {
+  if (!timeStr) return "";
+  try {
+    const d = new Date(timeStr);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    }
+    return String(timeStr).slice(0, 5);
+  } catch {
+    return String(timeStr);
+  }
+}
+
 export default function EventRegistration({ event, onBack }: Props) {
+  const tiers = (Array.isArray(event.pricing_tiers) ? event.pricing_tiers : []) as Array<{
+    label: string;
+    amount: number;
+    description?: string;
+    max_participants?: number | null;
+    spots_remaining?: number | null;
+  }>;
+  const hasTiers = tiers.length > 0;
+  const availableTiers = tiers.filter(
+    (t) => t.spots_remaining == null || t.spots_remaining > 0,
+  );
+
   const [form, setForm] = useState<FormData>({
     fullname: "",
     email: "",
@@ -46,9 +71,16 @@ export default function EventRegistration({ event, onBack }: Props) {
     message: "",
     acceptConditions: false,
   });
+  const [selectedTier, setSelectedTier] = useState<string>(
+    availableTiers[0]?.label ?? "",
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  const selectedAmount = hasTiers
+    ? Number(tiers.find((t) => t.label === selectedTier)?.amount ?? 0)
+    : Number(event.price ?? 0);
 
   const set = (field: keyof FormData, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -61,6 +93,7 @@ export default function EventRegistration({ event, onBack }: Props) {
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Email invalide";
     if (!form.phone.trim()) e.phone = "Le numéro de téléphone est obligatoire";
     if (!form.acceptConditions) e.acceptConditions = "Veuillez accepter les conditions";
+    if (hasTiers && !selectedTier) e.tier = "Veuillez sélectionner un tarif";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -75,7 +108,8 @@ export default function EventRegistration({ event, onBack }: Props) {
         email: form.email || undefined,
         phone: form.phone,
         message: form.message || undefined,
-      });
+        tier_label: hasTiers ? selectedTier : undefined,
+      } as any);
 
       toast.dismiss(tid);
 
@@ -157,7 +191,7 @@ export default function EventRegistration({ event, onBack }: Props) {
             </span>
             {event.time_at && (
               <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" /> {event.time_at}
+                <Clock className="w-3.5 h-3.5" /> {formatTime(event.time_at)}
               </span>
             )}
             {event.location_at && (
@@ -171,8 +205,7 @@ export default function EventRegistration({ event, onBack }: Props) {
           <div className="flex flex-wrap gap-2">
             {event.is_paid ? (
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full">
-                <CreditCard className="w-3 h-3" />
-                Événement payant — {Number(event.price).toLocaleString("fr-FR")} XOF
+                <CreditCard className="w-3 h-3" /> Événement payant
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-green-100 text-green-700 px-3 py-1 rounded-full">
@@ -210,6 +243,56 @@ export default function EventRegistration({ event, onBack }: Props) {
         ) : (
           /* ──── Formulaire ──── */
           <div className="p-6 space-y-4">
+            {/* Sélecteur de tarif */}
+            {event.is_paid && hasTiers && (
+              <div className="space-y-2">
+                <Label>Choisissez votre tarif *</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {tiers.map((t) => {
+                    const unavailable = t.spots_remaining != null && t.spots_remaining <= 0;
+                    const isSelected = selectedTier === t.label;
+                    return (
+                      <button
+                        key={t.label}
+                        type="button"
+                        disabled={unavailable}
+                        onClick={() => setSelectedTier(t.label)}
+                        className={`text-left rounded-xl border-2 p-3 transition-all ${
+                          unavailable
+                            ? "opacity-50 cursor-not-allowed border-gray-200 bg-gray-50"
+                            : isSelected
+                            ? "border-red-700 bg-red-50"
+                            : "border-gray-200 bg-white hover:border-red-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold text-gray-800">{t.label}</p>
+                          {unavailable && (
+                            <span className="text-[10px] font-semibold text-red-600 uppercase">
+                              Complet
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xl font-bold text-red-700 mt-0.5">
+                          {Number(t.amount).toLocaleString("fr-FR")} XOF
+                        </p>
+                        {t.description && (
+                          <p className="text-xs text-gray-500 mt-1">{t.description}</p>
+                        )}
+                        {t.spots_remaining != null && t.spots_remaining > 0 && (
+                          <p className="text-[11px] text-gray-500 mt-1">
+                            {t.spots_remaining} place{t.spots_remaining > 1 ? "s" : ""} restante
+                            {t.spots_remaining > 1 ? "s" : ""}
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {errors.tier && <p className="text-red-500 text-xs">{errors.tier}</p>}
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <Label htmlFor="fullname">Nom et prénom *</Label>
               <Input
@@ -286,7 +369,7 @@ export default function EventRegistration({ event, onBack }: Props) {
               ) : event.is_paid ? (
                 <span className="flex items-center justify-center gap-2">
                   <CreditCard className="w-4 h-4" />
-                  Payer {Number(event.price).toLocaleString("fr-FR")} XOF via Wave
+                  Payer {selectedAmount.toLocaleString("fr-FR")} XOF via Wave
                 </span>
               ) : (
                 "Confirmer mon inscription"

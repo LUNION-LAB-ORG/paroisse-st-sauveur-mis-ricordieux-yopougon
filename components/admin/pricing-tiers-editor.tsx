@@ -7,6 +7,9 @@ export interface PricingTier {
   label: string;
   amount: number;
   description?: string;
+  max_participants?: number | null;
+  /** Renvoyé par le backend, non éditable depuis le front */
+  spots_remaining?: number | null;
 }
 
 interface PricingTiersEditorProps {
@@ -21,7 +24,7 @@ export function PricingTiersEditor({ tiers, onChange, disabled }: PricingTiersEd
   const addTier = () => {
     const existing = tiers.length;
     const label = DEFAULT_LABELS[existing] ?? `Tarif ${existing + 1}`;
-    onChange([...tiers, { label, amount: 0, description: "" }]);
+    onChange([...tiers, { label, amount: 0, description: "", max_participants: null }]);
   };
 
   const removeTier = (index: number) => {
@@ -99,6 +102,22 @@ export function PricingTiersEditor({ tiers, onChange, disabled }: PricingTiersEd
           >
             <Label>Description (optionnel)</Label>
             <Input placeholder="Ex : Accès VIP avec rafraîchissements" />
+          </TextField>
+
+          <TextField
+            value={tier.max_participants != null ? String(tier.max_participants) : ""}
+            onChange={(val) => {
+              const n = val.trim() === "" ? null : Number(val);
+              updateTier(index, { max_participants: Number.isNaN(n as number) ? null : n });
+            }}
+            isDisabled={disabled}
+          >
+            <Label>Places disponibles pour ce tarif (optionnel)</Label>
+            <Input
+              type="number"
+              inputMode="numeric"
+              placeholder="Laisser vide = illimité"
+            />
           </TextField>
         </div>
       ))}
