@@ -106,23 +106,46 @@ export default function ActualitesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((article) => (
             <Card key={article.id} className="overflow-hidden hover:shadow-md transition-shadow">
-              <Card.Content className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Chip variant="soft" color="default" size="sm">{article.category}</Chip>
+              {/* Image hero */}
+              <div className="relative w-full h-40 bg-gray-100">
+                {article.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = "/assets/images/evenement.jpg"
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-300">
+                    <Newspaper className="w-10 h-10" />
+                  </div>
+                )}
+                <div className="absolute top-2 right-2">
                   <StatusBadge
                     status={article.status === "published" ? "confirmed" : "pending"}
                     label={article.status === "published" ? "Publié" : "Brouillon"}
                   />
+                </div>
+              </div>
+
+              <Card.Content className="p-4">
+                <div className="mb-2">
+                  <Chip variant="soft" color="default" size="sm">{article.category}</Chip>
                 </div>
 
                 <Card.Title className="text-base font-bold text-[#2d2d83] mb-1 line-clamp-2">
                   {article.title}
                 </Card.Title>
 
-                <div className="flex items-center gap-3 text-xs text-gray-400 mb-3">
+                <div className="flex items-center flex-wrap gap-3 text-xs text-gray-400 mb-3">
                   <span className="flex items-center gap-1"><User className="w-3 h-3" /> {article.author}</span>
                   <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {formatDate(article.published_at ?? article.created_at)}</span>
-                  {article.views > 0 && <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {article.views}</span>}
+                  <span className="flex items-center gap-1" title="Vues">
+                    <Eye className="w-3 h-3" /> {article.views ?? 0}
+                  </span>
                 </div>
 
                 <Separator className="mb-3" />
