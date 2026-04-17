@@ -102,7 +102,12 @@ export default function MesseForm() {
           amount: 3000,
           type: "messe",
           donator: formData.firstName || "Anonyme",
-          description: `Demande de messe : ${formData.intentionType} — ${formData.firstName}`,
+          description: formData.message || `Intention: ${formData.intentionType}`,
+          mess_type: formData.intentionType,
+          email: formData.email || undefined,
+          phone: formData.phone || undefined,
+          date_at: dateStr || undefined,
+          time_at: timeStr || undefined,
         });
         toast.success("Redirection vers Wave...", { id: toastId });
         window.location.href = result.wave_launch_url;

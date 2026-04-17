@@ -8,6 +8,12 @@ export interface WaveCheckoutParams {
   project?: string;
   description?: string;
   event_id?: number;
+  // Champs messe
+  mess_type?: string;
+  email?: string;
+  phone?: string;
+  date_at?: string;
+  time_at?: string;
 }
 
 export interface WaveCheckoutResponse {
