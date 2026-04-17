@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays, Clock } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import {
+  Button,
   Calendar as HeroCalendar,
   Card,
-  DatePicker,
   Separator,
 } from "@heroui/react";
 import { CalendarDate } from "@internationalized/date";
@@ -29,6 +29,7 @@ export default function SelectProgramme() {
   const [selectedDate, setSelectedDate] = useState<DateValue>(
     new CalendarDate(now.getFullYear(), now.getMonth() + 1, now.getDate()),
   );
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [visibleMonths, setVisibleMonths] = useState<number>(1);
 
   useEffect(() => {
@@ -42,80 +43,106 @@ export default function SelectProgramme() {
   const formattedDate = format(jsDate, "dd MMMM yyyy", { locale: fr });
   const dayLabel = format(jsDate, "EEEE d MMMM", { locale: fr });
 
+  const handleSelect = (v: DateValue | null) => {
+    if (v) {
+      setSelectedDate(v);
+      setCalendarOpen(false);
+    }
+  };
+
   return (
     <section className="bg-white w-full px-6 lg:px-[100px] py-12 max-w-[1440px] mx-auto flex flex-col gap-10 items-center">
-      {/* Sélecteur de date HeroUI — Card entier = trigger */}
-      <DatePicker
-        className="w-full max-w-[591px]"
-        value={selectedDate}
-        onChange={(v) => v && setSelectedDate(v)}
-        aria-label="Sélectionner une date"
+      {/* Sélecteur de date — design original + calendrier inline */}
+      <div
+        className={
+          visibleMonths === 2 && calendarOpen
+            ? "w-full max-w-[720px] flex flex-col items-center"
+            : "w-full max-w-[591px] flex flex-col items-center"
+        }
       >
-        <DatePicker.Trigger className="w-full focus:outline-none">
-          <Card className="bg-[#2d2d83] text-white p-0 overflow-hidden w-full cursor-pointer hover:bg-[#24246b] transition-colors">
-            <Card.Content className="p-5 flex items-center gap-4">
-              <CalendarDays className="w-10 h-10 sm:w-12 sm:h-12 text-white/80 shrink-0" />
-              <div className="flex-1 text-left">
-                <p className="text-xs sm:text-sm font-medium text-white/70">
-                  Programme du jour
-                </p>
-                <p className="text-2xl sm:text-3xl font-semibold capitalize">
-                  {formattedDate}
-                </p>
+        <Card className="bg-[#2d2d83] text-white p-0 overflow-hidden w-full max-w-[591px]">
+          <Card.Content className="p-0">
+            <div className="flex items-center">
+              <div className="flex items-center gap-4 flex-1 pl-4 py-4">
+                <CalendarDays className="w-12 h-12 sm:w-16 sm:h-16 text-white/80" />
+                <div className="text-center flex-1">
+                  <p className="text-sm sm:text-base font-medium text-white/70">
+                    Programme du jour
+                  </p>
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-semibold capitalize">
+                    {formattedDate}
+                  </p>
+                </div>
               </div>
-              <div className="text-white/70 text-sm hidden sm:flex items-center gap-1">
-                Changer
-                <DatePicker.TriggerIndicator />
-              </div>
-            </Card.Content>
-          </Card>
-        </DatePicker.Trigger>
+              <Button
+                variant="primary"
+                className="bg-[#98141f] hover:bg-[#7a1019] rounded-none h-full px-8 py-12 self-stretch"
+                onPress={() => setCalendarOpen((v) => !v)}
+                aria-label={calendarOpen ? "Fermer le calendrier" : "Sélectionner une date"}
+                aria-expanded={calendarOpen}
+              >
+                {calendarOpen ? (
+                  <ChevronUp className="w-7 h-7" />
+                ) : (
+                  <ChevronDown className="w-7 h-7" />
+                )}
+              </Button>
+            </div>
+          </Card.Content>
+        </Card>
 
-        <DatePicker.Popover
-          placement="bottom"
-          className={
-            visibleMonths === 2
-              ? "!min-w-[640px] !max-w-[720px]"
-              : "!min-w-[320px]"
-          }
-        >
-          <HeroCalendar
-            aria-label="Choisir une date"
-            visibleDuration={{ months: visibleMonths }}
-            className="p-4"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <HeroCalendar.NavButton slot="previous" />
-              <HeroCalendar.Heading className="font-semibold text-[#2d2d83] capitalize" />
-              <HeroCalendar.NavButton slot="next" />
-            </div>
-            <div className={visibleMonths === 2 ? "flex gap-6 justify-center" : ""}>
-              <HeroCalendar.Grid>
-                <HeroCalendar.GridHeader>
-                  {(day) => (
-                    <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>
-                  )}
-                </HeroCalendar.GridHeader>
-                <HeroCalendar.GridBody>
-                  {(d) => <HeroCalendar.Cell date={d} />}
-                </HeroCalendar.GridBody>
-              </HeroCalendar.Grid>
-              {visibleMonths === 2 && (
-                <HeroCalendar.Grid offset={{ months: 1 }}>
-                  <HeroCalendar.GridHeader>
-                    {(day) => (
-                      <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>
+        {/* Calendrier inline qui se déploie juste en dessous */}
+        {calendarOpen && (
+          <div className="w-full mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <Card className="w-full bg-white shadow-lg border border-gray-200">
+              <Card.Content className="p-4 sm:p-6">
+                <HeroCalendar
+                  aria-label="Choisir une date"
+                  value={selectedDate}
+                  onChange={handleSelect}
+                  visibleDuration={{ months: visibleMonths }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <HeroCalendar.NavButton slot="previous" />
+                    <HeroCalendar.Heading className="font-semibold text-[#2d2d83] capitalize" />
+                    <HeroCalendar.NavButton slot="next" />
+                  </div>
+                  <div
+                    className={
+                      visibleMonths === 2
+                        ? "flex gap-6 justify-center"
+                        : "flex justify-center"
+                    }
+                  >
+                    <HeroCalendar.Grid>
+                      <HeroCalendar.GridHeader>
+                        {(day) => (
+                          <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>
+                        )}
+                      </HeroCalendar.GridHeader>
+                      <HeroCalendar.GridBody>
+                        {(d) => <HeroCalendar.Cell date={d} />}
+                      </HeroCalendar.GridBody>
+                    </HeroCalendar.Grid>
+                    {visibleMonths === 2 && (
+                      <HeroCalendar.Grid offset={{ months: 1 }}>
+                        <HeroCalendar.GridHeader>
+                          {(day) => (
+                            <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>
+                          )}
+                        </HeroCalendar.GridHeader>
+                        <HeroCalendar.GridBody>
+                          {(d) => <HeroCalendar.Cell date={d} />}
+                        </HeroCalendar.GridBody>
+                      </HeroCalendar.Grid>
                     )}
-                  </HeroCalendar.GridHeader>
-                  <HeroCalendar.GridBody>
-                    {(d) => <HeroCalendar.Cell date={d} />}
-                  </HeroCalendar.GridBody>
-                </HeroCalendar.Grid>
-              )}
-            </div>
-          </HeroCalendar>
-        </DatePicker.Popover>
-      </DatePicker>
+                  </div>
+                </HeroCalendar>
+              </Card.Content>
+            </Card>
+          </div>
+        )}
+      </div>
 
       {/* Titre jour sélectionné */}
       <h2 className="text-2xl sm:text-3xl lg:text-4xl font-normal italic text-[#2d2d83] text-center">
