@@ -18,8 +18,8 @@ const dataLinks = [
 export default function Content({ data }: Props) {
   return (
     <div className="flex flex-col">
-      <CardHeader />
-      <div className="flex flex-col gap-12 lg:gap-20 pb-16">
+      <CardHeader title={data.title} subtitle={data.description} />
+      <div className="flex flex-col gap-10 lg:gap-16 pb-16">
         <NavigationSection dataLinks={dataLinks} />
 
         <div className="px-4 max-w-7xl mx-auto w-full">
@@ -35,10 +35,6 @@ export default function Content({ data }: Props) {
               />
             </div>
           )}
-
-          <h1 className="font-cinzel text-blue-900 text-2xl md:text-3xl lg:text-4xl font-bold py-4 !leading-relaxed">
-            {data.title}
-          </h1>
 
           {/* Méta responsable / horaires */}
           {(data.leader || data.schedule) && (
@@ -63,10 +59,6 @@ export default function Content({ data }: Props) {
               )}
             </div>
           )}
-
-          <p className="text-lg md:text-xl opacity-90 mb-8 leading-relaxed">
-            {data.description}
-          </p>
 
           {data.content && (
             <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">
