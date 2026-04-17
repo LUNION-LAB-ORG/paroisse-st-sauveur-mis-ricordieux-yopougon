@@ -1,6 +1,8 @@
 "use client";
 import {
   Button,
+  Calendar,
+  DateField,
   DatePicker,
   Label,
   ListBox,
@@ -46,11 +48,12 @@ export default function FilterActualites({
 
   return (
     <div className="w-full flex flex-col md:flex-row gap-4 md:items-end">
-      {/* Categorie */}
+      {/* Catégorie */}
       <Select
         className="w-full md:flex-1"
         selectedKey={category || "all"}
         onSelectionChange={(k) => onCategoryChange(String(k) === "all" ? "" : String(k))}
+        aria-label="Filtrer par thématique"
       >
         <Label>Thématique</Label>
         <Select.Trigger>
@@ -71,13 +74,47 @@ export default function FilterActualites({
         </Select.Popover>
       </Select>
 
-      {/* Date */}
+      {/* Date picker compound complet */}
       <DatePicker
         className="w-full md:flex-1"
         value={toDateValue(fromDate)}
         onChange={(d) => onFromDateChange(toIsoString(d))}
+        aria-label="Date de début"
       >
         <Label>Publié à partir du</Label>
+        <DateField.Group fullWidth>
+          <DateField.Input>
+            {(segment) => <DateField.Segment segment={segment} />}
+          </DateField.Input>
+          <DateField.Suffix>
+            <DatePicker.Trigger>
+              <DatePicker.TriggerIndicator />
+            </DatePicker.Trigger>
+          </DateField.Suffix>
+        </DateField.Group>
+        <DatePicker.Popover>
+          <Calendar aria-label="Date">
+            <Calendar.Header>
+              <Calendar.YearPickerTrigger>
+                <Calendar.YearPickerTriggerHeading />
+                <Calendar.YearPickerTriggerIndicator />
+              </Calendar.YearPickerTrigger>
+              <Calendar.NavButton slot="previous" />
+              <Calendar.NavButton slot="next" />
+            </Calendar.Header>
+            <Calendar.Grid>
+              <Calendar.GridHeader>
+                {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+              </Calendar.GridHeader>
+              <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+            </Calendar.Grid>
+            <Calendar.YearPickerGrid>
+              <Calendar.YearPickerGridBody>
+                {({ year }) => <Calendar.YearPickerCell year={year} />}
+              </Calendar.YearPickerGridBody>
+            </Calendar.YearPickerGrid>
+          </Calendar>
+        </DatePicker.Popover>
       </DatePicker>
 
       {/* Reset */}
