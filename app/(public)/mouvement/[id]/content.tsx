@@ -1,9 +1,9 @@
 import CardHeader from "@/components/mouvement/children/cardHeader";
 import Image from "next/image";
-import MouvementEquipes from "@/components/mouvement/children/mouvementEquipes";
 import FormulaireContact from "@/components/mouvement/children/formulaireContact";
 import LastSection from "@/components/mouvement/children/lastSection";
 import NavigationSection from "@/components/mouvement/children/navigationSection";
+import { Clock, User } from "lucide-react";
 import type { IService } from "@/features/service/types/service.type";
 
 interface Props {
@@ -24,23 +24,57 @@ export default function Content({ data }: Props) {
 
         <div className="px-4 max-w-7xl mx-auto w-full">
           {data.image && (
-            <Image
-              className="object-cover w-full max-h-[700px] rounded-xl mb-8"
-              width={1200}
-              height={600}
-              alt={data.title}
-              src={data.image}
-            />
+            <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden mb-8 bg-gray-100">
+              <Image
+                className="object-cover"
+                fill
+                sizes="(max-width: 1280px) 100vw, 1280px"
+                alt={data.title}
+                src={data.image}
+                priority
+              />
+            </div>
           )}
-          <h2 className="font-cinzel text-blue-900 text-xl md:text-2xl lg:text-3xl font-bold py-6 !leading-relaxed">
+
+          <h1 className="font-cinzel text-blue-900 text-2xl md:text-3xl lg:text-4xl font-bold py-4 !leading-relaxed">
             {data.title}
-          </h2>
-          <p className="text-xl md:text-2xl opacity-90 mb-8 leading-relaxed">
+          </h1>
+
+          {/* Méta responsable / horaires */}
+          {(data.leader || data.schedule) && (
+            <div className="flex flex-wrap gap-6 text-sm text-gray-600 mb-6">
+              {data.leader && (
+                <span className="inline-flex items-center gap-2 bg-[#2d2d83]/5 px-3 py-2 rounded-full">
+                  <User className="w-4 h-4 text-[#2d2d83]" />
+                  <span>
+                    <span className="text-xs text-gray-500">Responsable : </span>
+                    <span className="font-medium text-gray-800">{data.leader}</span>
+                  </span>
+                </span>
+              )}
+              {data.schedule && (
+                <span className="inline-flex items-center gap-2 bg-[#98141f]/5 px-3 py-2 rounded-full">
+                  <Clock className="w-4 h-4 text-[#98141f]" />
+                  <span>
+                    <span className="text-xs text-gray-500">Horaires : </span>
+                    <span className="font-medium text-gray-800">{data.schedule}</span>
+                  </span>
+                </span>
+              )}
+            </div>
+          )}
+
+          <p className="text-lg md:text-xl opacity-90 mb-8 leading-relaxed">
             {data.description}
           </p>
+
+          {data.content && (
+            <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">
+              {data.content}
+            </div>
+          )}
         </div>
 
-        <MouvementEquipes />
         <FormulaireContact />
         <LastSection />
       </div>
