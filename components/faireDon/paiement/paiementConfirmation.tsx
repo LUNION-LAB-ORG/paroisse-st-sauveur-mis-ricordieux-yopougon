@@ -101,23 +101,31 @@ function ModePaiementRadioGroup({
     >
       <p className="text-lg font-semibold mb-2">Mode de paiement</p>
       <div className="rounded-lg flex items-center gap-2 border-2 p-4">
-        <Radio value="en-ligne" />
-        <div>
-          <h3 className="text-black">Paiement en ligne</h3>
-          <p className="text-md md:text-md lg:text-md">
-            Par carte bancaire (sécurisé)
-          </p>
-        </div>
+        <Radio value="en-ligne">
+          <Radio.Control>
+            <Radio.Indicator />
+          </Radio.Control>
+          <Radio.Content>
+            <h3 className="text-black">Paiement en ligne</h3>
+            <p className="text-md md:text-md lg:text-md">
+              Via Wave Money (paiement mobile sécurisé)
+            </p>
+          </Radio.Content>
+        </Radio>
       </div>
 
       <div className="rounded-lg flex items-center gap-2 border-2 p-4">
-        <Radio value="paroisse" />
-        <div>
-          <h3 className="text-black">Paiement à la paroisse</h3>
-          <p className="text-md md:text-md lg:text-md">
-            En espèces ou par chèque
-          </p>
-        </div>
+        <Radio value="paroisse">
+          <Radio.Control>
+            <Radio.Indicator />
+          </Radio.Control>
+          <Radio.Content>
+            <h3 className="text-black">Paiement à la paroisse</h3>
+            <p className="text-md md:text-md lg:text-md">
+              En espèces ou par chèque
+            </p>
+          </Radio.Content>
+        </Radio>
       </div>
     </RadioGroup>
   );
