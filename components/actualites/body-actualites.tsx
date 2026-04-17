@@ -45,13 +45,14 @@ export default function BodyActualites({ news }: { news: NewsItemType[] }) {
       if (category) {
         if (normalizeCategory(n.category) !== category) return false;
       }
-      // Filtre date (from)
+      // Filtre date — comparaison au niveau du jour (YYYY-MM-DD)
       if (fromDate) {
         const pub = n.published_at ?? n.created_at;
         if (!pub) return false;
-        const pd = new Date(pub).getTime();
-        const fd = new Date(fromDate).getTime();
-        if (isNaN(pd) || isNaN(fd) || pd < fd) return false;
+        const d = new Date(pub);
+        if (isNaN(d.getTime())) return false;
+        const pubDay = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        if (pubDay < fromDate) return false;
       }
       return true;
     });
