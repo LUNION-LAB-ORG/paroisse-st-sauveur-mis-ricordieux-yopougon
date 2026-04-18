@@ -20,6 +20,7 @@ import {
   X,
   Church,
   Bell,
+  Clock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { signOut } from "next-auth/react"
@@ -33,6 +34,7 @@ const menuItems = [
   { label: "Demandes d'événements", icon: CalendarPlus, href: "/dashboard/organisations" },
   { label: "Dons", icon: Heart, href: "/dashboard/dons" },
   { label: "Curés", icon: Church, href: "/dashboard/cure" },
+  { label: "Horaires & Créneaux", icon: Clock, href: "/dashboard/horaires" },
 ]
 
 const contentItems = [

@@ -1,10 +1,12 @@
 "use client";
 import { messeAPI } from "@/features/messe/apis/messe.api";
 import { waveAPI } from "@/features/don/apis/wave.api";
-import { ArrowLeft, CheckCircle, Church } from "lucide-react";
+import { timeSlotAPI } from "@/features/time-slot/apis/time-slot.api";
+import type { ISlotOccurrence } from "@/features/time-slot/types/time-slot.type";
+import { ArrowLeft, CheckCircle, Church, Clock, CalendarDays } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   Button,
@@ -14,17 +16,11 @@ import {
   ListBox,
   TextArea,
   TextField,
-  DatePicker,
-  DateField,
-  Calendar,
-  TimeField,
   RadioGroup,
   Radio,
   Description,
   Card,
 } from "@heroui/react";
-import { today, getLocalTimeZone, Time } from "@internationalized/date";
-import type { DateValue, TimeValue } from "@heroui/react";
 import { IntentionType } from "@/features/messe/schemas/messe.schema";
 
 export default function MesseForm() {
@@ -40,9 +36,22 @@ export default function MesseForm() {
     request_status: "pending" as const,
     paymentMethod: "online",
   });
-  const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
-  const [selectedTime, setSelectedTime] = useState<TimeValue | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<ISlotOccurrence | null>(null);
+  const [slots, setSlots] = useState<ISlotOccurrence[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Charger les créneaux quand on arrive à l'étape 3
+  useEffect(() => {
+    if (currentStep === 3 && slots.length === 0) {
+      setSlotsLoading(true);
+      timeSlotAPI
+        .obtenirDisponibles("messe", 8)
+        .then((res) => setSlots(res.data ?? []))
+        .catch(() => toast.error("Impossible de charger les créneaux"))
+        .finally(() => setSlotsLoading(false));
+    }
+  }, [currentStep, slots.length]);
 
   const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
 
@@ -56,7 +65,7 @@ export default function MesseForm() {
       if (!formData.firstName.trim()) errors.firstName = "Le nom est obligatoire";
     }
     if (currentStep === 3) {
-      if (!selectedDate) errors.selectedDate = "Veuillez sélectionner une date";
+      if (!selectedSlot) errors.selectedSlot = "Veuillez sélectionner un créneau parmi ceux proposés";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -76,12 +85,13 @@ export default function MesseForm() {
     setLoading(true);
     const toastId = toast.loading("Envoi de votre demande...");
     try {
-      const dateStr = selectedDate
-        ? `${selectedDate.year}-${String(selectedDate.month).padStart(2, "0")}-${String(selectedDate.day).padStart(2, "0")}`
-        : "";
-      const timeStr = selectedTime
-        ? `${String(selectedTime.hour).padStart(2, "0")}:${String(selectedTime.minute).padStart(2, "0")}`
-        : "00:00";
+      if (!selectedSlot) {
+        toast.error("Veuillez choisir un créneau.", { id: toastId });
+        setLoading(false);
+        return;
+      }
+      const dateStr = selectedSlot.date;
+      const timeStr = selectedSlot.start_time;
       const isoDateTime = new Date(`${dateStr}T${timeStr}`).toISOString();
 
       const payload: IntentionType = {
@@ -139,8 +149,8 @@ export default function MesseForm() {
       request_status: "pending",
       paymentMethod: "online",
     });
-    setSelectedDate(null);
-    setSelectedTime(null);
+    setSelectedSlot(null);
+    setSlots([]);
     setCurrentStep(1);
     setIsSubmitted(false);
   };
@@ -317,63 +327,102 @@ export default function MesseForm() {
             )}
 
             {currentStep === 3 && (
-
               <div className="space-y-5">
-                <DatePicker
-                  className="w-full"
-                  value={selectedDate}
-                  onChange={setSelectedDate}
-                  minValue={today(getLocalTimeZone())}
-                >
-                  <Label>Date souhaitée</Label>
-                  <DateField.Group fullWidth>
-                    <DateField.Input>
-                      {(segment) => <DateField.Segment segment={segment} />}
-                    </DateField.Input>
-                    <DateField.Suffix>
-                      <DatePicker.Trigger>
-                        <DatePicker.TriggerIndicator />
-                      </DatePicker.Trigger>
-                    </DateField.Suffix>
-                  </DateField.Group>
-                  <DatePicker.Popover>
-                    <Calendar aria-label="Date de messe">
-                      <Calendar.Header>
-                        <Calendar.NavButton slot="previous" />
-                        <Calendar.Heading />
-                        <Calendar.NavButton slot="next" />
-                      </Calendar.Header>
-                      <Calendar.Grid>
-                        <Calendar.GridHeader>
-                          {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
-                        </Calendar.GridHeader>
-                        <Calendar.GridBody>
-                          {(date) => <Calendar.Cell date={date} />}
-                        </Calendar.GridBody>
-                      </Calendar.Grid>
-                    </Calendar>
-                  </DatePicker.Popover>
-                </DatePicker>
+                <div>
+                  <Label className="block mb-1 text-sm font-medium text-gray-700">
+                    Choisir un créneau de messe
+                  </Label>
+                  <p className="text-xs text-gray-500 mb-4">
+                    Voici les prochaines messes proposées par la paroisse. Sélectionnez le créneau qui vous convient.
+                  </p>
 
-                <TimeField
-                  className="w-full"
-                  value={selectedTime}
-                  onChange={setSelectedTime}
-                >
-                  <Label>Horaire souhaité</Label>
-                  <TimeField.Group>
-                    <TimeField.Input>
-                      {(segment) => <TimeField.Segment segment={segment} />}
-                    </TimeField.Input>
-                  </TimeField.Group>
-                </TimeField>
-                {stepErrors.selectedDate && (
-                  <p className="text-red-500 text-xs mt-1">{stepErrors.selectedDate}</p>
+                  {slotsLoading && (
+                    <div className="text-center py-8 text-gray-400 text-sm">
+                      Chargement des créneaux...
+                    </div>
+                  )}
+
+                  {!slotsLoading && slots.length === 0 && (
+                    <div className="text-center py-8 px-4 bg-amber-50 rounded-xl border border-amber-200">
+                      <p className="text-amber-800 text-sm font-medium">
+                        Aucun créneau disponible pour le moment.
+                      </p>
+                      <p className="text-amber-700 text-xs mt-1">
+                        Veuillez contacter la paroisse directement.
+                      </p>
+                    </div>
+                  )}
+
+                  {!slotsLoading && slots.length > 0 && (
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                      {slots.map((slot) => {
+                        const isSelected = selectedSlot
+                          ? selectedSlot.slot_id === slot.slot_id && selectedSlot.date === slot.date
+                          : false;
+                        return (
+                          <button
+                            key={`${slot.slot_id}-${slot.date}`}
+                            type="button"
+                            onClick={() => setSelectedSlot(slot)}
+                            className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
+                              isSelected
+                                ? "bg-[#2d2d83]/5 border-[#2d2d83]"
+                                : "bg-white border-gray-200 hover:border-[#2d2d83]/40"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                                  isSelected ? "bg-[#2d2d83] text-white" : "bg-gray-100 text-gray-500"
+                                }`}
+                              >
+                                <CalendarDays className="w-5 h-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p
+                                  className={`text-sm font-semibold truncate ${
+                                    isSelected ? "text-[#2d2d83]" : "text-gray-800"
+                                  }`}
+                                >
+                                  {slot.label}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-0.5 inline-flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {slot.start_time} – {slot.end_time}
+                                  {slot.available !== null && slot.capacity && (
+                                    <span className="ml-2 text-gray-400">
+                                      • {slot.available}/{slot.capacity} places
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                              {isSelected && (
+                                <CheckCircle className="w-5 h-5 text-[#2d2d83] shrink-0" />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {stepErrors.selectedSlot && (
+                  <p className="text-red-500 text-xs mt-1">{stepErrors.selectedSlot}</p>
                 )}
 
                 <div className="flex justify-between pt-2">
-                  <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>Précédent</Button>
-                  <Button variant="primary" className="bg-[#2d2d83] rounded-xl px-6" onPress={handleNextStep}>Suivant</Button>
+                  <Button variant="outline" className="rounded-xl" onPress={handlePrevStep}>
+                    Précédent
+                  </Button>
+                  <Button
+                    variant="primary"
+                    className="bg-[#2d2d83] rounded-xl px-6"
+                    isDisabled={!selectedSlot}
+                    onPress={handleNextStep}
+                  >
+                    Suivant
+                  </Button>
                 </div>
               </div>
             )}
@@ -412,13 +461,13 @@ export default function MesseForm() {
                       <span className="text-gray-800 font-medium">{formData.intentionType || "—"}</span>
                       <span className="text-gray-500">Demandeur :</span>
                       <span className="text-gray-800 font-medium">{formData.firstName || "—"}</span>
-                      <span className="text-gray-500">Date :</span>
+                      <span className="text-gray-500">Créneau :</span>
                       <span className="text-gray-800 font-medium">
-                        {selectedDate ? `${selectedDate.day}/${selectedDate.month}/${selectedDate.year}` : "—"}
+                        {selectedSlot ? selectedSlot.label : "—"}
                       </span>
                       <span className="text-gray-500">Horaire :</span>
                       <span className="text-gray-800 font-medium">
-                        {selectedTime ? `${String(selectedTime.hour).padStart(2, "0")}h${String(selectedTime.minute).padStart(2, "0")}` : "—"}
+                        {selectedSlot ? `${selectedSlot.start_time} – ${selectedSlot.end_time}` : "—"}
                       </span>
                       <span className="text-gray-500">Montant :</span>
                       <span className="text-[#98141f] font-bold">3 000 XOF</span>
