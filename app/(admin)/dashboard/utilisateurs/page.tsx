@@ -54,8 +54,8 @@ const EMPTY: FormState = {
   email: "",
   phone: "",
   password: "",
-  role: "ADMIN",
-  status: "ENABLE",
+  role: "admin",
+  status: "active",
 }
 
 export default function UtilisateursPage() {
@@ -106,9 +106,9 @@ export default function UtilisateursPage() {
   const counts = useMemo(() => {
     return {
       total: users.length,
-      admin: users.filter((u) => u.role === "ADMIN").length,
-      priest: users.filter((u) => u.role === "PRIEST").length,
-      active: users.filter((u) => u.status === "ENABLE").length,
+      admin: users.filter((u) => u.role === "admin").length,
+      priest: users.filter((u) => u.role === "priest").length,
+      active: users.filter((u) => u.status === "active").length,
     }
   }, [users])
 
@@ -126,7 +126,7 @@ export default function UtilisateursPage() {
       email: u.email ?? "",
       phone: u.phone ?? "",
       password: "",
-      role: (u.role ?? "ADMIN") as IUserRole,
+      role: (u.role ?? "admin") as IUserRole,
       status: u.status,
     })
     setPhotoFile(null)
@@ -172,11 +172,11 @@ export default function UtilisateursPage() {
   }
 
   const toggleStatus = async (u: IUser) => {
-    const newStatus = u.status === "ENABLE" ? "DISABLE" : "ENABLE"
+    const newStatus = u.status === "active" ? "inactive" : "active"
     try {
       const res = await userAPI.modifier(u.id, { status: newStatus })
       setUsers((prev) => prev.map((x) => (x.id === u.id ? res.data : x)))
-      toast.success(newStatus === "ENABLE" ? "Compte activé" : "Compte désactivé")
+      toast.success(newStatus === "active" ? "Compte activé" : "Compte désactivé")
     } catch {
       toast.error("Erreur")
     }
@@ -227,8 +227,8 @@ export default function UtilisateursPage() {
         <div className="flex gap-2 flex-wrap">
           {[
             { key: "all", label: "Tous" },
-            { key: "ADMIN", label: "Admin" },
-            { key: "PRIEST", label: "Prêtres" },
+            { key: "admin", label: "Admin" },
+            { key: "priest", label: "Prêtres" },
           ].map((f) => (
             <button
               key={f.key}
@@ -261,9 +261,11 @@ export default function UtilisateursPage() {
       {!loading && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((u) => {
-            const roleMeta = u.role ? ROLE_LABELS[u.role] : { label: "—", color: "bg-gray-100 text-gray-600" }
+            const roleMeta =
+              (u.role && ROLE_LABELS[u.role as keyof typeof ROLE_LABELS]) ||
+              { label: u.role ?? "—", color: "bg-gray-100 text-gray-600" }
             return (
-              <Card key={u.id} className={u.status === "DISABLE" ? "opacity-60" : ""}>
+              <Card key={u.id} className={u.status === "inactive" ? "opacity-60" : ""}>
                 <Card.Content className="p-5">
                   <div className="flex items-start gap-4 mb-3">
                     <Avatar className="w-14 h-14 ring-2 ring-[#2d2d83]/10 shrink-0">
@@ -280,10 +282,10 @@ export default function UtilisateursPage() {
                         </Chip>
                         <Chip
                           variant="soft"
-                          color={u.status === "ENABLE" ? "success" : "danger"}
+                          color={u.status === "active" ? "success" : "danger"}
                           size="sm"
                         >
-                          {u.status === "ENABLE" ? "Actif" : "Désactivé"}
+                          {u.status === "active" ? "Actif" : "Désactivé"}
                         </Chip>
                       </div>
                     </div>
@@ -306,12 +308,12 @@ export default function UtilisateursPage() {
 
                   <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
                     <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <Switch isSelected={u.status === "ENABLE"} onChange={() => toggleStatus(u)}>
+                      <Switch isSelected={u.status === "active"} onChange={() => toggleStatus(u)}>
                         <Switch.Control>
                           <Switch.Thumb />
                         </Switch.Control>
                       </Switch>
-                      <span>{u.status === "ENABLE" ? "Activé" : "Désactivé"}</span>
+                      <span>{u.status === "active" ? "Activé" : "Désactivé"}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Button
@@ -459,8 +461,8 @@ export default function UtilisateursPage() {
                   onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as IUserRole }))}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 bg-white"
                 >
-                  <option value="ADMIN">Administrateur</option>
-                  <option value="PRIEST">Prêtre</option>
+                  <option value="admin">Administrateur</option>
+                  <option value="priest">Prêtre</option>
                 </select>
               </div>
               <div>
@@ -470,8 +472,8 @@ export default function UtilisateursPage() {
                   onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as IUserStatus }))}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 bg-white"
                 >
-                  <option value="ENABLE">Actif</option>
-                  <option value="DISABLE">Désactivé</option>
+                  <option value="active">Actif</option>
+                  <option value="inactive">Désactivé</option>
                 </select>
               </div>
             </div>

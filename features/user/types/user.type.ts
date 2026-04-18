@@ -1,5 +1,5 @@
-export type IUserRole = "ADMIN" | "PRIEST";
-export type IUserStatus = "ENABLE" | "DISABLE";
+export type IUserRole = "admin" | "priest";
+export type IUserStatus = "active" | "inactive";
 
 export interface IUser {
   id: number;
@@ -28,6 +28,6 @@ export interface IUserModifier extends Partial<Omit<IUserCreer, "password">> {
 }
 
 export const ROLE_LABELS: Record<IUserRole, { label: string; color: string }> = {
-  ADMIN: { label: "Administrateur", color: "bg-[#98141f]/10 text-[#98141f]" },
-  PRIEST: { label: "Prêtre", color: "bg-[#2d2d83]/10 text-[#2d2d83]" },
+  admin: { label: "Administrateur", color: "bg-[#98141f]/10 text-[#98141f]" },
+  priest: { label: "Prêtre", color: "bg-[#2d2d83]/10 text-[#2d2d83]" },
 };

@@ -85,7 +85,7 @@ export default function ProfilPage() {
   }
 
   const photoPreview = photoFile ? URL.createObjectURL(photoFile) : me.photo
-  const roleMeta = me.role ? ROLE_LABELS[me.role] : null
+  const roleMeta = (me.role && ROLE_LABELS[me.role as keyof typeof ROLE_LABELS]) || null
 
   return (
     <div>

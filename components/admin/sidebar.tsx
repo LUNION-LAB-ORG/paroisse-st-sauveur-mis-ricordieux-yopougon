@@ -42,7 +42,6 @@ const contentItems = [
   { label: "Méditations", icon: FileEdit, href: "/dashboard/mediation" },
   { label: "Actualités", icon: Newspaper, href: "/dashboard/actualites" },
   { label: "Mouvements", icon: Users, href: "/dashboard/mouvements" },
-  { label: "Programmations", icon: CalendarHeart, href: "/dashboard/programmations" },
 ]
 
 const adminItems = [

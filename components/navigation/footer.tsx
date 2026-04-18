@@ -115,11 +115,6 @@ export function Footer() {
                   Historique
                 </Link>
               </li>
-              <li>
-                <Link href="/programmations" className="hover:text-white transition-colors">
-                  Programmations
-                </Link>
-              </li>
             </ul>
           </div>
 
