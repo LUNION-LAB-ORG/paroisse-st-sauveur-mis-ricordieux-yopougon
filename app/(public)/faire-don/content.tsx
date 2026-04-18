@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Heart, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Heart, Loader2, Shield } from "lucide-react";
 import { toast } from "sonner";
 import {
   Button,
@@ -11,8 +11,6 @@ import {
   Input,
   Label,
   NumberField,
-  Radio,
-  RadioGroup,
   Select,
   ListBox,
 } from "@heroui/react";
@@ -20,7 +18,6 @@ import {
 import { HeroCommon } from "@/components/common/hero-common";
 import CardContainer from "@/components/faireDon/CardContainer";
 import { waveAPI } from "@/features/don/apis/wave.api";
-import { donAPI } from "@/features/don/apis/don.api";
 
 const HERO_IMG = "/assets/images/hero-faire-don.jpg";
 
@@ -60,8 +57,7 @@ const PROJETS_AFFICHES = [
   },
 ];
 
-type Step = 1 | 2 | 3;
-type PaymentMode = "wave" | "paroisse";
+type Step = 1 | 2;
 
 interface FormState {
   amount: number;          // montant final en XOF
@@ -70,7 +66,6 @@ interface FormState {
   email: string;
   phone: string;
   description: string;
-  mode: PaymentMode | "";
 }
 
 const INITIAL: FormState = {
@@ -80,7 +75,6 @@ const INITIAL: FormState = {
   email: "",
   phone: "",
   description: "",
-  mode: "",
 };
 
 export default function Content() {
@@ -105,7 +99,7 @@ export default function Content() {
     return true;
   };
 
-  /* ─────────────────────────── STEP 2 validation ─────────────────────────── */
+  /* ─────────────────────────── STEP 2 + submit Wave ─────────────────────── */
   const validateStep2 = () => {
     if (!form.donator.trim()) {
       toast.error("Votre nom est requis.");
@@ -118,52 +112,35 @@ export default function Content() {
     return true;
   };
 
-  /* ─────────────────────────── Submit final ──────────────────────────────── */
   const submit = async () => {
-    if (!form.mode) {
-      toast.error("Veuillez choisir un mode de paiement.");
-      return;
-    }
+    if (!validateStep2()) return;
 
     setSubmitting(true);
+    const toastId = toast.loading("Redirection vers Wave…");
+
     try {
-      if (form.mode === "wave") {
-        const toastId = toast.loading("Redirection vers Wave…");
-        const result = await waveAPI.createCheckout({
-          amount: form.amount,
-          type: "donation",
-          donator: form.donator.trim() || "Anonyme",
-          email: form.email.trim() || undefined,
-          phone: form.phone.trim() || undefined,
-          project: form.project,
-          description: form.description.trim() || `Don de ${form.donator || "Anonyme"} via le site`,
-        });
-        toast.success("Redirection en cours…", { id: toastId });
-        window.location.href = result.wave_launch_url;
-        return;
-      }
-
-      // Mode paroisse : don enregistré en pending, paiement effectué sur place
-      await donAPI.ajouterPublic({
-        donator: form.donator.trim() || "Anonyme",
-        email: form.email.trim() || null,
-        phone: form.phone.trim() || null,
+      const result = await waveAPI.createCheckout({
         amount: form.amount,
+        type: "donation",
+        donator: form.donator.trim() || "Anonyme",
+        email: form.email.trim() || undefined,
+        phone: form.phone.trim() || undefined,
         project: form.project,
-        description: form.description.trim() || null,
+        description:
+          form.description.trim() || `Don de ${form.donator || "Anonyme"} via le site`,
       });
-
-      toast.success("Don enregistré — rendez-vous à la paroisse pour le versement.");
-      // Redirection vers une page succès dédiée au cas paroisse
-      window.location.href = `/faire-don/paiement/succes?mode=paroisse`;
+      toast.success("Redirection en cours…", { id: toastId });
+      window.location.href = result.wave_launch_url;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erreur lors de l'enregistrement du don.";
-      toast.error(msg);
+      const msg = err instanceof Error ? err.message : "Erreur lors du paiement Wave.";
+      toast.error(msg, { id: toastId });
       setSubmitting(false);
     }
   };
 
-  const amountIsCustom = customSelected || (!!form.amount && !AMOUNTS_PRESET.includes(form.amount as (typeof AMOUNTS_PRESET)[number]));
+  const amountIsCustom =
+    customSelected ||
+    (!!form.amount && !AMOUNTS_PRESET.includes(form.amount as (typeof AMOUNTS_PRESET)[number]));
 
   /* ─────────────────────────── Render ────────────────────────────────────── */
   return (
@@ -180,8 +157,7 @@ export default function Content() {
         <ol className="flex items-center justify-between mb-8">
           {[
             { n: 1, label: "Montant & projet" },
-            { n: 2, label: "Coordonnées" },
-            { n: 3, label: "Paiement" },
+            { n: 2, label: "Coordonnées & paiement" },
           ].map((s, i, arr) => {
             const active = step === s.n;
             const done = step > s.n;
@@ -221,7 +197,7 @@ export default function Content() {
               <>
                 <header>
                   <p className="text-[#98141f] text-xs font-semibold uppercase tracking-widest mb-1">
-                    Étape 1 / 3
+                    Étape 1 / 2
                   </p>
                   <h2 className="text-[#2d2d83] text-2xl font-bold">Montant & affectation</h2>
                   <p className="text-sm text-gray-500 mt-1">
@@ -323,7 +299,7 @@ export default function Content() {
               <>
                 <header>
                   <p className="text-[#98141f] text-xs font-semibold uppercase tracking-widest mb-1">
-                    Étape 2 / 3
+                    Étape 2 / 2
                   </p>
                   <h2 className="text-[#2d2d83] text-2xl font-bold">Vos coordonnées</h2>
                   <p className="text-sm text-gray-500 mt-1">
@@ -353,78 +329,19 @@ export default function Content() {
                   <TextArea rows={3} placeholder="Intention, mot personnel…" />
                 </TextField>
 
-                <div className="flex justify-between pt-2">
-                  <Button variant="secondary" className="rounded-xl" onPress={() => setStep(1)}>
-                    <ArrowLeft className="w-4 h-4" /> Précédent
-                  </Button>
-                  <Button
-                    variant="primary"
-                    className="bg-[#98141f] rounded-xl px-6"
-                    onPress={() => validateStep2() && setStep(3)}
-                  >
-                    Continuer <ArrowRight className="w-4 h-4" />
-                  </Button>
+                {/* Bandeau Wave unique mode paiement */}
+                <div className="rounded-xl border-2 border-[#98141f]/20 bg-[#98141f]/5 p-4 flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-[#98141f] mt-0.5 shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-[#2d2d83] mb-0.5">
+                      Paiement sécurisé par Wave Money
+                    </p>
+                    <p className="text-gray-600">
+                      Vous serez redirigé vers Wave pour valider votre paiement. Aucune information
+                      bancaire n'est conservée par la paroisse.
+                    </p>
+                  </div>
                 </div>
-              </>
-            )}
-
-            {step === 3 && (
-              <>
-                <header>
-                  <p className="text-[#98141f] text-xs font-semibold uppercase tracking-widest mb-1">
-                    Étape 3 / 3
-                  </p>
-                  <h2 className="text-[#2d2d83] text-2xl font-bold">Mode de paiement</h2>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Choisissez comment vous souhaitez verser votre don.
-                  </p>
-                </header>
-
-                <RadioGroup
-                  value={form.mode}
-                  onChange={(v: string) => update("mode", (v as PaymentMode) || "")}
-                >
-                  <div
-                    className={`rounded-xl border-2 p-4 transition-colors ${
-                      form.mode === "wave"
-                        ? "border-[#98141f] bg-[#98141f]/5"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <Radio value="wave">
-                      <Radio.Control>
-                        <Radio.Indicator />
-                      </Radio.Control>
-                      <Radio.Content>
-                        <p className="font-semibold text-gray-800">Paiement en ligne — Wave</p>
-                        <p className="text-sm text-gray-500 mt-0.5">
-                          Paiement mobile sécurisé. Redirection vers Wave, retour automatique après validation.
-                        </p>
-                      </Radio.Content>
-                    </Radio>
-                  </div>
-
-                  <div
-                    className={`rounded-xl border-2 p-4 transition-colors ${
-                      form.mode === "paroisse"
-                        ? "border-[#98141f] bg-[#98141f]/5"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <Radio value="paroisse">
-                      <Radio.Control>
-                        <Radio.Indicator />
-                      </Radio.Control>
-                      <Radio.Content>
-                        <p className="font-semibold text-gray-800">Paiement à la paroisse</p>
-                        <p className="text-sm text-gray-500 mt-0.5">
-                          En espèces ou par chèque, directement à la paroisse. Votre don est pré-enregistré et
-                          validé par le secrétariat à réception.
-                        </p>
-                      </Radio.Content>
-                    </Radio>
-                  </div>
-                </RadioGroup>
 
                 {/* Récapitulatif */}
                 <div className="rounded-xl bg-gray-50 p-5 space-y-2 text-sm">
@@ -441,20 +358,10 @@ export default function Content() {
                       {PROJECTS.find((p) => p.key === form.project)?.label ?? form.project}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Donateur</span>
-                    <span className="font-medium text-gray-800">{form.donator || "—"}</span>
-                  </div>
-                  {form.email && (
+                  {form.donator && (
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Email</span>
-                      <span className="font-medium text-gray-800">{form.email}</span>
-                    </div>
-                  )}
-                  {form.phone && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Téléphone</span>
-                      <span className="font-medium text-gray-800">{form.phone}</span>
+                      <span className="text-gray-500">Donateur</span>
+                      <span className="font-medium text-gray-800">{form.donator}</span>
                     </div>
                   )}
                 </div>
@@ -463,7 +370,7 @@ export default function Content() {
                   <Button
                     variant="secondary"
                     className="rounded-xl"
-                    onPress={() => setStep(2)}
+                    onPress={() => setStep(1)}
                     isDisabled={submitting}
                   >
                     <ArrowLeft className="w-4 h-4" /> Précédent
@@ -472,15 +379,15 @@ export default function Content() {
                     variant="primary"
                     className="bg-[#98141f] rounded-xl px-6"
                     onPress={submit}
-                    isDisabled={submitting || !form.mode}
+                    isDisabled={submitting}
                   >
                     {submitting ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Enregistrement…
+                        <Loader2 className="w-4 h-4 animate-spin" /> Redirection…
                       </>
                     ) : (
                       <>
-                        <Heart className="w-4 h-4" /> Faire mon don
+                        <Heart className="w-4 h-4" /> Payer avec Wave
                       </>
                     )}
                   </Button>

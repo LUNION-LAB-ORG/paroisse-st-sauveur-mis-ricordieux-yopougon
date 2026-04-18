@@ -315,30 +315,52 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard
-          icon={Users}
-          value={String(participants.length)}
-          label="Inscrits"
-          iconBgColor="bg-[#2d2d83]/10"
-          iconColor="text-[#2d2d83]"
-        />
-        <StatCard
-          icon={Mail}
-          value={String(participants.filter((p) => p.email).length)}
-          label="Avec email"
-          iconBgColor="bg-green-100"
-          iconColor="text-green-600"
-        />
-        <StatCard
-          icon={Phone}
-          value={String(participants.filter((p) => p.phone).length)}
-          label="Avec téléphone"
-          iconBgColor="bg-amber-100"
-          iconColor="text-amber-600"
-        />
-      </div>
+      {/* Stats — on ne compte que les inscriptions confirmées (paid/succeeded/free).
+          Les pending (Wave en cours) et failed ne sont pas comptés. */}
+      {(() => {
+        const isConfirmed = (p: typeof participants[number]) => {
+          const s = p.payment_status;
+          return s === "succeeded" || s === "paid" || s === "free" || !s;
+        };
+        const confirmed = participants.filter(isConfirmed);
+        const pending = participants.filter((p) => p.payment_status === "pending");
+        return (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <StatCard
+                icon={Users}
+                value={String(confirmed.length)}
+                label="Inscrits confirmés"
+                iconBgColor="bg-[#2d2d83]/10"
+                iconColor="text-[#2d2d83]"
+              />
+              <StatCard
+                icon={Mail}
+                value={String(confirmed.filter((p) => p.email).length)}
+                label="Avec email"
+                iconBgColor="bg-green-100"
+                iconColor="text-green-600"
+              />
+              <StatCard
+                icon={Phone}
+                value={String(confirmed.filter((p) => p.phone).length)}
+                label="Avec téléphone"
+                iconBgColor="bg-amber-100"
+                iconColor="text-amber-600"
+              />
+            </div>
+            {pending.length > 0 && (
+              <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-center gap-2">
+                <Users className="w-4 h-4 shrink-0" />
+                <span>
+                  <strong>{pending.length}</strong> paiement{pending.length > 1 ? "s" : ""} Wave en
+                  cours (non compté{pending.length > 1 ? "s" : ""} dans les statistiques).
+                </span>
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">

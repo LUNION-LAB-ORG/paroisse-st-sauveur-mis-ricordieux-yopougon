@@ -141,12 +141,31 @@ export default function DonsPage() {
       .filter((d) => !searchDon || d.donator.toLowerCase().includes(searchDon.toLowerCase()))
   }, [dons, filterType, filterMode, searchDon])
 
+  /**
+   * Un don n'est compté dans les statistiques / charts QUE si son paiement est
+   * validé. Les dons en "pending" (Wave en cours de paiement) et "failed"
+   * (paiement abandonné) ne doivent pas polluer les chiffres.
+   * Les dons sans payment_status (anciens, avant migration) sont considérés
+   * comme confirmés par compat ascendante.
+   */
+  const isConfirmedDon = (d: IDon) => {
+    const status = d.payment_status ?? "succeeded"
+    return status === "succeeded"
+  }
+
+  const confirmedDons = useMemo(() => dons.filter(isConfirmedDon), [dons])
+
   const monetaryDons = useMemo(
-    () => dons.filter((d) => (d.donation_type ?? "monetaire") === "monetaire"),
-    [dons],
+    () => confirmedDons.filter((d) => (d.donation_type ?? "monetaire") === "monetaire"),
+    [confirmedDons],
   )
   const natureDons = useMemo(
-    () => dons.filter((d) => d.donation_type === "nature"),
+    () => confirmedDons.filter((d) => d.donation_type === "nature"),
+    [confirmedDons],
+  )
+
+  const pendingDons = useMemo(
+    () => dons.filter((d) => d.payment_status === "pending"),
     [dons],
   )
 
@@ -157,12 +176,12 @@ export default function DonsPage() {
 
   const donsThisMonth = useMemo(() => {
     const now = new Date()
-    return dons.filter((d) => {
+    return confirmedDons.filter((d) => {
       if (!d.donation_at) return false
       const dd = new Date(d.donation_at)
       return dd.getMonth() === now.getMonth() && dd.getFullYear() === now.getFullYear()
     }).length
-  }, [dons])
+  }, [confirmedDons])
 
   const barData = useMemo(() => {
     const now = new Date()
@@ -278,20 +297,20 @@ export default function DonsPage() {
     <div>
       <Header title="Gestion des Dons" />
 
-      {/* Stats avec trends réels */}
+      {/* Stats avec trends réels - SEULS les dons confirmés sont comptés */}
       {(() => {
         const monetaryItems = monetaryDons as unknown as Record<string, unknown>[]
-        const allItems = dons as unknown as Record<string, unknown>[]
+        const confirmedItems = confirmedDons as unknown as Record<string, unknown>[]
         const natureItems = natureDons as unknown as Record<string, unknown>[]
         const totalTrend = trendFromItemsByDateSum(monetaryItems, "donation_at", "amount")
-        const thisMonthTrend = trendFromItemsByDate(allItems, "donation_at")
+        const thisMonthTrend = trendFromItemsByDate(confirmedItems, "donation_at")
         const natureTrend = trendFromItemsByDate(natureItems, "donation_at")
         return (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <StatCard
               icon={Heart}
               value={totalAmount >= 1000000 ? `${(totalAmount / 1000000).toFixed(1)}M F` : `${formatAmount(totalAmount)} F`}
-              label="Total dons (monétaires)"
+              label="Total dons (confirmés)"
               trend={totalTrend.trend ?? undefined}
               trendUp={totalTrend.trendUp}
               iconBgColor="bg-[#98141f]/10"
@@ -308,7 +327,7 @@ export default function DonsPage() {
             />
             <StatCard
               icon={Users}
-              value={String(new Set(dons.map((d) => d.donator)).size)}
+              value={String(new Set(confirmedDons.map((d) => d.donator)).size)}
               label="Donateurs"
               iconBgColor="bg-[#2d2d83]/10"
               iconColor="text-[#2d2d83]"
@@ -325,6 +344,17 @@ export default function DonsPage() {
           </div>
         )
       })()}
+
+      {/* Bandeau informatif si paiements Wave en cours */}
+      {pendingDons.length > 0 && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 shrink-0" />
+          <span>
+            <strong>{pendingDons.length}</strong> paiement{pendingDons.length > 1 ? "s" : ""} Wave en
+            cours (non compté{pendingDons.length > 1 ? "s" : ""} dans les statistiques).
+          </span>
+        </div>
+      )}
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
@@ -452,11 +482,14 @@ export default function DonsPage() {
                           <Table.Cell>{paymethodLabel(d.paymethod)}</Table.Cell>
                           <Table.Cell>
                             {d.payment_status === "pending" ? (
-                              <Chip variant="soft" color="warning" size="sm">À valider</Chip>
+                              <Chip variant="soft" color="warning" size="sm">En attente</Chip>
                             ) : d.payment_status === "failed" ? (
                               <Chip variant="soft" color="danger" size="sm">Échoué</Chip>
-                            ) : (
+                            ) : d.payment_status === "succeeded" ? (
                               <Chip variant="soft" color="success" size="sm">Reçu</Chip>
+                            ) : (
+                              // Cas legacy : dons créés avant la migration payment_status
+                              <Chip variant="soft" color="default" size="sm">Inconnu</Chip>
                             )}
                           </Table.Cell>
                           <Table.Cell>
