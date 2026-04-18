@@ -1,14 +1,32 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Heart, TrendingUp, Users, CreditCard, Plus, Trash2, Gift, Search } from "lucide-react"
+import { Heart, TrendingUp, Users, Plus, Trash2, Gift } from "lucide-react"
 import { toast } from "sonner"
 
 import { Header } from "@/components/admin/header"
 import { StatCard } from "@/components/admin/stat-card"
 import { BarChart } from "@/components/admin/charts/bar-chart"
 import { PieChart } from "@/components/admin/charts/pie-chart"
-import { Card, Chip, Button as HeroButton } from "@heroui/react"
+import {
+  Card,
+  Chip,
+  Button as HeroButton,
+  TextField,
+  TextArea,
+  Input,
+  Label,
+  NumberField,
+  Select,
+  ListBox,
+  SearchField,
+  DatePicker,
+  DateField,
+  Calendar as HeroCalendar,
+  Table,
+} from "@heroui/react"
+import { CalendarDate } from "@internationalized/date"
+import type { DateValue } from "@heroui/react"
 import {
   Dialog,
   DialogContent,
@@ -82,21 +100,27 @@ function paymethodLabel(k?: string | null) {
   return PAYMETHODS.find((p) => p.key === k)?.label ?? k
 }
 
+function toDateValue(iso: string): DateValue | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+  return m ? new CalendarDate(Number(m[1]), Number(m[2]), Number(m[3])) : null
+}
+function toIso(d: DateValue | null): string {
+  if (!d) return ""
+  return `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`
+}
+
 export default function DonsPage() {
   const [dons, setDons] = useState<IDon[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Modals
   const [addOpen, setAddOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [donToDelete, setDonToDelete] = useState<IDon | null>(null)
 
-  // Filters
   const [searchDon, setSearchDon] = useState("")
   const [filterMode, setFilterMode] = useState<string>("all")
   const [filterType, setFilterType] = useState<"all" | IDonType>("all")
 
-  // Form
   const [form, setForm] = useState(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
 
@@ -139,12 +163,6 @@ export default function DonsPage() {
       return dd.getMonth() === now.getMonth() && dd.getFullYear() === now.getFullYear()
     }).length
   }, [dons])
-
-  const wavePercent = useMemo(() => {
-    const n = monetaryDons.length
-    if (!n) return 0
-    return Math.round((monetaryDons.filter((d) => d.paymethod === "wave").length / n) * 100)
-  }, [monetaryDons])
 
   const barData = useMemo(() => {
     const now = new Date()
@@ -221,7 +239,6 @@ export default function DonsPage() {
         amount: isMonetary ? amount : Number(form.amount || 0),
         project: form.project,
         paymethod: isMonetary ? form.paymethod : null,
-        // Backend accepte null maintenant ; pour compat on génère une ref si vide en monétaire
         paytransaction: isMonetary
           ? (form.paytransaction.trim() || `MANUAL-${Date.now()}`)
           : null,
@@ -351,7 +368,6 @@ export default function DonsPage() {
 
         {/* Filters */}
         <div className="flex flex-col gap-3 mb-4">
-          {/* Type filter */}
           <div className="flex gap-2 flex-wrap items-center">
             <span className="text-xs text-gray-500 font-medium">Type :</span>
             {([
@@ -359,103 +375,100 @@ export default function DonsPage() {
               { key: "monetaire", label: "Monétaires" },
               { key: "nature", label: "En nature" },
             ] as const).map((f) => (
-              <button
+              <Chip
                 key={f.key}
+                variant={filterType === f.key ? "primary" : "soft"}
+                size="sm"
+                className={filterType === f.key ? "bg-[#2d2d83] text-white cursor-pointer" : "cursor-pointer"}
                 onClick={() => setFilterType(f.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  filterType === f.key ? "bg-[#2d2d83] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
               >
                 {f.label}
-              </button>
+              </Chip>
             ))}
           </div>
 
-          {/* Mode de paiement filter (pour monétaires) */}
           <div className="flex gap-2 flex-wrap items-center">
             <span className="text-xs text-gray-500 font-medium">Mode :</span>
             {[{ key: "all", label: "Tous" }, ...PAYMETHODS.map((p) => ({ key: p.key, label: p.label }))].map((f) => (
-              <button
+              <Chip
                 key={f.key}
+                variant={filterMode === f.key ? "primary" : "soft"}
+                size="sm"
+                className={filterMode === f.key ? "bg-[#2d2d83] text-white cursor-pointer" : "cursor-pointer"}
                 onClick={() => setFilterMode(f.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  filterMode === f.key ? "bg-[#2d2d83] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
               >
                 {f.label}
-              </button>
+              </Chip>
             ))}
           </div>
 
-          {/* Search */}
-          <div className="relative max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              value={searchDon}
-              onChange={(e) => setSearchDon(e.target.value)}
-              placeholder="Rechercher un donateur..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 text-sm"
-            />
+          <div className="max-w-xs">
+            <SearchField value={searchDon} onChange={setSearchDon} aria-label="Rechercher">
+              <Input placeholder="Rechercher un donateur..." />
+            </SearchField>
           </div>
         </div>
 
         {/* Table */}
         <Card>
           <Card.Content className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/50">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Donateur</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Type</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Montant / Désignation</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Projet</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Mode</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {filteredDons.map((d) => {
-                    const isNature = (d.donation_type ?? "monetaire") === "nature"
-                    return (
-                      <tr key={d.id} className="hover:bg-gray-50/80 transition-colors">
-                        <td className="px-4 py-3 text-sm text-gray-600">{formatDate(d.donation_at)}</td>
-                        <td className="px-4 py-3 text-sm font-medium text-gray-800">{d.donator}</td>
-                        <td className="px-4 py-3">
-                          <Chip variant="soft" color={isNature ? "warning" : "default"} size="sm">
-                            {isNature ? "En nature" : "Monétaire"}
-                          </Chip>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          {isNature ? (
-                            <span className="text-gray-600 italic">{d.description || "—"}</span>
-                          ) : (
-                            <span className="font-bold text-[#2d2d83]">{formatAmount(d.amount)} F</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Chip variant="soft" color="default" size="sm">{d.project}</Chip>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-500">{paymethodLabel(d.paymethod)}</td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => {
-                              setDonToDelete(d)
-                              setDeleteOpen(true)
-                            }}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                            aria-label="Supprimer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <Table aria-label="Liste des dons">
+              <Table.ScrollContainer>
+                <Table.Content>
+                  <Table.Header>
+                    <Table.Column isRowHeader>Date</Table.Column>
+                    <Table.Column>Donateur</Table.Column>
+                    <Table.Column>Type</Table.Column>
+                    <Table.Column>Montant / Désignation</Table.Column>
+                    <Table.Column>Projet</Table.Column>
+                    <Table.Column>Mode</Table.Column>
+                    <Table.Column>Actions</Table.Column>
+                  </Table.Header>
+                  <Table.Body>
+                    {filteredDons.map((d) => {
+                      const isNature = (d.donation_type ?? "monetaire") === "nature"
+                      return (
+                        <Table.Row key={d.id}>
+                          <Table.Cell>{formatDate(d.donation_at)}</Table.Cell>
+                          <Table.Cell>
+                            <span className="font-medium text-gray-800">{d.donator}</span>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <Chip variant="soft" color={isNature ? "warning" : "default"} size="sm">
+                              {isNature ? "En nature" : "Monétaire"}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell>
+                            {isNature ? (
+                              <span className="text-gray-600 italic">{d.description || "—"}</span>
+                            ) : (
+                              <span className="font-bold text-[#2d2d83]">{formatAmount(d.amount)} F</span>
+                            )}
+                          </Table.Cell>
+                          <Table.Cell>
+                            <Chip variant="soft" color="default" size="sm">{d.project}</Chip>
+                          </Table.Cell>
+                          <Table.Cell>{paymethodLabel(d.paymethod)}</Table.Cell>
+                          <Table.Cell>
+                            <HeroButton
+                              variant="ghost"
+                              className="rounded-lg text-red-500 hover:bg-red-50"
+                              onPress={() => {
+                                setDonToDelete(d)
+                                setDeleteOpen(true)
+                              }}
+                              aria-label="Supprimer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </HeroButton>
+                          </Table.Cell>
+                        </Table.Row>
+                      )
+                    })}
+                  </Table.Body>
+                </Table.Content>
+              </Table.ScrollContainer>
+            </Table>
             {filteredDons.length === 0 && !loading && (
               <p className="text-center text-gray-400 text-sm py-8">Aucun don pour ces filtres.</p>
             )}
@@ -476,159 +489,174 @@ export default function DonsPage() {
           <div className="space-y-4">
             {/* Type de don */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Type de don</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setForm((p) => ({ ...p, donation_type: "monetaire" }))}
-                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
-                    isMonetaryForm ? "bg-[#2d2d83] text-white border-[#2d2d83]" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                  }`}
+              <Label>Type de don</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <HeroButton
+                  variant={isMonetaryForm ? "primary" : "outline"}
+                  className={`rounded-xl ${isMonetaryForm ? "bg-[#2d2d83]" : ""}`}
+                  onPress={() => setForm((p) => ({ ...p, donation_type: "monetaire" }))}
                 >
                   <Heart className="w-4 h-4" /> Monétaire
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm((p) => ({ ...p, donation_type: "nature", amount: "0" }))}
-                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
-                    !isMonetaryForm ? "bg-[#2d2d83] text-white border-[#2d2d83]" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                  }`}
+                </HeroButton>
+                <HeroButton
+                  variant={!isMonetaryForm ? "primary" : "outline"}
+                  className={`rounded-xl ${!isMonetaryForm ? "bg-[#2d2d83]" : ""}`}
+                  onPress={() => setForm((p) => ({ ...p, donation_type: "nature", amount: "0" }))}
                 >
                   <Gift className="w-4 h-4" /> En nature
-                </button>
+                </HeroButton>
               </div>
             </div>
 
-            {/* Donateur */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nom du donateur *</label>
-              <input
-                value={form.donator}
-                onChange={(e) => setForm((p) => ({ ...p, donator: e.target.value }))}
-                placeholder="Jean Dupont (ou Anonyme)"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-              />
-            </div>
+            <TextField
+              value={form.donator}
+              onChange={(v) => setForm((p) => ({ ...p, donator: v }))}
+              isRequired
+            >
+              <Label>Nom du donateur</Label>
+              <Input placeholder="Jean Dupont (ou Anonyme)" />
+            </TextField>
 
-            {/* Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date du don</label>
-              <input
-                type="date"
-                value={form.donation_at}
-                onChange={(e) => setForm((p) => ({ ...p, donation_at: e.target.value }))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-              />
-            </div>
+            <DatePicker
+              value={toDateValue(form.donation_at)}
+              onChange={(d) => setForm((p) => ({ ...p, donation_at: toIso(d) }))}
+            >
+              <Label>Date du don</Label>
+              <DateField.Group fullWidth>
+                <DateField.Input>
+                  {(segment) => <DateField.Segment segment={segment} />}
+                </DateField.Input>
+                <DateField.Suffix>
+                  <DatePicker.Trigger>
+                    <DatePicker.TriggerIndicator />
+                  </DatePicker.Trigger>
+                </DateField.Suffix>
+              </DateField.Group>
+              <DatePicker.Popover>
+                <HeroCalendar>
+                  <HeroCalendar.Header>
+                    <HeroCalendar.NavButton slot="previous" />
+                    <HeroCalendar.Heading />
+                    <HeroCalendar.NavButton slot="next" />
+                  </HeroCalendar.Header>
+                  <HeroCalendar.Grid>
+                    <HeroCalendar.GridHeader>
+                      {(day) => <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>}
+                    </HeroCalendar.GridHeader>
+                    <HeroCalendar.GridBody>
+                      {(date) => <HeroCalendar.Cell date={date} />}
+                    </HeroCalendar.GridBody>
+                  </HeroCalendar.Grid>
+                </HeroCalendar>
+              </DatePicker.Popover>
+            </DatePicker>
 
-            {/* Affectation */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Affectation *</label>
-              <select
-                value={form.project}
-                onChange={(e) => setForm((p) => ({ ...p, project: e.target.value }))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 bg-white"
-              >
-                {PROJECTS.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </div>
+            <Select
+              selectedKey={form.project}
+              onSelectionChange={(k) => setForm((p) => ({ ...p, project: String(k) }))}
+            >
+              <Label>Affectation</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {PROJECTS.map((p) => (
+                    <ListBox.Item key={p} id={p} textValue={p}>{p}</ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
 
             {isMonetaryForm ? (
               <>
-                {/* Montant */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Montant (XOF) *</label>
-                  <input
-                    type="number"
-                    min={0}
-                    step={100}
-                    value={form.amount}
-                    onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
-                    placeholder="Ex: 25000"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                  />
-                </div>
+                <NumberField
+                  fullWidth
+                  value={form.amount === "" ? NaN : Number(form.amount)}
+                  onChange={(v) => setForm((p) => ({ ...p, amount: isNaN(v) ? "" : String(v) }))}
+                  minValue={0}
+                  step={100}
+                  isRequired
+                >
+                  <Label>Montant (XOF)</Label>
+                  <NumberField.Group>
+                    <NumberField.Input placeholder="Ex: 25000" />
+                    <NumberField.DecrementButton />
+                    <NumberField.IncrementButton />
+                  </NumberField.Group>
+                </NumberField>
 
-                {/* Mode de paiement */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mode de paiement *</label>
-                  <select
-                    value={form.paymethod}
-                    onChange={(e) => setForm((p) => ({ ...p, paymethod: e.target.value as IDonPaymethod }))}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 bg-white"
-                  >
-                    {PAYMETHODS.map((p) => (
-                      <option key={p.key} value={p.key}>{p.label}</option>
-                    ))}
-                  </select>
-                </div>
+                <Select
+                  selectedKey={form.paymethod}
+                  onSelectionChange={(k) => setForm((p) => ({ ...p, paymethod: String(k) as IDonPaymethod }))}
+                >
+                  <Label>Mode de paiement</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {PAYMETHODS.map((p) => (
+                        <ListBox.Item key={p.key} id={p.key} textValue={p.label}>{p.label}</ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
 
-                {/* Réf transaction */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Référence / Reçu <span className="text-gray-400 text-xs">(optionnel)</span>
-                  </label>
-                  <input
-                    value={form.paytransaction}
-                    onChange={(e) => setForm((p) => ({ ...p, paytransaction: e.target.value }))}
-                    placeholder="Ex: Reçu n°042, TX123..."
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                  />
-                </div>
+                <TextField
+                  value={form.paytransaction}
+                  onChange={(v) => setForm((p) => ({ ...p, paytransaction: v }))}
+                >
+                  <Label>Référence / Reçu (optionnel)</Label>
+                  <Input placeholder="Ex: Reçu n°042, TX123..." />
+                </TextField>
 
-                {/* Notes */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optionnel)</label>
-                  <textarea
-                    value={form.description}
-                    onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                    rows={2}
-                    placeholder="Ex: don pour la fête patronale..."
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                  />
-                </div>
+                <TextField
+                  value={form.description}
+                  onChange={(v) => setForm((p) => ({ ...p, description: v }))}
+                >
+                  <Label>Notes (optionnel)</Label>
+                  <TextArea rows={2} placeholder="Ex: don pour la fête patronale..." />
+                </TextField>
               </>
             ) : (
               <>
-                {/* Désignation du bien (requis pour nature) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Désignation du bien / service *</label>
-                  <textarea
-                    value={form.description}
-                    onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                    rows={3}
-                    placeholder="Ex: 50 kg de riz, 10 bancs en bois, matériel informatique..."
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                  />
-                </div>
+                <TextField
+                  value={form.description}
+                  onChange={(v) => setForm((p) => ({ ...p, description: v }))}
+                  isRequired
+                >
+                  <Label>Désignation du bien / service</Label>
+                  <TextArea rows={3} placeholder="Ex: 50 kg de riz, 10 bancs en bois, matériel informatique..." />
+                </TextField>
 
-                {/* Estimation valeur */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Valeur estimée (XOF) <span className="text-gray-400 text-xs">(optionnel)</span>
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step={100}
-                    value={form.amount}
-                    onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
-                    placeholder="Ex: 50000"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                  />
-                </div>
+                <NumberField
+                  fullWidth
+                  value={form.amount === "" ? NaN : Number(form.amount)}
+                  onChange={(v) => setForm((p) => ({ ...p, amount: isNaN(v) ? "" : String(v) }))}
+                  minValue={0}
+                  step={100}
+                >
+                  <Label>Valeur estimée (XOF) (optionnel)</Label>
+                  <NumberField.Group>
+                    <NumberField.Input placeholder="Ex: 50000" />
+                    <NumberField.DecrementButton />
+                    <NumberField.IncrementButton />
+                  </NumberField.Group>
+                </NumberField>
               </>
             )}
 
-            <button
-              onClick={handleAddDon}
-              disabled={submitting}
-              className="w-full bg-[#98141f] hover:bg-[#7a1019] text-white rounded-xl py-3 font-medium transition-colors disabled:opacity-60"
+            <HeroButton
+              variant="primary"
+              isDisabled={submitting}
+              onPress={handleAddDon}
+              className="w-full bg-[#98141f] rounded-xl"
             >
               {submitting ? "Enregistrement..." : "Enregistrer le don"}
-            </button>
+            </HeroButton>
           </div>
         </DialogContent>
       </Dialog>
@@ -645,18 +673,12 @@ export default function DonsPage() {
               : `${formatAmount(donToDelete?.amount ?? 0)} F`}
           </p>
           <DialogFooter>
-            <button
-              onClick={() => setDeleteOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-            >
+            <HeroButton variant="secondary" onPress={() => setDeleteOpen(false)} className="rounded-xl">
               Annuler
-            </button>
-            <button
-              onClick={confirmDelete}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors"
-            >
+            </HeroButton>
+            <HeroButton variant="primary" onPress={confirmDelete} className="bg-red-600 rounded-xl">
               Supprimer
-            </button>
+            </HeroButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

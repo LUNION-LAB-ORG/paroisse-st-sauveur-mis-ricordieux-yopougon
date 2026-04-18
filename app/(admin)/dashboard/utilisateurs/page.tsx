@@ -1,14 +1,20 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import {
-  Card,
-  Button,
-  Chip,
-  SearchField,
   Avatar,
+  Button,
+  Card,
+  Chip,
+  Input,
+  Label,
+  ListBox,
+  SearchField,
+  Select,
   Switch,
+  Table,
+  TextField,
 } from "@heroui/react"
 import {
   Plus,
@@ -17,14 +23,11 @@ import {
   Users as UsersIcon,
   Shield,
   Church,
-  Mail,
-  Phone,
-  Image as ImageIcon,
-  X as XIcon,
   KeyRound,
 } from "lucide-react"
 import { Header } from "@/components/admin/header"
 import { StatCard } from "@/components/admin/stat-card"
+import { ImageUploadField } from "@/components/admin/image-upload-field"
 import {
   Dialog,
   DialogContent,
@@ -58,6 +61,13 @@ const EMPTY: FormState = {
   status: "active",
 }
 
+function formatDateFR(iso?: string | null) {
+  if (!iso) return "—"
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
+}
+
 export default function UtilisateursPage() {
   const [users, setUsers] = useState<IUser[]>([])
   const [loading, setLoading] = useState(true)
@@ -70,7 +80,6 @@ export default function UtilisateursPage() {
   const [form, setForm] = useState<FormState>(EMPTY)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Delete
   const [toDelete, setToDelete] = useState<IUser | null>(null)
@@ -97,7 +106,7 @@ export default function UtilisateursPage() {
       .filter(
         (u) =>
           !search ||
-          u.fullname.toLowerCase().includes(search.toLowerCase()) ||
+          u.fullname?.toLowerCase().includes(search.toLowerCase()) ||
           (u.email ?? "").toLowerCase().includes(search.toLowerCase()) ||
           (u.phone ?? "").includes(search),
       )
@@ -122,7 +131,7 @@ export default function UtilisateursPage() {
   const openEdit = (u: IUser) => {
     setEditing(u)
     setForm({
-      fullname: u.fullname,
+      fullname: u.fullname ?? "",
       email: u.email ?? "",
       phone: u.phone ?? "",
       password: "",
@@ -172,7 +181,7 @@ export default function UtilisateursPage() {
   }
 
   const toggleStatus = async (u: IUser) => {
-    const newStatus = u.status === "active" ? "inactive" : "active"
+    const newStatus: IUserStatus = u.status === "active" ? "inactive" : "active"
     try {
       const res = await userAPI.modifier(u.id, { status: newStatus })
       setUsers((prev) => prev.map((x) => (x.id === u.id ? res.data : x)))
@@ -197,8 +206,6 @@ export default function UtilisateursPage() {
     }
   }
 
-  const photoPreview = photoFile ? URL.createObjectURL(photoFile) : editing?.photo ?? null
-
   return (
     <div>
       <Header title="Utilisateurs & Comptes" />
@@ -208,6 +215,7 @@ export default function UtilisateursPage() {
         Désactivez un compte pour bloquer son accès sans le supprimer.
       </p>
 
+      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <StatCard icon={UsersIcon} value={String(counts.total)} label="Total" iconBgColor="bg-[#2d2d83]/10" iconColor="text-[#2d2d83]" />
         <StatCard icon={Shield} value={String(counts.admin)} label="Administrateurs" iconBgColor="bg-[#98141f]/10" iconColor="text-[#98141f]" />
@@ -215,7 +223,8 @@ export default function UtilisateursPage() {
         <StatCard icon={UsersIcon} value={String(counts.active)} label="Actifs" iconBgColor="bg-green-100" iconColor="text-green-600" />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      {/* Filtres + bouton créer */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6 items-end">
         <SearchField className="flex-1 md:max-w-sm" value={search} onChange={setSearch}>
           <SearchField.Group>
             <SearchField.SearchIcon />
@@ -224,29 +233,31 @@ export default function UtilisateursPage() {
           </SearchField.Group>
         </SearchField>
 
-        <div className="flex gap-2 flex-wrap">
-          {[
-            { key: "all", label: "Tous" },
-            { key: "admin", label: "Admin" },
-            { key: "priest", label: "Prêtres" },
-          ].map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilterRole(f.key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                filterRole === f.key ? "bg-[#2d2d83] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        <Select
+          selectedKey={filterRole}
+          onSelectionChange={(k) => setFilterRole(String(k))}
+          className="w-full md:w-48"
+        >
+          <Label>Rôle</Label>
+          <Select.Trigger>
+            <Select.Value />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              <ListBox.Item id="all" textValue="Tous">Tous</ListBox.Item>
+              <ListBox.Item id="admin" textValue="Administrateurs">Administrateurs</ListBox.Item>
+              <ListBox.Item id="priest" textValue="Prêtres">Prêtres</ListBox.Item>
+            </ListBox>
+          </Select.Popover>
+        </Select>
 
         <Button variant="primary" className="bg-[#98141f] rounded-xl md:ml-auto" onPress={openCreate}>
           <Plus className="w-4 h-4" /> Nouveau compte
         </Button>
       </div>
 
+      {/* Table HeroUI */}
       {loading && <p className="text-center text-gray-400 py-12">Chargement...</p>}
 
       {!loading && filtered.length === 0 && (
@@ -259,86 +270,100 @@ export default function UtilisateursPage() {
       )}
 
       {!loading && filtered.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((u) => {
-            const roleMeta =
-              (u.role && ROLE_LABELS[u.role as keyof typeof ROLE_LABELS]) ||
-              { label: u.role ?? "—", color: "bg-gray-100 text-gray-600" }
-            return (
-              <Card key={u.id} className={u.status === "inactive" ? "opacity-60" : ""}>
-                <Card.Content className="p-5">
-                  <div className="flex items-start gap-4 mb-3">
-                    <Avatar className="w-14 h-14 ring-2 ring-[#2d2d83]/10 shrink-0">
-                      {u.photo ? <Avatar.Image src={u.photo} alt={u.fullname} /> : null}
-                      <Avatar.Fallback className="bg-[#2d2d83] text-white font-semibold">
-                        {u.fullname?.charAt(0).toUpperCase() || "?"}
-                      </Avatar.Fallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-[#2d2d83] truncate">{u.fullname}</h3>
-                      <div className="flex items-center flex-wrap gap-1.5 mt-1">
-                        <Chip variant="soft" size="sm" className={roleMeta.color}>
-                          {roleMeta.label}
-                        </Chip>
-                        <Chip
-                          variant="soft"
-                          color={u.status === "active" ? "success" : "danger"}
-                          size="sm"
-                        >
-                          {u.status === "active" ? "Actif" : "Désactivé"}
-                        </Chip>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1 mb-4 text-sm text-gray-600">
-                    {u.email && (
-                      <div className="flex items-center gap-2 truncate">
-                        <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                        <span className="truncate">{u.email}</span>
-                      </div>
-                    )}
-                    {u.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                        <span>{u.phone}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <Switch isSelected={u.status === "active"} onChange={() => toggleStatus(u)}>
-                        <Switch.Control>
-                          <Switch.Thumb />
-                        </Switch.Control>
-                      </Switch>
-                      <span>{u.status === "active" ? "Activé" : "Désactivé"}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        className="h-9 w-9 p-0 rounded-lg text-[#2d2d83] hover:bg-[#2d2d83]/10"
-                        onPress={() => openEdit(u)}
-                        aria-label="Modifier"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="h-9 w-9 p-0 rounded-lg text-red-500 hover:bg-red-50"
-                        onPress={() => setToDelete(u)}
-                        aria-label="Supprimer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </Card.Content>
-              </Card>
-            )
-          })}
-        </div>
+        <Card className="overflow-hidden">
+          <Card.Content className="p-0">
+            <Table>
+              <Table.ScrollContainer>
+                <Table.Content aria-label="Liste des utilisateurs" className="min-w-[800px]">
+                  <Table.Header>
+                    <Table.Column isRowHeader>Utilisateur</Table.Column>
+                    <Table.Column>Contact</Table.Column>
+                    <Table.Column>Rôle</Table.Column>
+                    <Table.Column>Statut</Table.Column>
+                    <Table.Column>Créé le</Table.Column>
+                    <Table.Column>Actions</Table.Column>
+                  </Table.Header>
+                  <Table.Body>
+                    {filtered.map((u) => {
+                      const roleMeta =
+                        (u.role && ROLE_LABELS[u.role as keyof typeof ROLE_LABELS]) ||
+                        { label: u.role ?? "—", color: "bg-gray-100 text-gray-600" }
+                      return (
+                        <Table.Row key={u.id} className={u.status === "inactive" ? "opacity-60" : ""}>
+                          <Table.Cell>
+                            <div className="flex items-center gap-3 min-w-0">
+                              <Avatar className="w-10 h-10 ring-2 ring-[#2d2d83]/10 shrink-0">
+                                {u.photo ? <Avatar.Image src={u.photo} alt={u.fullname ?? ""} /> : null}
+                                <Avatar.Fallback className="bg-[#2d2d83] text-white text-sm font-semibold">
+                                  {u.fullname?.charAt(0).toUpperCase() || "?"}
+                                </Avatar.Fallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-[#2d2d83] truncate">
+                                  {u.fullname || <span className="text-gray-400 italic">Sans nom</span>}
+                                </p>
+                              </div>
+                            </div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <div className="text-sm">
+                              {u.email && <p className="text-gray-700 truncate">{u.email}</p>}
+                              {u.phone && <p className="text-gray-500 text-xs">{u.phone}</p>}
+                            </div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <Chip variant="soft" size="sm" className={roleMeta.color}>
+                              {roleMeta.label}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <div className="flex items-center gap-2">
+                              <Switch isSelected={u.status === "active"} onChange={() => toggleStatus(u)}>
+                                <Switch.Control>
+                                  <Switch.Thumb />
+                                </Switch.Control>
+                              </Switch>
+                              <Chip
+                                variant="soft"
+                                color={u.status === "active" ? "success" : "danger"}
+                                size="sm"
+                              >
+                                {u.status === "active" ? "Actif" : "Désactivé"}
+                              </Chip>
+                            </div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <span className="text-sm text-gray-500">{formatDateFR(u.created_at)}</span>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                className="h-9 w-9 p-0 rounded-lg text-[#2d2d83] hover:bg-[#2d2d83]/10"
+                                onPress={() => openEdit(u)}
+                                aria-label="Modifier"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                className="h-9 w-9 p-0 rounded-lg text-red-500 hover:bg-red-50"
+                                onPress={() => setToDelete(u)}
+                                aria-label="Supprimer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </Table.Cell>
+                        </Table.Row>
+                      )
+                    })}
+                  </Table.Body>
+                </Table.Content>
+              </Table.ScrollContainer>
+            </Table>
+          </Card.Content>
+        </Card>
       )}
 
       {/* Create/Edit Modal */}
@@ -351,140 +376,82 @@ export default function UtilisateursPage() {
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Photo */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 hover:border-[#2d2d83]/30 transition-colors">
-                {photoPreview ? (
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
-                      <img src={photoPreview} alt="Aperçu" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800">
-                        {photoFile ? photoFile.name : "Photo actuelle"}
-                      </p>
-                      <div className="flex gap-3 mt-1">
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="text-xs text-[#2d2d83] hover:underline"
-                        >
-                          Changer
-                        </button>
-                        {photoFile && (
-                          <button
-                            type="button"
-                            onClick={() => setPhotoFile(null)}
-                            className="text-xs text-red-500 hover:underline inline-flex items-center gap-1"
-                          >
-                            <XIcon className="w-3 h-3" /> Retirer
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full flex flex-col items-center justify-center py-3 text-gray-500"
-                  >
-                    <ImageIcon className="w-8 h-8 text-gray-300 mb-1" />
-                    <p className="text-sm">Ajouter une photo</p>
-                  </button>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={(e) => e.target.files && setPhotoFile(e.target.files[0])}
-                />
-              </div>
-            </div>
+            {/* Photo via composant projet uniforme */}
+            <ImageUploadField
+              initialImageUrl={editing?.photo ?? null}
+              onChange={setPhotoFile}
+              title="Photo de profil"
+              height={140}
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
-              <input
-                value={form.fullname}
-                onChange={(e) => setForm((f) => ({ ...f, fullname: e.target.value }))}
-                placeholder="Père Jean Dupont"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-              />
-            </div>
+            {/* Nom */}
+            <TextField value={form.fullname} onChange={(v) => setForm((f) => ({ ...f, fullname: v }))} isRequired>
+              <Label>Nom complet</Label>
+              <Input placeholder="Père Jean Dupont" />
+            </TextField>
 
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  placeholder="user@example.com"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone *</label>
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  placeholder="+225 07 00 00 00 00"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <TextField value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} type="email">
+                <Label>Email</Label>
+                <Input placeholder="user@example.com" />
+              </TextField>
+              <TextField value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} type="tel" isRequired>
+                <Label>Téléphone</Label>
+                <Input placeholder="+225 07 00 00 00 00" />
+              </TextField>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mot de passe {editing ? <span className="text-gray-400 text-xs">(laisser vide pour ne pas changer)</span> : "*"}
-              </label>
-              <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                  placeholder={editing ? "••••••" : "Minimum 6 caractères"}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
-            </div>
+            <TextField value={form.password} onChange={(v) => setForm((f) => ({ ...f, password: v }))} type="password">
+              <Label className="inline-flex items-center gap-1">
+                <KeyRound className="w-3.5 h-3.5" />
+                Mot de passe {editing && <span className="text-gray-400 text-xs font-normal">(vide = inchangé)</span>}
+              </Label>
+              <Input placeholder={editing ? "••••••" : "Minimum 6 caractères"} />
+            </TextField>
 
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rôle</label>
-                <select
-                  value={form.role}
-                  onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as IUserRole }))}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 bg-white"
-                >
-                  <option value="admin">Administrateur</option>
-                  <option value="priest">Prêtre</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-                <select
-                  value={form.status}
-                  onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as IUserStatus }))}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 bg-white"
-                >
-                  <option value="active">Actif</option>
-                  <option value="inactive">Désactivé</option>
-                </select>
-              </div>
+              <Select
+                selectedKey={form.role}
+                onSelectionChange={(k) => setForm((f) => ({ ...f, role: String(k) as IUserRole }))}
+              >
+                <Label>Rôle</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    <ListBox.Item id="admin" textValue="Administrateur">Administrateur</ListBox.Item>
+                    <ListBox.Item id="priest" textValue="Prêtre">Prêtre</ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
+              </Select>
+              <Select
+                selectedKey={form.status}
+                onSelectionChange={(k) => setForm((f) => ({ ...f, status: String(k) as IUserStatus }))}
+              >
+                <Label>Statut</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    <ListBox.Item id="active" textValue="Actif">Actif</ListBox.Item>
+                    <ListBox.Item id="inactive" textValue="Désactivé">Désactivé</ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
+              </Select>
             </div>
 
-            <button
-              onClick={save}
-              disabled={saving}
-              className="w-full bg-[#98141f] hover:bg-[#7a1019] text-white rounded-xl py-3 font-medium transition-colors disabled:opacity-60"
+            <Button
+              variant="primary"
+              isDisabled={saving}
+              onPress={save}
+              className="w-full bg-[#98141f] rounded-xl py-3 font-medium"
             >
               {saving ? "Enregistrement..." : editing ? "Mettre à jour" : "Créer le compte"}
-            </button>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -496,7 +463,8 @@ export default function UtilisateursPage() {
             <DialogTitle className="text-red-600">Supprimer cet utilisateur ?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-gray-500">
-            <strong>{toDelete?.fullname}</strong> n&apos;aura plus accès au tableau de bord. Cette action est réversible (soft delete).
+            <strong>{toDelete?.fullname}</strong> n&apos;aura plus accès au tableau de bord.
+            Cette action est réversible (soft delete).
           </p>
           <DialogFooter>
             <Button variant="secondary" onPress={() => setToDelete(null)}>

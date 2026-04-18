@@ -1,14 +1,27 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Edit, User, Calendar, Save, X } from "lucide-react"
-import Image from "next/image"
+import { useParams } from "next/navigation"
+import { ArrowLeft, Edit, Calendar, Save, X } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { Card, Avatar, Chip, Separator, TextField, Label, Input as HeroInput, TextArea as HeroTextArea } from "@heroui/react"
-import { Button as HeroButton } from "@heroui/react"
-import { Input } from "@/components/ui/input"
+import {
+  Card,
+  Avatar,
+  Chip,
+  Separator,
+  TextField,
+  Label,
+  Input,
+  TextArea,
+  DatePicker,
+  DateField,
+  Calendar as HeroCalendar,
+  Button as HeroButton,
+} from "@heroui/react"
+import { CalendarDate } from "@internationalized/date"
+import type { DateValue } from "@heroui/react"
+import { ImageUploadField } from "@/components/admin/image-upload-field"
 import { cureAPI } from "@/features/cure/apis/cure.api"
 import type { ICure } from "@/features/cure/types/cure.type"
 
@@ -19,9 +32,17 @@ function formatDate(iso: string | null) {
   } catch { return iso }
 }
 
+function toDateValue(iso: string): DateValue | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+  return m ? new CalendarDate(Number(m[1]), Number(m[2]), Number(m[3])) : null
+}
+function toIso(d: DateValue | null): string {
+  if (!d) return ""
+  return `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`
+}
+
 export default function CureDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const router = useRouter()
   const [cure, setCure] = useState<ICure | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -58,15 +79,17 @@ export default function CureDetailPage() {
     if (!cure) return
     setSaving(true)
     try {
-      const payload: Record<string, unknown> = {
-        fullname: form.fullname,
-        started_at: form.started_at,
-        ended_at: form.ended_at || null,
-        description: form.description,
-      }
-      if (file) payload.photo = file
-      const res = await cureAPI.modifier(String(cure.id), payload)
-      setCure(res as unknown as ICure)
+      const fd = new FormData()
+      fd.append("_method", "PUT")
+      fd.append("fullname", form.fullname)
+      fd.append("started_at", form.started_at)
+      if (form.ended_at) fd.append("ended_at", form.ended_at)
+      fd.append("description", form.description)
+      if (file) fd.append("photo", file)
+
+      const res = await cureAPI.modifier(String(cure.id), fd)
+      const updated = (res as unknown as { data?: ICure }).data ?? (res as unknown as ICure)
+      setCure(updated)
       toast.success("Curé mis à jour")
       setEditing(false)
       setFile(null)
@@ -81,11 +104,15 @@ export default function CureDetailPage() {
     if (!cure) return
     const isActive = !cure.ended_at
     try {
-      const payload = isActive
-        ? { ended_at: new Date().toISOString().slice(0, 10) }
-        : { ended_at: null }
-      const res = await cureAPI.modifier(String(cure.id), payload)
-      setCure(res as unknown as ICure)
+      const fd = new FormData()
+      fd.append("_method", "PUT")
+      fd.append("fullname", cure.fullname)
+      fd.append("started_at", cure.started_at ?? "")
+      fd.append("description", cure.description ?? "")
+      if (isActive) fd.append("ended_at", new Date().toISOString().slice(0, 10))
+      const res = await cureAPI.modifier(String(cure.id), fd)
+      const updated = (res as unknown as { data?: ICure }).data ?? (res as unknown as ICure)
+      setCure(updated)
       toast.success(isActive ? "Marqué comme ancien curé" : "Remis en poste")
     } catch {
       toast.error("Erreur lors de la mise à jour")
@@ -149,7 +176,6 @@ export default function CureDetailPage() {
       </div>
 
       <Card className="overflow-hidden">
-        {/* Photo header */}
         <div className="relative h-40 bg-gradient-to-br from-[#2d2d83] to-[#98141f]">
           <div className="absolute top-3 right-3">
             <Chip variant="soft" color={cure.ended_at ? "default" : "success"} size="sm">
@@ -168,7 +194,6 @@ export default function CureDetailPage() {
 
         <Card.Content className="pt-16 pb-6 px-6">
           {!editing ? (
-            /* ---- VIEW MODE ---- */
             <div className="space-y-5">
               <div>
                 <h1 className="text-2xl font-bold text-[#2d2d83]">{cure.fullname}</h1>
@@ -199,44 +224,103 @@ export default function CureDetailPage() {
                 className={`w-full rounded-xl text-sm ${cure.ended_at ? "text-green-700 bg-green-50 hover:bg-green-100" : "text-gray-600 bg-gray-50 hover:bg-gray-100"}`}
                 onPress={toggleEnPoste}
               >
-                {cure.ended_at ? "↩ Remettre en poste" : "✓ Marquer comme ancien"}
+                {cure.ended_at ? "Remettre en poste" : "Marquer comme ancien"}
               </HeroButton>
             </div>
           ) : (
-            /* ---- EDIT MODE ---- */
             <div className="space-y-4">
-              {/* Photo upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>
-                <label className="flex items-center gap-3 border-2 border-dashed border-gray-200 rounded-xl p-4 cursor-pointer hover:border-[#2d2d83]/30 transition-colors">
-                  <User className="w-8 h-8 text-gray-300 shrink-0" />
-                  <div>
-                    <p className="text-sm text-gray-600">{file ? file.name : "Changer la photo"}</p>
-                    <p className="text-xs text-gray-400">JPG, PNG (max 2MB)</p>
-                  </div>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files && setFile(e.target.files[0])} />
-                </label>
-              </div>
+              <ImageUploadField
+                initialImageUrl={cure.photo ?? null}
+                onChange={setFile}
+                title="Photo"
+                height={140}
+              />
 
-              <TextField value={form.fullname} onChange={(v) => setForm((p) => ({ ...p, fullname: v }))}>
+              <TextField
+                value={form.fullname}
+                onChange={(v) => setForm((p) => ({ ...p, fullname: v }))}
+                isRequired
+              >
                 <Label>Nom complet</Label>
-                <HeroInput placeholder="Père Jean-Baptiste KOFFI" />
+                <Input placeholder="Père Jean-Baptiste KOFFI" />
               </TextField>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Début de ministère</label>
-                  <Input type="date" value={form.started_at} onChange={(e) => setForm((p) => ({ ...p, started_at: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fin (vide si en cours)</label>
-                  <Input type="date" value={form.ended_at} onChange={(e) => setForm((p) => ({ ...p, ended_at: e.target.value }))} />
-                </div>
+                <DatePicker
+                  value={toDateValue(form.started_at)}
+                  onChange={(d) => setForm((p) => ({ ...p, started_at: toIso(d) }))}
+                >
+                  <Label>Début de ministère</Label>
+                  <DateField.Group fullWidth>
+                    <DateField.Input>
+                      {(segment) => <DateField.Segment segment={segment} />}
+                    </DateField.Input>
+                    <DateField.Suffix>
+                      <DatePicker.Trigger>
+                        <DatePicker.TriggerIndicator />
+                      </DatePicker.Trigger>
+                    </DateField.Suffix>
+                  </DateField.Group>
+                  <DatePicker.Popover>
+                    <HeroCalendar>
+                      <HeroCalendar.Header>
+                        <HeroCalendar.NavButton slot="previous" />
+                        <HeroCalendar.Heading />
+                        <HeroCalendar.NavButton slot="next" />
+                      </HeroCalendar.Header>
+                      <HeroCalendar.Grid>
+                        <HeroCalendar.GridHeader>
+                          {(day) => <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>}
+                        </HeroCalendar.GridHeader>
+                        <HeroCalendar.GridBody>
+                          {(date) => <HeroCalendar.Cell date={date} />}
+                        </HeroCalendar.GridBody>
+                      </HeroCalendar.Grid>
+                    </HeroCalendar>
+                  </DatePicker.Popover>
+                </DatePicker>
+
+                <DatePicker
+                  value={toDateValue(form.ended_at)}
+                  onChange={(d) => setForm((p) => ({ ...p, ended_at: toIso(d) }))}
+                >
+                  <Label>Fin (vide si en cours)</Label>
+                  <DateField.Group fullWidth>
+                    <DateField.Input>
+                      {(segment) => <DateField.Segment segment={segment} />}
+                    </DateField.Input>
+                    <DateField.Suffix>
+                      <DatePicker.Trigger>
+                        <DatePicker.TriggerIndicator />
+                      </DatePicker.Trigger>
+                    </DateField.Suffix>
+                  </DateField.Group>
+                  <DatePicker.Popover>
+                    <HeroCalendar>
+                      <HeroCalendar.Header>
+                        <HeroCalendar.NavButton slot="previous" />
+                        <HeroCalendar.Heading />
+                        <HeroCalendar.NavButton slot="next" />
+                      </HeroCalendar.Header>
+                      <HeroCalendar.Grid>
+                        <HeroCalendar.GridHeader>
+                          {(day) => <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>}
+                        </HeroCalendar.GridHeader>
+                        <HeroCalendar.GridBody>
+                          {(date) => <HeroCalendar.Cell date={date} />}
+                        </HeroCalendar.GridBody>
+                      </HeroCalendar.Grid>
+                    </HeroCalendar>
+                  </DatePicker.Popover>
+                </DatePicker>
               </div>
 
-              <TextField value={form.description} onChange={(v) => setForm((p) => ({ ...p, description: v }))}>
+              <TextField
+                value={form.description}
+                onChange={(v) => setForm((p) => ({ ...p, description: v }))}
+              >
                 <Label>Description / Biographie</Label>
-                <HeroTextArea rows={4} placeholder="Biographie courte du curé..." />
+                <TextArea rows={4} placeholder="Biographie courte du curé..." />
               </TextField>
             </div>
           )}

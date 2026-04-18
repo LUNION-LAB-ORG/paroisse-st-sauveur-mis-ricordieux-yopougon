@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { Church, Clock, Globe, ImageIcon, Save, Loader2 } from "lucide-react"
 import { Header } from "@/components/admin/header"
-import { Card, Button } from "@heroui/react"
+import { Card, Button, TextField, TextArea, Input, Label } from "@heroui/react"
 import { ImageUploadField } from "@/components/admin/image-upload-field"
 import { settingAPI } from "@/features/setting/apis/setting.api"
 import { invalidateSettingsCache } from "@/features/setting/hooks/useSettings"
@@ -135,10 +135,8 @@ export default function ParametresPage() {
                   {items.map((s) => {
                     if (s.type === "image") {
                       return (
-                        <div key={s.key}>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {s.label ?? s.key}
-                          </label>
+                        <div key={s.key} className="space-y-1">
+                          <Label>{s.label ?? s.key}</Label>
                           <ImageUploadField
                             initialImageUrl={values[s.key] || null}
                             onChange={(file) => uploadImage(s.key, file)}
@@ -150,15 +148,13 @@ export default function ParametresPage() {
                     if (s.type === "textarea") {
                       return (
                         <div key={s.key} className="sm:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {s.label ?? s.key}
-                          </label>
-                          <textarea
+                          <TextField
                             value={values[s.key] ?? ""}
-                            onChange={(e) => setValue(s.key, e.target.value)}
-                            rows={3}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                          />
+                            onChange={(v) => setValue(s.key, v)}
+                          >
+                            <Label>{s.label ?? s.key}</Label>
+                            <TextArea rows={3} />
+                          </TextField>
                         </div>
                       )
                     }
@@ -171,18 +167,15 @@ export default function ParametresPage() {
                             ? "tel"
                             : "text"
                     return (
-                      <div key={s.key}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {s.label ?? s.key}
-                        </label>
-                        <input
-                          type={inputType}
-                          value={values[s.key] ?? ""}
-                          onChange={(e) => setValue(s.key, e.target.value)}
-                          placeholder={s.label ?? ""}
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                        />
-                      </div>
+                      <TextField
+                        key={s.key}
+                        value={values[s.key] ?? ""}
+                        onChange={(v) => setValue(s.key, v)}
+                        type={inputType}
+                      >
+                        <Label>{s.label ?? s.key}</Label>
+                        <Input placeholder={s.label ?? ""} />
+                      </TextField>
                     )
                   })}
                 </div>

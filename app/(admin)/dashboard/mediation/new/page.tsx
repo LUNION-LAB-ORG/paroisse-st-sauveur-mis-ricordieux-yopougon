@@ -5,7 +5,21 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
-import { Card, Button } from "@heroui/react"
+import {
+  Button,
+  Card,
+  DateField,
+  DatePicker,
+  Calendar,
+  Input,
+  Label,
+  ListBox,
+  Select,
+  TextArea,
+  TextField,
+} from "@heroui/react"
+import { CalendarDate } from "@internationalized/date"
+import type { DateValue } from "@heroui/react"
 import { ImageUploadField } from "@/components/admin/image-upload-field"
 import { mediationAPI } from "@/features/mediation/apis/mediation.api"
 
@@ -18,6 +32,15 @@ const CATEGORIES = [
   "Temps liturgique",
   "Autre",
 ] as const
+
+function toDateValue(iso: string): DateValue | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+  return m ? new CalendarDate(Number(m[1]), Number(m[2]), Number(m[3])) : null
+}
+function toIso(d: DateValue | null): string {
+  if (!d) return ""
+  return `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`
+}
 
 export default function NouvelleMeditationPage() {
   const router = useRouter()
@@ -95,25 +118,17 @@ export default function NouvelleMeditationPage() {
         <div className="lg:col-span-2 space-y-5">
           <Card>
             <Card.Content className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Titre *</label>
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Titre de la méditation"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contenu</label>
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
+              <TextField value={title} onChange={setTitle} isRequired>
+                <Label>Titre</Label>
+                <Input placeholder="Titre de la méditation" />
+              </TextField>
+              <TextField value={content} onChange={setContent}>
+                <Label>Contenu</Label>
+                <TextArea
                   rows={14}
                   placeholder="Le texte complet de la méditation (versets, commentaires, prière...)"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 leading-relaxed"
                 />
-              </div>
+              </TextField>
             </Card.Content>
           </Card>
         </div>
@@ -123,40 +138,62 @@ export default function NouvelleMeditationPage() {
             <Card.Content className="p-6 space-y-4">
               <h3 className="font-semibold text-[#2d2d83]">Paramètres</h3>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Auteur *</label>
-                <input
-                  value={author}
-                  onChange={(e) => setAuthor(e.target.value)}
-                  placeholder="Ex : Père Joseph Kouadio"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <TextField value={author} onChange={setAuthor} isRequired>
+                <Label>Auteur</Label>
+                <Input placeholder="Ex : Père Joseph Kouadio" />
+              </TextField>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 bg-white"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                selectedKey={category}
+                onSelectionChange={(k) => setCategory(String(k))}
+              >
+                <Label>Catégorie</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {CATEGORIES.map((c) => (
+                      <ListBox.Item key={c} id={c} textValue={c}>{c}</ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                <input
-                  type="date"
-                  value={dateAt}
-                  onChange={(e) => setDateAt(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <DatePicker
+                value={toDateValue(dateAt)}
+                onChange={(d) => setDateAt(toIso(d))}
+              >
+                <Label>Date</Label>
+                <DateField.Group fullWidth>
+                  <DateField.Input>
+                    {(segment) => <DateField.Segment segment={segment} />}
+                  </DateField.Input>
+                  <DateField.Suffix>
+                    <DatePicker.Trigger>
+                      <DatePicker.TriggerIndicator />
+                    </DatePicker.Trigger>
+                  </DateField.Suffix>
+                </DateField.Group>
+                <DatePicker.Popover>
+                  <Calendar>
+                    <Calendar.Header>
+                      <Calendar.NavButton slot="previous" />
+                      <Calendar.Heading />
+                      <Calendar.NavButton slot="next" />
+                    </Calendar.Header>
+                    <Calendar.Grid>
+                      <Calendar.GridHeader>
+                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                      </Calendar.GridHeader>
+                      <Calendar.GridBody>
+                        {(date) => <Calendar.Cell date={date} />}
+                      </Calendar.GridBody>
+                    </Calendar.Grid>
+                  </Calendar>
+                </DatePicker.Popover>
+              </DatePicker>
             </Card.Content>
           </Card>
 

@@ -5,11 +5,34 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
-import { Card, Button } from "@heroui/react"
+import {
+  Card,
+  Button,
+  TextField,
+  TextArea,
+  Input,
+  Label,
+  Select,
+  ListBox,
+  DatePicker,
+  DateField,
+  Calendar as HeroCalendar,
+} from "@heroui/react"
+import { CalendarDate } from "@internationalized/date"
+import type { DateValue } from "@heroui/react"
 import { ImageUploadField } from "@/components/admin/image-upload-field"
 import { actualiteAPI } from "@/features/actualite/apis/actualite.api"
 
 const CATEGORIES = ["Annonce", "Événement", "Liturgie", "Vie paroissiale", "Autre"] as const
+
+function toDateValue(iso: string): DateValue | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+  return m ? new CalendarDate(Number(m[1]), Number(m[2]), Number(m[3])) : null
+}
+function toIso(d: DateValue | null): string {
+  if (!d) return ""
+  return `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`
+}
 
 export default function NouvelArticlePage() {
   const router = useRouter()
@@ -19,7 +42,6 @@ export default function NouvelArticlePage() {
   const [content, setContent] = useState("")
   const [location, setLocation] = useState("")
   const [author, setAuthor] = useState("")
-  const [status, setStatus] = useState<"published" | "draft">("draft")
   const [publishedAt, setPublishedAt] = useState<string>(new Date().toISOString().slice(0, 10))
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
@@ -97,35 +119,18 @@ export default function NouvelArticlePage() {
         <div className="lg:col-span-2 space-y-5">
           <Card>
             <Card.Content className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Titre *</label>
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Titre de l'article"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Résumé *</label>
-                <textarea
-                  value={resume}
-                  onChange={(e) => setResume(e.target.value)}
-                  rows={2}
-                  placeholder="Un court résumé (affiché sur la liste)"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contenu *</label>
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={10}
-                  placeholder="Contenu détaillé de l'article"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <TextField value={title} onChange={setTitle} isRequired>
+                <Label>Titre</Label>
+                <Input placeholder="Titre de l'article" />
+              </TextField>
+              <TextField value={resume} onChange={setResume} isRequired>
+                <Label>Résumé</Label>
+                <TextArea rows={2} placeholder="Un court résumé (affiché sur la liste)" />
+              </TextField>
+              <TextField value={content} onChange={setContent} isRequired>
+                <Label>Contenu</Label>
+                <TextArea rows={10} placeholder="Contenu détaillé de l'article" />
+              </TextField>
             </Card.Content>
           </Card>
         </div>
@@ -135,74 +140,73 @@ export default function NouvelArticlePage() {
             <Card.Content className="p-6 space-y-4">
               <h3 className="font-semibold text-[#2d2d83]">Paramètres</h3>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                selectedKey={category}
+                onSelectionChange={(k) => setCategory(String(k))}
+              >
+                <Label>Catégorie</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {CATEGORIES.map((c) => (
+                      <ListBox.Item key={c} id={c} textValue={c}>{c}</ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setStatus("published")}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium ${status === "published" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
-                  >
-                    Publié
-                  </button>
-                  <button
-                    onClick={() => setStatus("draft")}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium ${status === "draft" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-600"}`}
-                  >
-                    Brouillon
-                  </button>
-                </div>
-              </div>
+              <DatePicker
+                value={toDateValue(publishedAt)}
+                onChange={(d) => setPublishedAt(toIso(d))}
+              >
+                <Label>Date de publication</Label>
+                <DateField.Group fullWidth>
+                  <DateField.Input>
+                    {(segment) => <DateField.Segment segment={segment} />}
+                  </DateField.Input>
+                  <DateField.Suffix>
+                    <DatePicker.Trigger>
+                      <DatePicker.TriggerIndicator />
+                    </DatePicker.Trigger>
+                  </DateField.Suffix>
+                </DateField.Group>
+                <DatePicker.Popover>
+                  <HeroCalendar>
+                    <HeroCalendar.Header>
+                      <HeroCalendar.NavButton slot="previous" />
+                      <HeroCalendar.Heading />
+                      <HeroCalendar.NavButton slot="next" />
+                    </HeroCalendar.Header>
+                    <HeroCalendar.Grid>
+                      <HeroCalendar.GridHeader>
+                        {(day) => <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>}
+                      </HeroCalendar.GridHeader>
+                      <HeroCalendar.GridBody>
+                        {(date) => <HeroCalendar.Cell date={date} />}
+                      </HeroCalendar.GridBody>
+                    </HeroCalendar.Grid>
+                  </HeroCalendar>
+                </DatePicker.Popover>
+              </DatePicker>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date de publication</label>
-                <input
-                  type="date"
-                  value={publishedAt}
-                  onChange={(e) => setPublishedAt(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <TextField value={location} onChange={setLocation} isRequired>
+                <Label>Lieu</Label>
+                <Input placeholder="Ex: Église paroissiale" />
+              </TextField>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Lieu *</label>
-                <input
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Ex: Église paroissiale"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Auteur *</label>
-                <input
-                  value={author}
-                  onChange={(e) => setAuthor(e.target.value)}
-                  placeholder="Ex: Père Joseph"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <TextField value={author} onChange={setAuthor} isRequired>
+                <Label>Auteur</Label>
+                <Input placeholder="Ex: Père Joseph" />
+              </TextField>
             </Card.Content>
           </Card>
 
           <Card>
             <Card.Content className="p-6">
-              <ImageUploadField onChange={setImageFile} title="Image principale *" />
+              <ImageUploadField onChange={setImageFile} title="Image principale" />
             </Card.Content>
           </Card>
         </div>

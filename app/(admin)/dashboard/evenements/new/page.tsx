@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, ImageIcon, CalendarPlus, DollarSign, Users, Clock } from "lucide-react";
+import { ArrowLeft, Save, CalendarPlus, DollarSign, Users, Clock } from "lucide-react";
 import { toast } from "sonner";
 import {
   Card,
@@ -13,7 +13,7 @@ import {
   Input,
   TextArea,
   Description,
-  Switch,
+  NumberField,
   DatePicker,
   DateField,
   Calendar as HeroCalendar,
@@ -21,6 +21,7 @@ import {
 } from "@heroui/react";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import type { DateValue, TimeValue } from "@heroui/react";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { evenementAPI } from "@/features/evenement/apis/evenement.api";
 import { PricingTiersEditor, type PricingTier } from "@/components/admin/pricing-tiers-editor";
 import { DateTimePicker } from "@/components/admin/datetime-picker";
@@ -36,7 +37,6 @@ export default function NewEventPage() {
   const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
   const [selectedTime, setSelectedTime] = useState<TimeValue | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Config paiement (indépendant)
   const [isPaid, setIsPaid] = useState(false);
@@ -49,19 +49,6 @@ export default function NewEventPage() {
   // État
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    if (f.size > 5 * 1024 * 1024) {
-      toast.error("Image trop lourde (max 5 Mo)");
-      return;
-    }
-    setImageFile(f);
-    const reader = new FileReader();
-    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-    reader.readAsDataURL(f);
-  };
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
@@ -313,17 +300,24 @@ export default function NewEventPage() {
               </Card.Title>
             </Card.Header>
             <Card.Content className="p-6 pt-0 space-y-5">
-              <TextField
-                value={maxParticipants}
-                onChange={setMaxParticipants}
+              <NumberField
+                fullWidth
+                value={maxParticipants === "" ? NaN : Number(maxParticipants)}
+                onChange={(v) => setMaxParticipants(isNaN(v) ? "" : String(v))}
+                minValue={1}
+                step={1}
                 isInvalid={!!errors.maxParticipants}
               >
                 <Label>Nombre max de participants (optionnel)</Label>
-                <Input type="number" placeholder="Laissez vide pour illimité" inputMode="numeric" />
+                <NumberField.Group>
+                  <NumberField.Input placeholder="Laissez vide pour illimité" />
+                  <NumberField.DecrementButton />
+                  <NumberField.IncrementButton />
+                </NumberField.Group>
                 {errors.maxParticipants && (
                   <Description className="text-red-500 text-xs">{errors.maxParticipants}</Description>
                 )}
-              </TextField>
+              </NumberField>
 
               <DateTimePicker
                 label="Date limite d'inscription (optionnel)"
@@ -340,44 +334,8 @@ export default function NewEventPage() {
         <div className="space-y-5">
           {/* Image */}
           <Card>
-            <Card.Header className="px-5 pt-5 pb-3">
-              <Card.Title className="text-sm font-semibold text-[#2d2d83]">
-                Image principale
-              </Card.Title>
-            </Card.Header>
-            <Card.Content className="px-5 pb-5">
-              <label className="block border-2 border-dashed border-gray-200 rounded-xl overflow-hidden hover:border-[#2d2d83]/30 transition-colors cursor-pointer">
-                {imagePreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={imagePreview}
-                    alt="Prévisualisation"
-                    className="w-full h-48 object-cover"
-                  />
-                ) : (
-                  <div className="p-8 text-center">
-                    <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">Cliquez pour ajouter</p>
-                    <p className="text-xs text-gray-400 mt-1">JPG, PNG (max 5Mo)</p>
-                  </div>
-                )}
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
-              {imageFile && (
-                <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-                  <span className="truncate">{imageFile.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImageFile(null);
-                      setImagePreview(null);
-                    }}
-                    className="text-red-500 hover:underline ml-2 shrink-0"
-                  >
-                    Retirer
-                  </button>
-                </div>
-              )}
+            <Card.Content className="p-5">
+              <ImageUploadField onChange={setImageFile} title="Image principale" />
             </Card.Content>
           </Card>
 

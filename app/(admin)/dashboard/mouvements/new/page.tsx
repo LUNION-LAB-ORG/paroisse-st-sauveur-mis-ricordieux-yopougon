@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
-import { Card, Button } from "@heroui/react"
+import { Card, Button, TextField, TextArea, Input, Label } from "@heroui/react"
 import { ImageUploadField } from "@/components/admin/image-upload-field"
 import { serviceAPI } from "@/features/service/apis/service.api"
 
@@ -68,35 +68,21 @@ export default function NouveauMouvementPage() {
         <div className="lg:col-span-2 space-y-5">
           <Card>
             <Card.Content className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nom du mouvement *</label>
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ex : Chorale Sainte Cécile"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description courte *</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                  placeholder="Une phrase ou deux qui résument le mouvement (affichée sur la liste publique)"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Présentation détaillée</label>
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
+              <TextField value={title} onChange={setTitle} isRequired>
+                <Label>Nom du mouvement</Label>
+                <Input placeholder="Ex : Chorale Sainte Cécile" />
+              </TextField>
+              <TextField value={description} onChange={setDescription} isRequired>
+                <Label>Description courte</Label>
+                <TextArea rows={3} placeholder="Une phrase ou deux qui résument le mouvement (affichée sur la liste publique)" />
+              </TextField>
+              <TextField value={content} onChange={setContent}>
+                <Label>Présentation détaillée</Label>
+                <TextArea
                   rows={10}
                   placeholder="Vocation, activités, histoire, valeurs... (affiché sur la page détail)"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 leading-relaxed"
                 />
-              </div>
+              </TextField>
             </Card.Content>
           </Card>
         </div>
@@ -106,25 +92,15 @@ export default function NouveauMouvementPage() {
             <Card.Content className="p-6 space-y-4">
               <h3 className="font-semibold text-[#2d2d83]">Responsable & horaires</h3>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Responsable</label>
-                <input
-                  value={leader}
-                  onChange={(e) => setLeader(e.target.value)}
-                  placeholder="Ex : Père Joseph Kouadio"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <TextField value={leader} onChange={setLeader}>
+                <Label>Responsable</Label>
+                <Input placeholder="Ex : Père Joseph Kouadio" />
+              </TextField>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Horaires / fréquence</label>
-                <input
-                  value={schedule}
-                  onChange={(e) => setSchedule(e.target.value)}
-                  placeholder="Ex : Samedi à 16h"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <TextField value={schedule} onChange={setSchedule}>
+                <Label>Horaires / fréquence</Label>
+                <Input placeholder="Ex : Samedi à 16h" />
+              </TextField>
             </Card.Content>
           </Card>
 

@@ -5,7 +5,21 @@ import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { Card, Button } from "@heroui/react"
+import {
+  Button,
+  Calendar,
+  Card,
+  DateField,
+  DatePicker,
+  Input,
+  Label,
+  ListBox,
+  Select,
+  TextArea,
+  TextField,
+} from "@heroui/react"
+import { CalendarDate } from "@internationalized/date"
+import type { DateValue } from "@heroui/react"
 import {
   Dialog,
   DialogContent,
@@ -26,6 +40,15 @@ const CATEGORIES = [
   "Temps liturgique",
   "Autre",
 ] as const
+
+function toDateValue(iso: string): DateValue | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+  return m ? new CalendarDate(Number(m[1]), Number(m[2]), Number(m[3])) : null
+}
+function toIso(d: DateValue | null): string {
+  if (!d) return ""
+  return `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`
+}
 
 export default function MeditationDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -83,7 +106,7 @@ export default function MeditationDetailPage() {
       toast.success("Méditation mise à jour")
       router.push("/dashboard/mediation")
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erreur lors de la mise à jour"
+      const msg = e instanceof Error ? e.message : "Erreur"
       toast.error(msg)
     } finally {
       setSaving(false)
@@ -96,7 +119,7 @@ export default function MeditationDetailPage() {
       toast.success("Méditation supprimée")
       router.push("/dashboard/mediation")
     } catch {
-      toast.error("Erreur lors de la suppression")
+      toast.error("Erreur")
     }
   }
 
@@ -105,9 +128,7 @@ export default function MeditationDetailPage() {
     return (
       <div className="text-gray-500 py-24 text-center">
         Méditation introuvable.{" "}
-        <Link href="/dashboard/mediation" className="text-[#2d2d83] underline">
-          Retour
-        </Link>
+        <Link href="/dashboard/mediation" className="text-[#2d2d83] underline">Retour</Link>
       </div>
     )
 
@@ -152,24 +173,14 @@ export default function MeditationDetailPage() {
         <div className="lg:col-span-2 space-y-5">
           <Card>
             <Card.Content className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contenu</label>
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={14}
-                  placeholder="Le texte complet de la méditation..."
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 leading-relaxed"
-                />
-              </div>
+              <TextField value={title} onChange={setTitle} isRequired>
+                <Label>Titre</Label>
+                <Input />
+              </TextField>
+              <TextField value={content} onChange={setContent}>
+                <Label>Contenu</Label>
+                <TextArea rows={14} />
+              </TextField>
             </Card.Content>
           </Card>
         </div>
@@ -179,57 +190,73 @@ export default function MeditationDetailPage() {
             <Card.Content className="p-6 space-y-4">
               <h3 className="font-semibold text-[#2d2d83]">Paramètres</h3>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Auteur</label>
-                <input
-                  value={author}
-                  onChange={(e) => setAuthor(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <TextField value={author} onChange={setAuthor} isRequired>
+                <Label>Auteur</Label>
+                <Input />
+              </TextField>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20 bg-white"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select selectedKey={category} onSelectionChange={(k) => setCategory(String(k))}>
+                <Label>Catégorie</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {CATEGORIES.map((c) => (
+                      <ListBox.Item key={c} id={c} textValue={c}>{c}</ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                <input
-                  type="date"
-                  value={dateAt}
-                  onChange={(e) => setDateAt(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <DatePicker value={toDateValue(dateAt)} onChange={(d) => setDateAt(toIso(d))}>
+                <Label>Date</Label>
+                <DateField.Group fullWidth>
+                  <DateField.Input>
+                    {(segment) => <DateField.Segment segment={segment} />}
+                  </DateField.Input>
+                  <DateField.Suffix>
+                    <DatePicker.Trigger>
+                      <DatePicker.TriggerIndicator />
+                    </DatePicker.Trigger>
+                  </DateField.Suffix>
+                </DateField.Group>
+                <DatePicker.Popover>
+                  <Calendar>
+                    <Calendar.Header>
+                      <Calendar.NavButton slot="previous" />
+                      <Calendar.Heading />
+                      <Calendar.NavButton slot="next" />
+                    </Calendar.Header>
+                    <Calendar.Grid>
+                      <Calendar.GridHeader>
+                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                      </Calendar.GridHeader>
+                      <Calendar.GridBody>
+                        {(date) => <Calendar.Cell date={date} />}
+                      </Calendar.GridBody>
+                    </Calendar.Grid>
+                  </Calendar>
+                </DatePicker.Popover>
+              </DatePicker>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setStatus("published")}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium ${status === "published" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
-                  >
-                    Publié
-                  </button>
-                  <button
-                    onClick={() => setStatus("draft")}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium ${status === "draft" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-600"}`}
-                  >
-                    Brouillon
-                  </button>
-                </div>
-              </div>
+              <Select
+                selectedKey={status}
+                onSelectionChange={(k) => setStatus(String(k) as "published" | "draft")}
+              >
+                <Label>Statut</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    <ListBox.Item id="published" textValue="Publié">Publié</ListBox.Item>
+                    <ListBox.Item id="draft" textValue="Brouillon">Brouillon</ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
+              </Select>
             </Card.Content>
           </Card>
 
@@ -252,12 +279,8 @@ export default function MeditationDetailPage() {
           </DialogHeader>
           <p className="text-sm text-gray-600">Cette action est irréversible.</p>
           <DialogFooter>
-            <Button variant="secondary" onPress={() => setDeleteOpen(false)}>
-              Annuler
-            </Button>
-            <Button variant="primary" className="bg-red-600" onPress={remove}>
-              Confirmer la suppression
-            </Button>
+            <Button variant="secondary" onPress={() => setDeleteOpen(false)}>Annuler</Button>
+            <Button variant="primary" className="bg-red-600" onPress={remove}>Confirmer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

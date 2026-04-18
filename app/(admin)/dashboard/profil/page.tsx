@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { Card, Button, Avatar, Chip } from "@heroui/react"
-import { Save, Image as ImageIcon, X as XIcon, KeyRound } from "lucide-react"
+import { Card, Button, Avatar, Chip, TextField, Input, Label } from "@heroui/react"
+import { Save, KeyRound } from "lucide-react"
 import { Header } from "@/components/admin/header"
+import { ImageUploadField } from "@/components/admin/image-upload-field"
 import { userAPI } from "@/features/user/apis/user.api"
 import { ROLE_LABELS, type IUser } from "@/features/user/types/user.type"
 
@@ -19,7 +20,6 @@ export default function ProfilPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [photoFile, setPhotoFile] = useState<File | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     userAPI
@@ -84,7 +84,6 @@ export default function ProfilPage() {
     )
   }
 
-  const photoPreview = photoFile ? URL.createObjectURL(photoFile) : me.photo
   const roleMeta = (me.role && ROLE_LABELS[me.role as keyof typeof ROLE_LABELS]) || null
 
   return (
@@ -92,11 +91,11 @@ export default function ProfilPage() {
       <Header title="Mon profil" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-5">
           <Card>
             <Card.Content className="p-6 text-center">
               <Avatar className="w-28 h-28 mx-auto mb-4 ring-4 ring-[#2d2d83]/10">
-                {photoPreview ? <Avatar.Image src={photoPreview} alt={me.fullname} /> : null}
+                {me.photo ? <Avatar.Image src={me.photo} alt={me.fullname ?? ""} /> : null}
                 <Avatar.Fallback className="bg-[#2d2d83] text-white text-2xl font-semibold">
                   {me.fullname?.charAt(0).toUpperCase() || "?"}
                 </Avatar.Fallback>
@@ -108,33 +107,17 @@ export default function ProfilPage() {
                   {roleMeta.label}
                 </Chip>
               )}
+            </Card.Content>
+          </Card>
 
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-2 text-sm text-[#2d2d83] hover:underline"
-                >
-                  <ImageIcon className="w-4 h-4" />
-                  {photoFile ? "Changer la photo" : "Modifier la photo"}
-                </button>
-                {photoFile && (
-                  <button
-                    type="button"
-                    onClick={() => setPhotoFile(null)}
-                    className="ml-3 inline-flex items-center gap-1 text-xs text-red-500 hover:underline"
-                  >
-                    <XIcon className="w-3 h-3" /> Annuler
-                  </button>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={(e) => e.target.files && setPhotoFile(e.target.files[0])}
-                />
-              </div>
+          <Card>
+            <Card.Content className="p-6">
+              <ImageUploadField
+                initialImageUrl={me.photo ?? null}
+                onChange={setPhotoFile}
+                title="Photo de profil"
+                height={140}
+              />
             </Card.Content>
           </Card>
         </div>
@@ -147,33 +130,19 @@ export default function ProfilPage() {
               </Card.Title>
             </Card.Header>
             <Card.Content className="p-6 pt-0 space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
-                <input
-                  value={fullname}
-                  onChange={(e) => setFullname(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <TextField value={fullname} onChange={setFullname} isRequired>
+                <Label>Nom complet</Label>
+                <Input />
+              </TextField>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone *</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                  />
-                </div>
+                <TextField value={email} onChange={setEmail} type="email">
+                  <Label>Email</Label>
+                  <Input />
+                </TextField>
+                <TextField value={phone} onChange={setPhone} type="tel" isRequired>
+                  <Label>Téléphone</Label>
+                  <Input />
+                </TextField>
               </div>
             </Card.Content>
           </Card>
@@ -189,26 +158,14 @@ export default function ProfilPage() {
                 Laissez ces champs vides pour conserver votre mot de passe actuel.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nouveau mot de passe</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Minimum 6 caractères"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirmer</label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Répétez le mot de passe"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                  />
-                </div>
+                <TextField value={password} onChange={setPassword} type="password">
+                  <Label>Nouveau mot de passe</Label>
+                  <Input placeholder="Minimum 6 caractères" />
+                </TextField>
+                <TextField value={confirmPassword} onChange={setConfirmPassword} type="password">
+                  <Label>Confirmer</Label>
+                  <Input placeholder="Répétez le mot de passe" />
+                </TextField>
               </div>
             </Card.Content>
           </Card>

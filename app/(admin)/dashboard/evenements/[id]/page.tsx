@@ -5,12 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Calendar,
   CalendarPlus,
   ClipboardList,
-  Clock,
   DollarSign,
-  ImageIcon,
   Loader2,
   Mail,
   Phone,
@@ -24,18 +21,21 @@ import {
   Button,
   Card,
   Calendar as HeroCalendar,
+  Chip,
   DateField,
   DatePicker,
   Description,
   Input,
   Label,
-  Switch,
+  NumberField,
+  Table,
   TextArea,
   TextField,
   TimeField,
 } from "@heroui/react";
 import { CalendarDate, Time } from "@internationalized/date";
 import type { DateValue, TimeValue } from "@heroui/react";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { PricingTiersEditor, type PricingTier } from "@/components/admin/pricing-tiers-editor";
 import { DateTimePicker } from "@/components/admin/datetime-picker";
 import { ToggleSwitch } from "@/components/admin/toggle-switch";
@@ -79,32 +79,16 @@ type PaymentStatus = IParticipant["payment_status"];
 
 function PaymentBadge({ status }: { status: PaymentStatus }) {
   if (!status || status === "pending") {
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-        En attente
-      </span>
-    );
+    return <Chip variant="soft" color="warning" size="sm">En attente</Chip>;
   }
   if (status === "paid" || status === "succeeded") {
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-        Payé
-      </span>
-    );
+    return <Chip variant="soft" color="success" size="sm">Payé</Chip>;
   }
   if (status === "free") {
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-        Gratuit
-      </span>
-    );
+    return <Chip variant="soft" color="accent" size="sm">Gratuit</Chip>;
   }
   if (status === "failed") {
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
-        Échoué
-      </span>
-    );
+    return <Chip variant="soft" color="danger" size="sm">Échoué</Chip>;
   }
   return null;
 }
@@ -127,7 +111,6 @@ export default function EventDetailPage() {
   const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
   const [selectedTime, setSelectedTime] = useState<TimeValue | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Config form (tarifs)
   const [isPaid, setIsPaid] = useState(false);
@@ -173,7 +156,6 @@ export default function EventDetailPage() {
               setSelectedTime(new Time(Number(match[1]), Number(match[2])));
             }
           }
-          if (e.image) setImagePreview(e.image);
           setIsPaid(e.is_paid ?? false);
           setPricingTiers(Array.isArray(e.pricing_tiers) ? e.pricing_tiers : []);
           setMaxParticipants(
@@ -188,19 +170,6 @@ export default function EventDetailPage() {
       })
       .finally(() => setLoading(false));
   }, [id]);
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    if (f.size > 5 * 1024 * 1024) {
-      toast.error("Image trop lourde (max 5 Mo)");
-      return;
-    }
-    setImageFile(f);
-    const reader = new FileReader();
-    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-    reader.readAsDataURL(f);
-  };
 
   const validateInfos = (): boolean => {
     const errs: Record<string, string> = {};
@@ -522,32 +491,12 @@ export default function EventDetailPage() {
           <div className="space-y-5">
             {/* Image */}
             <Card>
-              <Card.Header className="px-5 pt-5 pb-3">
-                <Card.Title className="text-sm font-semibold text-[#2d2d83]">
-                  Image de l&apos;événement
-                </Card.Title>
-              </Card.Header>
-              <Card.Content className="px-5 pb-5">
-                <label className="block border-2 border-dashed border-gray-200 rounded-xl overflow-hidden hover:border-[#2d2d83]/30 transition-colors cursor-pointer">
-                  {imagePreview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={imagePreview}
-                      alt="Prévisualisation"
-                      className="w-full h-48 object-cover"
-                    />
-                  ) : (
-                    <div className="p-8 text-center">
-                      <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">Cliquez pour ajouter</p>
-                      <p className="text-xs text-gray-400 mt-1">JPG, PNG (max 5Mo)</p>
-                    </div>
-                  )}
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                </label>
-                {imageFile && (
-                  <p className="mt-2 text-xs text-gray-500 truncate">{imageFile.name}</p>
-                )}
+              <Card.Content className="p-5">
+                <ImageUploadField
+                  initialImageUrl={event?.image ?? null}
+                  onChange={setImageFile}
+                  title="Image de l'événement"
+                />
               </Card.Content>
             </Card>
 
@@ -584,42 +533,45 @@ export default function EventDetailPage() {
           ) : (
             <Card>
               <Card.Content className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-100 bg-gray-50/50">
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Nom</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Téléphone</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Paiement</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {participants.map((p) => (
-                        <tr key={p.id} className="hover:bg-gray-50/80 transition-colors">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-800">{p.fullname}</td>
-                          <td className="px-4 py-3 text-sm text-gray-500">{p.phone ?? "—"}</td>
-                          <td className="px-4 py-3 text-sm text-gray-500">{p.email ?? "—"}</td>
-                          <td className="px-4 py-3">
-                            <PaymentBadge status={p.payment_status} />
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">{formatDateShort(p.created_at)}</td>
-                          <td className="px-4 py-3">
-                            <button
-                              onClick={() => setDeleteParticipantId(p.id)}
-                              className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                              aria-label="Retirer cet inscrit"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <Table aria-label="Liste des participants">
+                  <Table.ScrollContainer>
+                    <Table.Content>
+                      <Table.Header>
+                        <Table.Column isRowHeader>Nom</Table.Column>
+                        <Table.Column>Téléphone</Table.Column>
+                        <Table.Column>Email</Table.Column>
+                        <Table.Column>Paiement</Table.Column>
+                        <Table.Column>Date</Table.Column>
+                        <Table.Column>Action</Table.Column>
+                      </Table.Header>
+                      <Table.Body>
+                        {participants.map((p) => (
+                          <Table.Row key={p.id}>
+                            <Table.Cell>
+                              <span className="font-medium text-gray-800">{p.fullname}</span>
+                            </Table.Cell>
+                            <Table.Cell>{p.phone ?? "—"}</Table.Cell>
+                            <Table.Cell>{p.email ?? "—"}</Table.Cell>
+                            <Table.Cell>
+                              <PaymentBadge status={p.payment_status} />
+                            </Table.Cell>
+                            <Table.Cell>{formatDateShort(p.created_at)}</Table.Cell>
+                            <Table.Cell>
+                              <Button
+                                variant="ghost"
+                                className="rounded-lg text-red-500 hover:bg-red-50"
+                                onPress={() => setDeleteParticipantId(p.id)}
+                                aria-label="Retirer cet inscrit"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </Table.Cell>
+                          </Table.Row>
+                        ))}
+                      </Table.Body>
+                    </Table.Content>
+                  </Table.ScrollContainer>
+                </Table>
               </Card.Content>
             </Card>
           )}
@@ -662,10 +614,20 @@ export default function EventDetailPage() {
               </Card.Title>
             </Card.Header>
             <Card.Content className="p-6 pt-0 space-y-5 max-w-lg">
-              <TextField value={maxParticipants} onChange={setMaxParticipants}>
+              <NumberField
+                fullWidth
+                value={maxParticipants === "" ? NaN : Number(maxParticipants)}
+                onChange={(v) => setMaxParticipants(isNaN(v) ? "" : String(v))}
+                minValue={1}
+                step={1}
+              >
                 <Label>Nombre max de participants (optionnel)</Label>
-                <Input type="number" placeholder="Laisser vide = illimité" inputMode="numeric" />
-              </TextField>
+                <NumberField.Group>
+                  <NumberField.Input placeholder="Laisser vide = illimité" />
+                  <NumberField.DecrementButton />
+                  <NumberField.IncrementButton />
+                </NumberField.Group>
+              </NumberField>
 
               <DateTimePicker
                 label="Date limite d'inscription (optionnel)"
@@ -705,20 +667,22 @@ export default function EventDetailPage() {
           </DialogHeader>
           <p className="text-sm text-gray-500">Cette inscription sera supprimée définitivement.</p>
           <div className="flex justify-end gap-3 mt-4">
-            <button
-              onClick={() => setDeleteParticipantId(null)}
-              disabled={deletingParticipant}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+            <Button
+              variant="secondary"
+              isDisabled={deletingParticipant}
+              onPress={() => setDeleteParticipantId(null)}
+              className="rounded-xl"
             >
               Annuler
-            </button>
-            <button
-              onClick={handleDeleteParticipant}
-              disabled={deletingParticipant}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-60"
+            </Button>
+            <Button
+              variant="primary"
+              isDisabled={deletingParticipant}
+              onPress={handleDeleteParticipant}
+              className="bg-red-600 rounded-xl"
             >
               {deletingParticipant ? "Suppression..." : "Supprimer"}
-            </button>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -733,20 +697,22 @@ export default function EventDetailPage() {
             Cette action est irréversible. Toutes les inscriptions seront également supprimées.
           </p>
           <div className="flex justify-end gap-3 mt-4">
-            <button
-              onClick={() => setDeleteEventOpen(false)}
-              disabled={deletingEvent}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+            <Button
+              variant="secondary"
+              isDisabled={deletingEvent}
+              onPress={() => setDeleteEventOpen(false)}
+              className="rounded-xl"
             >
               Annuler
-            </button>
-            <button
-              onClick={handleDeleteEvent}
-              disabled={deletingEvent}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-60"
+            </Button>
+            <Button
+              variant="primary"
+              isDisabled={deletingEvent}
+              onPress={handleDeleteEvent}
+              className="bg-red-600 rounded-xl"
             >
               {deletingEvent ? "Suppression..." : "Supprimer"}
-            </button>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -5,7 +5,21 @@ import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { Card, Button } from "@heroui/react"
+import {
+  Card,
+  Button,
+  TextField,
+  TextArea,
+  Input,
+  Label,
+  Select,
+  ListBox,
+  DatePicker,
+  DateField,
+  Calendar as HeroCalendar,
+} from "@heroui/react"
+import { CalendarDate } from "@internationalized/date"
+import type { DateValue } from "@heroui/react"
 import {
   Dialog,
   DialogContent,
@@ -18,6 +32,15 @@ import { actualiteAPI } from "@/features/actualite/apis/actualite.api"
 import type { IActualite } from "@/features/actualite/types/actualite.type"
 
 const CATEGORIES = ["Annonce", "Événement", "Liturgie", "Vie paroissiale", "Autre"] as const
+
+function toDateValue(iso: string): DateValue | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+  return m ? new CalendarDate(Number(m[1]), Number(m[2]), Number(m[3])) : null
+}
+function toIso(d: DateValue | null): string {
+  if (!d) return ""
+  return `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`
+}
 
 export default function ActualiteDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -66,7 +89,7 @@ export default function ActualiteDetailPage() {
     setSaving(true)
     try {
       const fd = new FormData()
-      fd.append("_method", "PUT") // Laravel multipart + PUT workaround
+      fd.append("_method", "PUT")
       fd.append("title", title)
       fd.append("category", category)
       fd.append("new_resume", resume)
@@ -159,32 +182,18 @@ export default function ActualiteDetailPage() {
         <div className="lg:col-span-2 space-y-5">
           <Card>
             <Card.Content className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Résumé</label>
-                <textarea
-                  value={resume}
-                  onChange={(e) => setResume(e.target.value)}
-                  rows={2}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contenu</label>
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={10}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <TextField value={title} onChange={setTitle} isRequired>
+                <Label>Titre</Label>
+                <Input />
+              </TextField>
+              <TextField value={resume} onChange={setResume}>
+                <Label>Résumé</Label>
+                <TextArea rows={2} />
+              </TextField>
+              <TextField value={content} onChange={setContent}>
+                <Label>Contenu</Label>
+                <TextArea rows={10} />
+              </TextField>
             </Card.Content>
           </Card>
         </div>
@@ -194,68 +203,84 @@ export default function ActualiteDetailPage() {
             <Card.Content className="p-6 space-y-4">
               <h3 className="font-semibold text-[#2d2d83]">Paramètres</h3>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                selectedKey={category}
+                onSelectionChange={(k) => setCategory(String(k))}
+              >
+                <Label>Catégorie</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {CATEGORIES.map((c) => (
+                      <ListBox.Item key={c} id={c} textValue={c}>{c}</ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setStatus("published")}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium ${status === "published" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
-                  >
-                    Publié
-                  </button>
-                  <button
-                    onClick={() => setStatus("draft")}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium ${status === "draft" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-600"}`}
-                  >
-                    Brouillon
-                  </button>
-                </div>
-              </div>
+              <Select
+                selectedKey={status}
+                onSelectionChange={(k) => setStatus(String(k) as "published" | "draft")}
+              >
+                <Label>Statut</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    <ListBox.Item id="published" textValue="Publié">Publié</ListBox.Item>
+                    <ListBox.Item id="draft" textValue="Brouillon">Brouillon</ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
+              </Select>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date de publication
-                </label>
-                <input
-                  type="date"
-                  value={publishedAt}
-                  onChange={(e) => setPublishedAt(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <DatePicker
+                value={toDateValue(publishedAt)}
+                onChange={(d) => setPublishedAt(toIso(d))}
+              >
+                <Label>Date de publication</Label>
+                <DateField.Group fullWidth>
+                  <DateField.Input>
+                    {(segment) => <DateField.Segment segment={segment} />}
+                  </DateField.Input>
+                  <DateField.Suffix>
+                    <DatePicker.Trigger>
+                      <DatePicker.TriggerIndicator />
+                    </DatePicker.Trigger>
+                  </DateField.Suffix>
+                </DateField.Group>
+                <DatePicker.Popover>
+                  <HeroCalendar>
+                    <HeroCalendar.Header>
+                      <HeroCalendar.NavButton slot="previous" />
+                      <HeroCalendar.Heading />
+                      <HeroCalendar.NavButton slot="next" />
+                    </HeroCalendar.Header>
+                    <HeroCalendar.Grid>
+                      <HeroCalendar.GridHeader>
+                        {(day) => <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>}
+                      </HeroCalendar.GridHeader>
+                      <HeroCalendar.GridBody>
+                        {(date) => <HeroCalendar.Cell date={date} />}
+                      </HeroCalendar.GridBody>
+                    </HeroCalendar.Grid>
+                  </HeroCalendar>
+                </DatePicker.Popover>
+              </DatePicker>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Lieu</label>
-                <input
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <TextField value={location} onChange={setLocation}>
+                <Label>Lieu</Label>
+                <Input />
+              </TextField>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Auteur</label>
-                <input
-                  value={author}
-                  onChange={(e) => setAuthor(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-                />
-              </div>
+              <TextField value={author} onChange={setAuthor}>
+                <Label>Auteur</Label>
+                <Input />
+              </TextField>
             </Card.Content>
           </Card>
 

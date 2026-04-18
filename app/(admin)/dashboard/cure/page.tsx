@@ -1,7 +1,8 @@
 "use client";
 
-import { Edit, Plus, Trash2, User, Calendar, ChurchIcon, ImageIcon, X as XIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Edit, Plus, Trash2, User, Calendar, ChurchIcon } from "lucide-react";
+import { useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Header } from "@/components/admin/header";
@@ -13,8 +14,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { Card, Avatar, Chip, Separator, Button as HeroButton } from "@heroui/react";
+import {
+  Card,
+  Avatar,
+  Chip,
+  Separator,
+  Button as HeroButton,
+  TextField,
+  TextArea,
+  Input,
+  Label,
+  DatePicker,
+  DateField,
+  Calendar as HeroCalendar,
+} from "@heroui/react";
+import { CalendarDate } from "@internationalized/date";
+import type { DateValue } from "@heroui/react";
 
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { cureAPI } from "@/features/cure/apis/cure.api";
 import type { ICure } from "@/features/cure/types/cure.type";
 
@@ -29,11 +46,19 @@ const EMPTY: CureFormState = { fullname: "", started_at: "", ended_at: "", descr
 
 function toDateInput(iso?: string | null): string {
   if (!iso) return "";
-  // Accept "YYYY-MM-DD" directly, otherwise parse Date.
   if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";
   return d.toISOString().slice(0, 10);
+}
+
+function toDateValue(iso: string): DateValue | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? new CalendarDate(Number(m[1]), Number(m[2]), Number(m[3])) : null;
+}
+function toIso(d: DateValue | null): string {
+  if (!d) return "";
+  return `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
 }
 
 /** Format lisible "sept. 2005" pour l'affichage en carte */
@@ -46,10 +71,9 @@ function toDateFR(iso?: string | null): string {
 
 function buildFormData(state: CureFormState, file: File | null, isUpdate: boolean): FormData {
   const fd = new FormData();
-  if (isUpdate) fd.append("_method", "PUT"); // Laravel multipart PUT workaround
+  if (isUpdate) fd.append("_method", "PUT");
   fd.append("fullname", state.fullname);
   fd.append("started_at", state.started_at);
-  // ended_at may be empty → ne pas envoyer pour indiquer "en poste"
   if (state.ended_at) fd.append("ended_at", state.ended_at);
   fd.append("description", state.description);
   if (file) fd.append("photo", file);
@@ -260,7 +284,7 @@ export default function CuresPage() {
                     className={`w-full rounded-lg text-sm ${cure.ended_at ? "text-green-700 bg-green-50" : "text-gray-600 bg-gray-50"}`}
                     onPress={() => toggleEnPoste(cure)}
                   >
-                    {cure.ended_at ? "↩ Remettre en poste" : "✓ Marquer comme ancien"}
+                    {cure.ended_at ? "Remettre en poste" : "Marquer comme ancien"}
                   </HeroButton>
 
                   <div className="flex justify-center gap-2">
@@ -336,19 +360,17 @@ export default function CuresPage() {
             Cette action est irréversible. Le profil et la photo seront définitivement supprimés.
           </p>
           <div className="flex justify-end gap-3 mt-4">
-            <button
-              onClick={() => setDeleteOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-            >
+            <HeroButton variant="secondary" onPress={() => setDeleteOpen(false)} className="rounded-xl">
               Annuler
-            </button>
-            <button
-              onClick={confirmDelete}
-              disabled={isDeleting}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50"
+            </HeroButton>
+            <HeroButton
+              variant="primary"
+              isDisabled={isDeleting}
+              onPress={confirmDelete}
+              className="bg-red-600 rounded-xl"
             >
               {isDeleting ? "Suppression..." : "Supprimer"}
-            </button>
+            </HeroButton>
           </div>
         </DialogContent>
       </Dialog>
@@ -368,127 +390,113 @@ function CureFormFields(props: {
   disabled?: boolean;
   submitColor: string;
 }) {
-  const { form, setForm, file, setFile, existingPhotoUrl, onSubmit, submitLabel, disabled, submitColor } = props;
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [localPreview, setLocalPreview] = useState<string | null>(null);
-  useEffect(() => {
-    if (!file) {
-      setLocalPreview(null);
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setLocalPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
-
-  const previewUrl = localPreview || existingPhotoUrl || null;
+  const { form, setForm, existingPhotoUrl, setFile, onSubmit, submitLabel, disabled, submitColor } = props;
 
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
-      {/* Photo upload */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Photo du curé</label>
-        <div className="border-2 border-dashed border-gray-200 rounded-xl p-5 hover:border-[#2d2d83]/30 transition-colors">
-          {previewUrl ? (
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
-                <img src={previewUrl} alt="Aperçu" className="w-full h-full object-cover" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-800">
-                  {file ? file.name : "Photo actuelle"}
-                </p>
-                <div className="flex gap-3 mt-1">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-xs text-[#2d2d83] hover:underline"
-                  >
-                    Changer
-                  </button>
-                  {file && (
-                    <button
-                      type="button"
-                      onClick={() => setFile(null)}
-                      className="text-xs text-red-500 hover:underline inline-flex items-center gap-1"
-                    >
-                      <XIcon className="w-3 h-3" /> Retirer
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full flex flex-col items-center justify-center py-4 text-gray-500"
-            >
-              <ImageIcon className="w-10 h-10 text-gray-300 mb-2" />
-              <p className="text-sm">Cliquez pour ajouter une photo</p>
-              <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP (max 2MB)</p>
-            </button>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-            onChange={(e) => e.target.files && setFile(e.target.files[0])}
-          />
-        </div>
-      </div>
+      <ImageUploadField
+        initialImageUrl={existingPhotoUrl ?? null}
+        onChange={setFile}
+        title="Photo du curé"
+        height={140}
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
-        <input
-          value={form.fullname}
-          onChange={(e) => setForm((f) => ({ ...f, fullname: e.target.value }))}
-          placeholder="Père Jean-Baptiste KOFFI"
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-        />
-      </div>
+      <TextField
+        value={form.fullname}
+        onChange={(v) => setForm((f) => ({ ...f, fullname: v }))}
+        isRequired
+      >
+        <Label>Nom complet</Label>
+        <Input placeholder="Père Jean-Baptiste KOFFI" />
+      </TextField>
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Début de ministère *</label>
-          <input
-            type="date"
-            value={form.started_at}
-            onChange={(e) => setForm((f) => ({ ...f, started_at: e.target.value }))}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Fin (vide si en cours)</label>
-          <input
-            type="date"
-            value={form.ended_at}
-            onChange={(e) => setForm((f) => ({ ...f, ended_at: e.target.value }))}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-          />
-        </div>
+        <DatePicker
+          value={toDateValue(form.started_at)}
+          onChange={(d) => setForm((f) => ({ ...f, started_at: toIso(d) }))}
+        >
+          <Label>Début de ministère</Label>
+          <DateField.Group fullWidth>
+            <DateField.Input>
+              {(segment) => <DateField.Segment segment={segment} />}
+            </DateField.Input>
+            <DateField.Suffix>
+              <DatePicker.Trigger>
+                <DatePicker.TriggerIndicator />
+              </DatePicker.Trigger>
+            </DateField.Suffix>
+          </DateField.Group>
+          <DatePicker.Popover>
+            <HeroCalendar>
+              <HeroCalendar.Header>
+                <HeroCalendar.NavButton slot="previous" />
+                <HeroCalendar.Heading />
+                <HeroCalendar.NavButton slot="next" />
+              </HeroCalendar.Header>
+              <HeroCalendar.Grid>
+                <HeroCalendar.GridHeader>
+                  {(day) => <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>}
+                </HeroCalendar.GridHeader>
+                <HeroCalendar.GridBody>
+                  {(date) => <HeroCalendar.Cell date={date} />}
+                </HeroCalendar.GridBody>
+              </HeroCalendar.Grid>
+            </HeroCalendar>
+          </DatePicker.Popover>
+        </DatePicker>
+
+        <DatePicker
+          value={toDateValue(form.ended_at)}
+          onChange={(d) => setForm((f) => ({ ...f, ended_at: toIso(d) }))}
+        >
+          <Label>Fin (vide si en cours)</Label>
+          <DateField.Group fullWidth>
+            <DateField.Input>
+              {(segment) => <DateField.Segment segment={segment} />}
+            </DateField.Input>
+            <DateField.Suffix>
+              <DatePicker.Trigger>
+                <DatePicker.TriggerIndicator />
+              </DatePicker.Trigger>
+            </DateField.Suffix>
+          </DateField.Group>
+          <DatePicker.Popover>
+            <HeroCalendar>
+              <HeroCalendar.Header>
+                <HeroCalendar.NavButton slot="previous" />
+                <HeroCalendar.Heading />
+                <HeroCalendar.NavButton slot="next" />
+              </HeroCalendar.Header>
+              <HeroCalendar.Grid>
+                <HeroCalendar.GridHeader>
+                  {(day) => <HeroCalendar.HeaderCell>{day}</HeroCalendar.HeaderCell>}
+                </HeroCalendar.GridHeader>
+                <HeroCalendar.GridBody>
+                  {(date) => <HeroCalendar.Cell date={date} />}
+                </HeroCalendar.GridBody>
+              </HeroCalendar.Grid>
+            </HeroCalendar>
+          </DatePicker.Popover>
+        </DatePicker>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-        <textarea
-          value={form.description}
-          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-          placeholder="Biographie courte du curé..."
-          rows={3}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2d2d83]/20"
-        />
-      </div>
+      <TextField
+        value={form.description}
+        onChange={(v) => setForm((f) => ({ ...f, description: v }))}
+        isRequired
+      >
+        <Label>Description</Label>
+        <TextArea rows={3} placeholder="Biographie courte du curé..." />
+      </TextField>
 
-      <button
+      <HeroButton
         type="submit"
-        disabled={disabled}
-        className={`w-full ${submitColor} text-white rounded-xl py-3 font-medium transition-colors disabled:opacity-50`}
+        variant="primary"
+        isDisabled={disabled}
+        className={`w-full ${submitColor} text-white rounded-xl`}
       >
         {submitLabel}
-      </button>
+      </HeroButton>
     </form>
   );
 }
