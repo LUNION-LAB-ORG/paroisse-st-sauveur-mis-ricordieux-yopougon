@@ -8,7 +8,10 @@ export default auth((req) => {
   // Admin routes require authentication
   if (pathname.startsWith("/dashboard")) {
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/login", req.url));
+      const loginUrl = new URL("/login", req.url);
+      // callbackUrl permet de revenir sur la page demandée après login
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
     }
   }
 

@@ -3,6 +3,7 @@ import type {
   IDon,
   IDonCreer,
   IDonModifier,
+  IDonPublicCreer,
 } from "../types/don.type";
 
 export const donAPI = {
@@ -12,6 +13,22 @@ export const donAPI = {
       method: "POST",
       data,
       service: "private",
+    });
+    return res;
+  },
+
+  /**
+   * Enregistre un don soumis depuis le site public en mode "paiement à la
+   * paroisse" (espèces). Le don est créé avec payment_status='pending' ;
+   * il sera validé manuellement par le curé depuis le dashboard après
+   * réception effective des espèces.
+   */
+  async ajouterPublic(data: IDonPublicCreer): Promise<{ data: IDon }> {
+    const res = await apiClient.request<{ data: IDon }>({
+      endpoint: "/donations/public",
+      method: "POST",
+      data,
+      service: "public",
     });
     return res;
   },

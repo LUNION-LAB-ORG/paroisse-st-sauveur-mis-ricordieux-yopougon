@@ -9,6 +9,7 @@ export interface IParticipant {
   wave_checkout_id?: string | null;
   payment_reference?: string | null;
   amount?: number | null;
+  tier_label?: string | null;
   created_at: string;
 }
 

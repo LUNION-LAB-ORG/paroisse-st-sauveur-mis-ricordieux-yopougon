@@ -540,6 +540,7 @@ export default function EventDetailPage() {
                         <Table.Column isRowHeader>Nom</Table.Column>
                         <Table.Column>Téléphone</Table.Column>
                         <Table.Column>Email</Table.Column>
+                        <Table.Column>Tarif</Table.Column>
                         <Table.Column>Paiement</Table.Column>
                         <Table.Column>Date</Table.Column>
                         <Table.Column>Action</Table.Column>
@@ -552,6 +553,13 @@ export default function EventDetailPage() {
                             </Table.Cell>
                             <Table.Cell>{p.phone ?? "—"}</Table.Cell>
                             <Table.Cell>{p.email ?? "—"}</Table.Cell>
+                            <Table.Cell>
+                              {p.tier_label ? (
+                                <Chip variant="soft" color="default" size="sm">{p.tier_label}</Chip>
+                              ) : (
+                                <span className="text-gray-400 text-xs">—</span>
+                              )}
+                            </Table.Cell>
                             <Table.Cell>
                               <PaymentBadge status={p.payment_status} />
                             </Table.Cell>

@@ -422,6 +422,7 @@ export default function DonsPage() {
                     <Table.Column>Montant / Désignation</Table.Column>
                     <Table.Column>Projet</Table.Column>
                     <Table.Column>Mode</Table.Column>
+                    <Table.Column>Statut</Table.Column>
                     <Table.Column>Actions</Table.Column>
                   </Table.Header>
                   <Table.Body>
@@ -449,6 +450,15 @@ export default function DonsPage() {
                             <Chip variant="soft" color="default" size="sm">{d.project}</Chip>
                           </Table.Cell>
                           <Table.Cell>{paymethodLabel(d.paymethod)}</Table.Cell>
+                          <Table.Cell>
+                            {d.payment_status === "pending" ? (
+                              <Chip variant="soft" color="warning" size="sm">À valider</Chip>
+                            ) : d.payment_status === "failed" ? (
+                              <Chip variant="soft" color="danger" size="sm">Échoué</Chip>
+                            ) : (
+                              <Chip variant="soft" color="success" size="sm">Reçu</Chip>
+                            )}
+                          </Table.Cell>
                           <Table.Cell>
                             <HeroButton
                               variant="ghost"
