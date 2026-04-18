@@ -45,6 +45,8 @@ const contentItems = [
 
 const adminItems = [
   { label: "Notifications", icon: Bell, href: "/dashboard/notifications" },
+  { label: "Utilisateurs", icon: Users, href: "/dashboard/utilisateurs" },
+  { label: "Mon profil", icon: Users, href: "/dashboard/profil" },
   { label: "Paramètres", icon: Settings, href: "/dashboard/parametres" },
 ]
 
