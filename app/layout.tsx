@@ -14,7 +14,8 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   icons: {
-    icon: "/favicon.ico",
+    icon: "/logo-paroisse.png",
+    apple: "/logo-paroisse.png",
   },
 };
 
