@@ -13,3 +13,14 @@ export const annonceServerAPI = {
     return res?.data?.[0] ?? null;
   },
 };
+
+export const annoncesServerAPI = {
+  async obtenirToutes(): Promise<IAnnonce[]> {
+    const res = await fetchPublicOrNull<{ data: IAnnonce[] }>(
+      "/announcements",
+      { per_page: 100 },
+    );
+
+    return res?.data ?? [];
+  },
+};

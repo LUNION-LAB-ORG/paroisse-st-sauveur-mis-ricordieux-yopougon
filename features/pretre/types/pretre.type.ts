@@ -7,6 +7,8 @@ export interface IPretre {
   missions: string | null;
   biography: string | null;
   ordination_year: number | null;
+  since_year?: number | null;
+  congregation?: string | null;
   photo: string | null;
   status: IContenuStatut;
   sort_order: number;

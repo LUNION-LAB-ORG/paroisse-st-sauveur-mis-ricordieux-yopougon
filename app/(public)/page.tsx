@@ -18,6 +18,7 @@ import { histoireServerAPI } from "@/features/histoire/apis/histoire.server";
 import { horaireServerAPI } from "@/features/horaire/apis/horaire.server";
 import { liturgieServerAPI } from "@/features/liturgie/apis/liturgie.server";
 import { serviceServerAPI } from "@/features/service/apis/service.server";
+import { publicationServerAPI } from "@/features/publication/apis/publication.server";
 import { pretreServerAPI } from "@/features/pretre/apis/pretre.server";
 import { projetEgliseServerAPI } from "@/features/projet-eglise/apis/projet-eglise.server";
 import { settingServerAPI } from "@/features/setting/apis/setting.server";
@@ -114,6 +115,7 @@ export default async function Accueil() {
     evenement,
     jalons,
     pretres,
+    publications,
   ] = await Promise.all([
     settingServerAPI.obtenirMap(),
     liturgieServerAPI.obtenirDuJour(aujourdhui),
@@ -125,6 +127,7 @@ export default async function Accueil() {
     evenementServerAPI.obtenirProchain(aujourdhui),
     histoireServerAPI.obtenirJalons(),
     pretreServerAPI.obtenirTous(),
+    publicationServerAPI.obtenirPage({ per_page: 3 }),
   ]);
 
   const identite = identiteParoisse(settings);
@@ -191,7 +194,11 @@ export default async function Accueil() {
         vueEglise={identite.vueEglise}
       />
       <Mouvements mouvements={mouvements} />
-      <Actualites actualites={actualites} evenement={evenement} />
+      <Actualites
+        actualites={actualites}
+        evenement={evenement}
+        publications={publications.data}
+      />
       <HistoireCure
         jalons={jalons}
         motDuCure={{

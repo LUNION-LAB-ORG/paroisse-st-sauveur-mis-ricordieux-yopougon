@@ -7,6 +7,7 @@ import type {
 } from "@/features/horaire/types/horaire.type";
 
 import { Tabs } from "@heroui/react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { EnTeteSection } from "./en-tete-section";
@@ -134,6 +135,12 @@ export function HorairesSemaine({
                   Contact : {annonce.contact}
                 </span>
               )}
+              <Link
+                className="text-[15px] font-bold text-rouge hover:text-rouge-hover"
+                href="/annonces"
+              >
+                Toutes les annonces de la semaine
+              </Link>
             </div>
           )}
         </div>

@@ -12,13 +12,16 @@ const COLONNES = [
       { label: "Histoire", href: "/historique" },
       { label: "Le mot du curé", href: "/#cure" },
       { label: "Horaires", href: "/#horaires" },
-      { label: "Équipe pastorale", href: "/equipes" },
+      { label: "Annonces", href: "/annonces" },
+      { label: "Équipe pastorale", href: "/equipe" },
     ],
   },
   {
     titre: "Participer",
     liens: [
       { label: "Mouvements", href: "/#vie" },
+      { label: "Agenda", href: "/agenda" },
+      { label: "Communauté", href: "/communaute" },
       { label: "Nouvelle église", href: "/#eglise" },
       { label: "Demander une messe", href: "/demande-messe" },
       { label: "Faire un don", href: "/#eglise" },

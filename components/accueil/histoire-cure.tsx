@@ -82,7 +82,7 @@ export function HistoireCure({ jalons, motDuCure }: HistoireCureProps) {
               )}
               <Link
                 className="text-[15px] font-bold text-rouge hover:text-rouge-hover"
-                href="/equipes"
+                href="/equipe"
               >
                 Lire le message
               </Link>

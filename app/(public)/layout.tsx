@@ -25,20 +25,24 @@ export default async function PublicLayout({
       >
         Aller au contenu
       </a>
-      <BandeauLiturgique
-        email={identite.email}
-        liturgie={liturgie}
-        telephone={identite.telephone}
-      />
-      <SiteHeader
-        devise={identite.devise}
-        logo={identite.logo}
-        nom={identite.nom}
-      />
+      <div className="print:hidden">
+        <BandeauLiturgique
+          email={identite.email}
+          liturgie={liturgie}
+          telephone={identite.telephone}
+        />
+        <SiteHeader
+          devise={identite.devise}
+          logo={identite.logo}
+          nom={identite.nom}
+        />
+      </div>
       <main className="flex-grow" id="contenu">
         {children}
       </main>
-      <SiteFooter identite={identite} />
+      <div className="print:hidden">
+        <SiteFooter identite={identite} />
+      </div>
     </div>
   );
 }

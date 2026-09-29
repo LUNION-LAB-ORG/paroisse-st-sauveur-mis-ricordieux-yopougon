@@ -97,13 +97,13 @@ export function BandeInfos({
           </Link>
           <Link
             className="text-base text-encre hover:text-rouge"
-            href="/ecoute"
+            href="/equipe#rdv"
           >
             Écoute et confession
           </Link>
           <Link
             className="text-base text-encre hover:text-rouge"
-            href="/equipes"
+            href="/equipe#rdv"
           >
             Baptême, mariage, sacrements
           </Link>

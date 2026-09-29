@@ -8,8 +8,8 @@ export const LIENS_PRINCIPAUX = [
   { label: "Vie paroissiale", href: "/#vie" },
   { label: "Parole du jour", href: "/#parole" },
   { label: "Nouvelle église", href: "/#eglise" },
-  { label: "Communauté", href: "/actualites" },
-  { label: "Annonces", href: "/#annonce" },
+  { label: "Communauté", href: "/communaute" },
+  { label: "Annonces", href: "/annonces" },
   { label: "Contact", href: "#contact" },
 ] as const;
 
@@ -20,19 +20,19 @@ export const MENU_PAROISSE = [
     href: "/historique",
   },
   {
-    titre: "Le mot du curé",
-    description: "Message de notre pasteur",
-    href: "/#cure",
-  },
-  {
     titre: "Équipe pastorale",
     description: "Prêtres, conseil, secrétariat",
-    href: "/equipes",
+    href: "/equipe",
   },
   {
     titre: "Horaires et sacrements",
     description: "Messes, confessions, baptêmes",
     href: "/#horaires",
+  },
+  {
+    titre: "Agenda",
+    description: "Célébrations et événements à venir",
+    href: "/agenda",
   },
   {
     titre: "Demander une messe",

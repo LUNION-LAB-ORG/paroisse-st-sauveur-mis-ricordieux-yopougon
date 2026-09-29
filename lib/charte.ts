@@ -55,3 +55,33 @@ export function formatMontant(n: number): string {
 export function lienPartageWhatsapp(texte: string): string {
   return `https://wa.me/?text=${encodeURIComponent(texte)}`;
 }
+
+/** « 18:30:00 » ou « 2026-09-29T18:30:00Z » → « 18:30 » */
+export const heureCourte = (h: string | null | undefined) =>
+  (h ?? "").match(/\d{2}:\d{2}/)?.[0] ?? "";
+
+/** Jour et mois abrégés pour les pastilles de date (« 12 », « oct. ») */
+export function pastilleDate(iso: string): { jour: string; mois: string } {
+  const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
+
+  return {
+    jour: String(d.getUTCDate()),
+    mois: new Intl.DateTimeFormat("fr-FR", {
+      month: "short",
+      timeZone: "UTC",
+    }).format(d),
+  };
+}
+
+/** « 12 octobre » */
+export function jourMoisLong(iso: string): string {
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(`${iso.slice(0, 10)}T00:00:00Z`));
+}
+
+/** Carte Google Maps intégrée (sans clé) pour une adresse. */
+export const carteGoogle = (adresse: string) =>
+  `https://www.google.com/maps?q=${encodeURIComponent(adresse)}&output=embed`;

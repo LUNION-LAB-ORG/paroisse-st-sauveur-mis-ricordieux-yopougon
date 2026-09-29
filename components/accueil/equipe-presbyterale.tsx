@@ -28,7 +28,7 @@ export function EquipePresbyterale({ pretres }: { pretres: IPretre[] }) {
           />
           <Link
             className="hidden shrink-0 text-[15px] font-bold text-rouge hover:text-rouge-hover lg:inline"
-            href="/equipes"
+            href="/equipe"
           >
             Toute l’équipe pastorale
           </Link>
@@ -71,7 +71,7 @@ export function EquipePresbyterale({ pretres }: { pretres: IPretre[] }) {
           </span>
           <Link
             className="w-full rounded-charte bg-marine px-6 py-[15px] text-center text-[15px] font-bold text-white hover:bg-marine-deep hover:text-white hover:no-underline lg:w-auto"
-            href="/ecoute"
+            href="/equipe#rdv"
           >
             Prendre rendez-vous avec un prêtre
           </Link>

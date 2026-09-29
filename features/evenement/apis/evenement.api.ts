@@ -1,9 +1,12 @@
-import { apiClient } from "@/lib/api.client";
 import type { IPaginatedResponse } from "@/types/api.type";
 import type { IEvenement, IInscriptionResponse } from "../types/evenement.type";
 
+import { apiClient } from "@/lib/api.client";
+
 export const evenementAPI = {
-  obtenirTous(params?: Record<string, unknown>): Promise<IPaginatedResponse<IEvenement>> {
+  obtenirTous(
+    params?: Record<string, unknown>,
+  ): Promise<IPaginatedResponse<IEvenement>> {
     return apiClient.request({
       endpoint: `/events`,
       method: "GET",
@@ -17,6 +20,7 @@ export const evenementAPI = {
       method: "GET",
       service: "public",
     });
+
     // Le backend retourne { data: ... } via EventResource, on extrait
     return (res as any)?.data ?? (res as any as IEvenement);
   },
@@ -31,9 +35,13 @@ export const evenementAPI = {
         ? { headers: { "Content-Type": "multipart/form-data" } }
         : undefined,
     });
+
     return (res as any)?.data ?? (res as any);
   },
-  async modifier(id: string, data: FormData | Record<string, unknown>): Promise<IEvenement> {
+  async modifier(
+    id: string,
+    data: FormData | Record<string, unknown>,
+  ): Promise<IEvenement> {
     const isForm = typeof FormData !== "undefined" && data instanceof FormData;
     const method = isForm ? "POST" : "PUT";
     const res = await apiClient.request({
@@ -45,6 +53,7 @@ export const evenementAPI = {
         ? { headers: { "Content-Type": "multipart/form-data" } }
         : undefined,
     });
+
     return (res as any)?.data ?? (res as any);
   },
   supprimer(id: string): Promise<void> {
@@ -56,7 +65,15 @@ export const evenementAPI = {
   },
   inscrire(
     id: string,
-    data: { fullname: string; phone?: string; email?: string; message?: string },
+    data: {
+      fullname: string;
+      phone?: string;
+      email?: string;
+      message?: string;
+      attendees?: number;
+      reminder?: boolean;
+      tier_label?: string;
+    },
   ): Promise<IInscriptionResponse> {
     return apiClient.request({
       endpoint: `/events/${id}/register`,

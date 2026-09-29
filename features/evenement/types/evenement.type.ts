@@ -20,6 +20,13 @@ export interface IEvenement {
   registration_deadline: string | null;
   participants_count: number | null;
   spots_remaining: number | null;
+  /** Champs de la refonte (page /agenda/[slug]) */
+  slug?: string;
+  summary?: string | null;
+  category?: string | null;
+  audience?: string | null;
+  end_time?: string | null;
+  programme?: { time: string; label: string }[];
   created_at: string;
 }
 

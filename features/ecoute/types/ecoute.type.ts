@@ -16,7 +16,9 @@ export interface IEcouteCreer {
   fullname: string;
   phone?: string;
   availability?: string;
-  message: string;
+  message?: string;
+  /** Prêtre souhaité (page Équipe) — null = indifférent */
+  priest_id?: number | null;
   request_status?: IEcouteStatutDemande;
 }
 

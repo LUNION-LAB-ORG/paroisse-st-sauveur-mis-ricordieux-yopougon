@@ -1,11 +1,14 @@
 import type { IActualite } from "@/features/actualite/types/actualite.type";
 import type { IEvenement } from "@/features/evenement/types/evenement.type";
+import type { IPublication } from "@/features/publication/types/publication.type";
 
 import Link from "next/link";
 
 import { EmplacementImage } from "./emplacement-image";
 import { EnTeteSection } from "./en-tete-section";
 
+import { MediaPublication } from "@/components/communaute/carte-publication";
+import { formatDatePublication } from "@/features/publication/utils/publication.utils";
 import { CONTENEUR } from "@/lib/charte";
 import { cn } from "@/lib/utils";
 
@@ -32,13 +35,16 @@ const jourMois = (iso: string) => {
 };
 
 export function Actualites({
+  publications,
   actualites,
   evenement,
 }: {
+  publications: IPublication[];
   actualites: IActualite[];
   evenement: IEvenement | null;
 }) {
-  if (actualites.length === 0 && !evenement) return null;
+  if (publications.length === 0 && actualites.length === 0 && !evenement)
+    return null;
 
   return (
     <section className="mt-8 border-t border-ligne bg-white lg:mt-0" id="actus">
@@ -56,13 +62,42 @@ export function Actualites({
           />
           <Link
             className="hidden shrink-0 text-[15px] font-bold text-rouge hover:text-rouge-hover lg:inline"
-            href="/actualites"
+            href="/communaute"
           >
             Toutes les publications
           </Link>
         </div>
 
-        {actualites.length > 0 && (
+        {publications.length > 0 && (
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-6">
+            {publications.map((p) => (
+              <Link
+                key={p.id}
+                className="group flex flex-col gap-3.5 text-encre hover:text-encre hover:no-underline"
+                href={`/communaute/${p.slug}`}
+              >
+                <MediaPublication p={p} />
+                <span className="text-[13px] font-bold text-rouge">
+                  {[p.format, p.category].filter(Boolean).join(" · ")}
+                  <span className="font-normal text-gris">
+                    {" "}
+                    · {formatDatePublication(p.published_at)}
+                  </span>
+                </span>
+                <span className="font-heading text-xl font-semibold leading-[1.2] text-marine group-hover:underline group-hover:underline-offset-4 lg:text-[26px]">
+                  {p.title}
+                </span>
+                {p.lead && (
+                  <span className="line-clamp-3 text-[15px] leading-[1.55] text-encre-douce">
+                    {p.lead}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {publications.length === 0 && actualites.length > 0 && (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-6">
             {actualites.map((a) => (
               <Link
@@ -112,7 +147,7 @@ export function Actualites({
             </span>
             <Link
               className="text-[15px] font-bold text-rouge hover:text-rouge-hover"
-              href={`/evenement/${evenement.id}`}
+              href={`/agenda/${evenement.slug ?? evenement.id}`}
             >
               Voir l’événement
             </Link>
@@ -121,7 +156,7 @@ export function Actualites({
 
         <Link
           className="text-[15px] font-bold text-rouge lg:hidden"
-          href="/actualites"
+          href="/communaute"
         >
           Toutes les publications
         </Link>
