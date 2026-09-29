@@ -4,6 +4,7 @@ import type {
 } from "@/features/projet-eglise/types/projet-eglise.type";
 
 import { ProgressBar } from "@heroui/react";
+import Link from "next/link";
 
 import { DonRapide } from "./don-rapide";
 import { EmplacementImage } from "./emplacement-image";
@@ -13,7 +14,7 @@ import { GalerieChantier } from "./galerie-chantier";
 import { CONTENEUR, formatMontant } from "@/lib/charte";
 import { cn } from "@/lib/utils";
 
-const LIBELLE_STATUT: Record<IPhaseStatut, string> = {
+export const LIBELLE_STATUT: Record<IPhaseStatut, string> = {
   done: "Terminée",
   in_progress: "En cours",
   upcoming: "À venir",
@@ -27,7 +28,8 @@ interface NouvelleEgliseProps {
   logo: string;
 }
 
-function Jauge({
+/** Jauge de collecte (sur fond marine). */
+export function Jauge({
   projet,
   compacte = false,
 }: {
@@ -98,10 +100,16 @@ export function NouvelleEglise({
             titreClassName="text-2xl lg:text-[44px]"
           />
           {projet?.presentation && (
-            <p className="m-0 hidden whitespace-pre-line text-lg leading-[1.65] text-brume lg:block">
+            <p className="m-0 hidden whitespace-pre-line text-lg leading-[1.65] text-brume lg:line-clamp-6">
               {projet.presentation}
             </p>
           )}
+          <Link
+            className="flex min-h-11 items-center self-start text-[15px] font-bold text-ciel hover:text-white"
+            href="/nouvelle-eglise"
+          >
+            Découvrir le projet et suivre le chantier
+          </Link>
 
           {/* Mobile : la jauge vient juste sous le titre */}
           {projet && (

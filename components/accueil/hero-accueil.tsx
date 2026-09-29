@@ -7,20 +7,29 @@ import { EmplacementImage } from "./emplacement-image";
 import { CONTENEUR } from "@/lib/charte";
 import { cn } from "@/lib/utils";
 
-function BoutonsHero({ className }: { className?: string }) {
+interface LibellesHero {
+  libellePrincipal: string;
+  libelleSecondaire: string;
+}
+
+function BoutonsHero({
+  className,
+  libellePrincipal,
+  libelleSecondaire,
+}: LibellesHero & { className?: string }) {
   return (
     <div className={cn("flex-col gap-2.5 lg:flex-row lg:gap-3", className)}>
       <Link
         className="rounded-charte bg-rouge px-[26px] py-[15px] text-center text-[15px] font-bold text-white hover:bg-rouge-hover hover:text-white lg:py-4 lg:text-base"
-        href="#eglise"
+        href="/nouvelle-eglise"
       >
-        Soutenir la construction
+        {libellePrincipal}
       </Link>
       <Link
         className="rounded-charte border border-white px-[26px] py-[14px] text-center text-[15px] font-bold text-white hover:bg-white/10 hover:text-white lg:py-[15px] lg:text-base"
-        href="#horaires"
+        href="/horaires"
       >
-        Horaires des messes
+        {libelleSecondaire}
       </Link>
     </div>
   );
@@ -29,10 +38,17 @@ function BoutonsHero({ className }: { className?: string }) {
 export function HeroAccueil({
   identite,
   vueEglise,
-}: {
+  texte,
+  libellePrincipal,
+  libelleSecondaire,
+}: LibellesHero & {
   identite: IIdentiteParoisse;
   vueEglise: string | null;
+  /** Phrase d'accueil (paramètre hero.text, repli : description de la paroisse) */
+  texte: string;
 }) {
+  const libelles = { libellePrincipal, libelleSecondaire };
+
   return (
     <section className="relative overflow-hidden bg-marine text-white">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -56,9 +72,9 @@ export function HeroAccueil({
             {identite.nom}
           </h1>
           <p className="m-0 text-base leading-[1.55] text-brume-clair lg:text-[19px] lg:leading-[1.6]">
-            {identite.description}
+            {texte}
           </p>
-          <BoutonsHero className="hidden lg:mt-1.5 lg:flex" />
+          <BoutonsHero {...libelles} className="hidden lg:mt-1.5 lg:flex" />
         </div>
 
         <figure className="m-0 flex flex-col gap-3 lg:col-span-7 lg:col-start-6">
@@ -73,13 +89,13 @@ export function HeroAccueil({
             <span>Vue d’architecte de la future église</span>
             <Link
               className="hidden font-bold text-ciel hover:text-white lg:inline"
-              href="#eglise"
+              href="/nouvelle-eglise"
             >
               Suivre le projet
             </Link>
           </figcaption>
         </figure>
-        <BoutonsHero className="flex lg:hidden" />
+        <BoutonsHero {...libelles} className="flex lg:hidden" />
       </div>
     </section>
   );

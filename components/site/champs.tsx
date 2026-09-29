@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Checkbox,
   FieldError,
   Input,
   Label,
@@ -143,5 +144,27 @@ export function ChampChoix({
         </ListBox>
       </Select.Popover>
     </Select>
+  );
+}
+
+/** Case à cocher de la charte (libellé à droite, coche marine). */
+export function CaseACocher({
+  valeur,
+  onChange,
+  children,
+}: {
+  valeur: boolean;
+  onChange: (v: boolean) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Checkbox className="group" isSelected={valeur} onChange={onChange}>
+      <Checkbox.Content className="flex flex-row items-start gap-3 text-[15px] leading-[1.45] text-encre-douce">
+        <Checkbox.Control className="mt-0.5 size-5 shrink-0 rounded-[2px] border border-champ bg-white group-data-[selected=true]:border-marine group-data-[selected=true]:bg-marine group-data-[selected=true]:text-white">
+          <Checkbox.Indicator />
+        </Checkbox.Control>
+        {children}
+      </Checkbox.Content>
+    </Checkbox>
   );
 }

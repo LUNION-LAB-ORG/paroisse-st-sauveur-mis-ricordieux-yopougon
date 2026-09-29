@@ -13,4 +13,13 @@ export const serviceServerAPI = {
 
     return res?.data ?? [];
   },
+
+  /** Un mouvement publié (null si absent ou non publié). */
+  async obtenir(id: string): Promise<IService | null> {
+    if (!/^\d+$/.test(id)) return null;
+    const res = await fetchPublicOrNull<{ data: IService }>(`/services/${id}`);
+    const m = res?.data ?? null;
+
+    return m && m.status === "published" ? m : null;
+  },
 };

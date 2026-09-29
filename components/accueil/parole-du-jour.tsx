@@ -40,11 +40,19 @@ const META = "text-sm text-gris lg:text-[15px]";
  * Acclamation de l'Évangile sur une ligne : « Alléluia. Tous les anges… (Dn 3, 58) ».
  * Pendant le Carême, le verset ne commence pas par Alléluia : on l'affiche tel quel.
  */
-function Acclamation({ verset, refVerset }: { verset: string; refVerset: string | null }) {
+function Acclamation({
+  verset,
+  refVerset,
+}: {
+  verset: string;
+  refVerset: string | null;
+}) {
   const texte = texteBrut(verset);
   const estAlleluia = /^allélu/i.test(texte);
   const acclamation = estAlleluia
-    ? texte.replace(/^(Alléluia[.!]?\s*)+/i, "").replace(/\s*Alléluia[.!]?$/i, "")
+    ? texte
+        .replace(/^(Alléluia[.!]?\s*)+/i, "")
+        .replace(/\s*Alléluia[.!]?$/i, "")
     : texte;
 
   return (
@@ -72,13 +80,37 @@ function Lecture({ lecture, sur }: { lecture: ILecture; sur: string }) {
   );
 }
 
+interface ParoleDuJourProps {
+  liturgie: ILiturgie | null;
+  /** Adresse partagée sur WhatsApp (page « Parole du jour » de la date) */
+  lienPartage: string;
+  /** Numéro de section (accueil) ; absent sur la page dédiée */
+  numero?: string;
+  surtitre?: string;
+  titre?: string;
+  /** Remplace le rappel « date — fête » de la colonne de gauche */
+  entete?: React.ReactNode;
+  /** Mention AELF visible aussi sur mobile (page dédiée) */
+  mentionAelfMobile?: boolean;
+  id?: string;
+  className?: string;
+}
+
+/**
+ * Textes du jour (AELF) en onglets : lectures, psaume, Évangile, homélie.
+ * Partagé par l'accueil et la page « Parole du jour ».
+ */
 export function ParoleDuJour({
   liturgie,
-  urlPage,
-}: {
-  liturgie: ILiturgie | null;
-  urlPage: string;
-}) {
+  lienPartage,
+  numero = "02",
+  surtitre = "La Parole de Dieu au quotidien",
+  titre = "Textes du jour",
+  entete,
+  mentionAelfMobile = false,
+  id = "parole",
+  className,
+}: ParoleDuJourProps) {
   const estDesktop = useEstDesktop();
   const lectures = lecturesDuJour(liturgie);
   const homelie = liturgie?.homily ?? null;
@@ -211,7 +243,7 @@ export function ParoleDuJour({
         liturgie.feast,
         lectures.evangile &&
           `Évangile (${lectures.evangile.ref}) : ${titreLecture(lectures.evangile.title)}`,
-        `${urlPage}#parole`,
+        lienPartage,
       ]
         .filter(Boolean)
         .join("\n")
@@ -243,17 +275,16 @@ export function ParoleDuJour({
 
   return (
     <section
-      className="scroll-mt-4 lg:border-y lg:border-ligne lg:bg-white"
-      id="parole"
+      className={cn(
+        "scroll-mt-4 lg:border-y lg:border-ligne lg:bg-white",
+        className,
+      )}
+      id={id}
     >
       <div className={cn(CONTENEUR, "pb-2.5 pt-8 lg:py-[100px]")}>
         {!liturgie || onglets.length === 0 ? (
           <div className="flex flex-col gap-4">
-            <EnTeteSection
-              numero="02"
-              surtitre="La Parole de Dieu au quotidien"
-              titre="Textes du jour"
-            />
+            <EnTeteSection numero={numero} surtitre={surtitre} titre={titre} />
             <p className="m-0 text-base text-gris">
               Les textes du jour sont momentanément indisponibles. Vous pouvez
               les lire sur{" "}
@@ -281,17 +312,19 @@ export function ParoleDuJour({
           >
             <div className="flex flex-col gap-3.5 lg:col-span-4 lg:row-span-2 lg:gap-[18px]">
               <EnTeteSection
-                numero="02"
-                surtitre="La Parole de Dieu au quotidien"
-                titre="Textes du jour"
+                numero={numero}
+                surtitre={surtitre}
+                titre={titre}
                 titreClassName="lg:text-4xl text-2xl"
               />
-              <span className="hidden text-[17px] text-gris lg:block">
-                {dateLongue(liturgie.date)}
-                <br />
-                {liturgie.feast}
-                {liturgie.degree && ` — ${liturgie.degree}`}
-              </span>
+              {entete ?? (
+                <span className="hidden text-[17px] text-gris lg:block">
+                  {dateLongue(liturgie.date)}
+                  <br />
+                  {liturgie.feast}
+                  {liturgie.degree && ` — ${liturgie.degree}`}
+                </span>
+              )}
               <Tabs.ListContainer className="w-full lg:mt-[18px]">
                 <Tabs.List
                   aria-label="Textes du jour"
@@ -437,6 +470,11 @@ export function ParoleDuJour({
                 </Tabs.Panel>
               )}
               <div className="mt-5 lg:hidden">{boutons}</div>
+              {mentionAelfMobile && (
+                <p className="m-0 mt-4 text-[13px] text-gris lg:hidden">
+                  Textes liturgiques : AELF
+                </p>
+              )}
             </div>
           </Tabs>
         )}

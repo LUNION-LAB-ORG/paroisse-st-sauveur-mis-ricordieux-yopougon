@@ -4,20 +4,21 @@ import type { IService } from "@/features/service/types/service.type";
 
 import { Button, Tabs } from "@heroui/react";
 import { X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { EmplacementImage } from "./emplacement-image";
 import { EnTeteSection } from "./en-tete-section";
 
+import {
+  BoutonsMouvement,
+  InfosMouvement,
+  surtitreMouvement,
+} from "@/components/mouvements/infos-mouvement";
 import { CONTENEUR } from "@/lib/charte";
 import { cn } from "@/lib/utils";
 
 const TOUS = "Tous";
-
-/** Lien WhatsApp direct vers le responsable (numéro saisi dans le back-office). */
-function lienWhatsapp(numero: string, message: string) {
-  return `https://wa.me/${numero.replace(/[^\d]/g, "")}?text=${encodeURIComponent(message)}`;
-}
 
 function Fiche({
   mouvement,
@@ -31,14 +32,6 @@ function Fiche({
   useEffect(() => {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [mouvement.id]);
-
-  const infos = [
-    { label: "Rencontres", valeur: mouvement.schedule },
-    { label: "Lieu", valeur: mouvement.location },
-    { label: "Responsable", valeur: mouvement.leader },
-    { label: "Contact", valeur: mouvement.whatsapp },
-  ];
-  const message = `Bonjour, je souhaite rejoindre le groupe « ${mouvement.title} » de la paroisse.`;
 
   return (
     <div
@@ -57,9 +50,7 @@ function Fiche({
         <div className="flex items-start justify-between gap-5">
           <div className="flex flex-col gap-1.5">
             <span className="text-[13px] font-bold text-rouge">
-              {[mouvement.category, mouvement.audience]
-                .filter(Boolean)
-                .join(" · ")}
+              {surtitreMouvement(mouvement)}
             </span>
             <span className="font-heading text-[28px] font-semibold leading-[1.05] text-marine lg:text-[40px]">
               {mouvement.title}
@@ -80,43 +71,14 @@ function Fiche({
             {mouvement.content}
           </p>
         )}
-        <dl className="m-0 grid grid-cols-2 border-y border-ligne lg:grid-cols-4">
-          {infos.map((info, i) => (
-            <div
-              key={info.label}
-              className={cn(
-                "flex flex-col gap-1 p-4",
-                i % 2 === 0 ? "pl-0" : "",
-                "lg:pl-4",
-                i === 0 && "lg:pl-0",
-                i < infos.length - 1 && "lg:border-r lg:border-ligne",
-              )}
-            >
-              <dt className="text-[13px] text-gris">{info.label}</dt>
-              <dd className="m-0 text-[15px] font-semibold">
-                {info.valeur || "—"}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        {mouvement.whatsapp && (
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <a
-              className="rounded-charte bg-rouge px-6 py-[15px] text-center text-[15px] font-bold text-white hover:bg-rouge-hover hover:text-white hover:no-underline"
-              href={lienWhatsapp(mouvement.whatsapp, message)}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              Rejoindre ce groupe
-            </a>
-            <a
-              className="rounded-charte border border-marine px-6 py-3.5 text-center text-[15px] font-bold text-marine hover:text-marine hover:no-underline"
-              href={`tel:${mouvement.whatsapp.replace(/[^\d+]/g, "")}`}
-            >
-              Contacter le responsable
-            </a>
-          </div>
-        )}
+        <InfosMouvement mouvement={mouvement} />
+        <BoutonsMouvement mouvement={mouvement} />
+        <Link
+          className="self-start text-[15px] font-bold text-rouge hover:text-rouge-hover"
+          href={`/vie-paroissiale/${mouvement.id}`}
+        >
+          Voir la fiche complète
+        </Link>
       </div>
     </div>
   );
@@ -249,6 +211,13 @@ export function Mouvements({ mouvements }: { mouvements: IService[] }) {
             <Fiche mouvement={choisi} onFermer={() => setOuvert(null)} />
           </div>
         )}
+
+        <Link
+          className="flex min-h-11 items-center self-start text-[15px] font-bold text-rouge hover:text-rouge-hover"
+          href="/vie-paroissiale"
+        >
+          Tous les mouvements et groupes
+        </Link>
       </div>
     </section>
   );

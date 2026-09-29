@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { LIEN_DON } from "@/components/site/navigation";
 import { formatMontant } from "@/lib/charte";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +50,7 @@ export function DonRapide({ montants, projet, logo }: DonRapideProps) {
       ...(bienfaiteur ? { bienfaiteur: "1" } : {}),
     });
 
-    router.push(`/faire-don?${params.toString()}`);
+    router.push(`${LIEN_DON}?${params.toString()}`);
   };
 
   return (

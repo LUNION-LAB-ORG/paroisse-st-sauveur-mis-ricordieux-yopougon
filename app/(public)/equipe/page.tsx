@@ -111,7 +111,7 @@ export default async function PageEquipe() {
               </a>
               <Link
                 className="rounded-charte border border-marine px-6 py-3.5 text-center text-[15px] font-bold text-marine hover:text-marine hover:no-underline"
-                href="/#parole"
+                href="/parole-du-jour"
               >
                 Lire ses homélies
               </Link>

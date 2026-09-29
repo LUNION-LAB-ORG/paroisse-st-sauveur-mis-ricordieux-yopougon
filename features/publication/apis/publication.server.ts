@@ -13,6 +13,7 @@ export const publicationServerAPI = {
       page?: number;
       exclude?: string;
       per_page?: number;
+      category?: string;
     } = {},
   ): Promise<IPublicationsPage> {
     const res = await fetchPublicOrNull<IPublicationsPage>(

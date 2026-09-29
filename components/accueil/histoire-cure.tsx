@@ -47,7 +47,7 @@ export function HistoireCure({ jalons, motDuCure }: HistoireCureProps) {
           )}
           <Link
             className="text-[15px] font-bold text-rouge hover:text-rouge-hover"
-            href="/historique"
+            href="/histoire"
           >
             Lire l’histoire de la paroisse
           </Link>
@@ -82,7 +82,7 @@ export function HistoireCure({ jalons, motDuCure }: HistoireCureProps) {
               )}
               <Link
                 className="text-[15px] font-bold text-rouge hover:text-rouge-hover"
-                href="/equipe"
+                href="/histoire#cure"
               >
                 Lire le message
               </Link>

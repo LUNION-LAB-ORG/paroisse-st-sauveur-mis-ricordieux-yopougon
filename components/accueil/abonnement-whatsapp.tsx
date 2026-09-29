@@ -11,6 +11,7 @@ import {
 } from "@heroui/react";
 import { useState } from "react";
 
+import { MentionDonnees } from "@/components/site/mention-donnees";
 import { CONTENEUR } from "@/lib/charte";
 import { cn } from "@/lib/utils";
 import { useAbonnerWhatsappMutation } from "@/features/abonnement/queries/abonnement-add.mutation";
@@ -125,10 +126,10 @@ export function AbonnementWhatsapp({ logo }: { logo: string }) {
                 <p className="m-0 mt-1 text-sm text-rouge">{erreurs.consent}</p>
               )}
             </Checkbox>
-            <p className="m-0 max-w-[440px] text-xs leading-[1.45] text-gris">
-              Votre numéro sert uniquement à ces envois. Désabonnement à tout
-              moment en répondant « STOP ».
-            </p>
+            <MentionDonnees
+              className="max-w-[440px]"
+              finalite="servent uniquement à ces envois ; désabonnement à tout moment en répondant « STOP »"
+            />
           </Form>
         )}
       </div>

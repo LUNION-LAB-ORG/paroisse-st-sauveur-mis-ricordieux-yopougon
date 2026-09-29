@@ -35,9 +35,12 @@ export function identiteParoisse(s: ISettingsMap): IIdentiteParoisse {
     adresse: v("parish.address"),
     telephone: v("parish.phone"),
     email: v("parish.email"),
-    // Logo officiel de la charte, fixe : le paramètre images.logo n'est plus lu
-    // par le site public (une image erronée y était enregistrée en production).
-    logo: LOGO_PAR_DEFAUT,
+    // Logo officiel de la charte, sauf logo remplacé depuis le back-office
+    // (images.logo_custom = 1) : une image erronée restait enregistrée dans images.logo.
+    logo:
+      v("images.logo_custom") === "1"
+        ? v("images.logo", LOGO_PAR_DEFAUT)
+        : LOGO_PAR_DEFAUT,
     vueEglise: v("images.church_render") || null,
     reseaux: {
       facebook: v("social.facebook"),

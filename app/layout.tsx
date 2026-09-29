@@ -6,8 +6,10 @@ import { Providers } from "./providers";
 
 import { fontBody, fontHeading, fontSans, fontScripture } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
+import { URL_SITE } from "@/lib/charte";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(URL_SITE),
   title: {
     default: siteConfig.name,
     template: `%s - ${siteConfig.name}`,
@@ -40,7 +42,7 @@ export default function RootLayout({
           fontSans.variable,
           fontHeading.variable,
           fontBody.variable,
-          fontScripture.variable
+          fontScripture.variable,
         )}
       >
         <Providers>{children}</Providers>

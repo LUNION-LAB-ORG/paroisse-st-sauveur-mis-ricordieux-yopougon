@@ -2,21 +2,35 @@ import { cn } from "@/lib/utils";
 
 const LIBELLES = ["Intention", "Date", "Coordonnées", "Offrande"];
 
-/** Progression en 4 étapes (5 = confirmation, toutes validées). */
-export function EtapesDemande({ etape }: { etape: number }) {
+/**
+ * Progression par étapes (étape > nombre d'étapes = toutes validées).
+ * Par défaut, les 4 étapes de la demande de messe.
+ */
+export function EtapesDemande({
+  etape,
+  libelles = LIBELLES,
+  label = "Étapes de la demande",
+}: {
+  etape: number;
+  libelles?: readonly string[];
+  label?: string;
+}) {
   return (
     <ol
-      aria-label="Étapes de la demande"
-      className="m-0 mt-6 grid list-none grid-cols-4 p-0 lg:mt-[26px]"
+      aria-label={label}
+      className="m-0 mt-6 grid list-none p-0 lg:mt-[26px]"
+      style={{
+        gridTemplateColumns: `repeat(${libelles.length}, minmax(0, 1fr))`,
+      }}
     >
-      {LIBELLES.map((label, i) => {
+      {libelles.map((libelle, i) => {
         const n = i + 1;
         const fait = etape > n;
         const courant = etape === n;
 
         return (
           <li
-            key={label}
+            key={libelle}
             aria-current={courant ? "step" : undefined}
             className={cn(
               "flex flex-col items-start gap-2 border-b-4 pb-[18px] text-xs sm:flex-row sm:items-center sm:gap-2.5 sm:text-[15px]",
@@ -39,7 +53,7 @@ export function EtapesDemande({ etape }: { etape: number }) {
             >
               {fait ? "✓" : n}
             </span>
-            <span>{label}</span>
+            <span>{libelle}</span>
           </li>
         );
       })}
