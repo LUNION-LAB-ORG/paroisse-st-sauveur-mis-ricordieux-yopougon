@@ -1,152 +1,142 @@
 "use client";
 
+import { Form } from "@heroui/react";
 import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { toast } from "sonner";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { Suspense, useState } from "react";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { BoutonAdmin, ChampTexteAdmin } from "@/components/admin/ui/kit";
+import { LOGO_PAR_DEFAUT } from "@/lib/charte";
 
-interface LoginFormData {
-  email: string;
-  password: string;
-}
-
-export default function LoginPage() {
+function Connexion() {
   const router = useRouter();
+  const recherche = useSearchParams();
+  const [email, setEmail] = useState("");
+  const [motDePasse, setMotDePasse] = useState("");
+  const [erreurs, setErreurs] = useState<{
+    email?: string;
+    motDePasse?: string;
+    general?: string;
+  }>({});
+  const [envoi, setEnvoi] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginFormData>();
+  // Retour vers la page demandée avant la connexion (uniquement une page du back-office)
+  const retour = recherche.get("callbackUrl");
+  const destination =
+    retour && retour.startsWith("/dashboard") ? retour : "/dashboard";
 
-  const handleConnexion: SubmitHandler<LoginFormData> = async (data) => {
-    const result = await signIn("credentials-user", {
-      username: data.email,
-      password: data.password,
+  const seConnecter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const err: typeof erreurs = {};
+
+    if (!/^\S+@\S+\.\S+$/.test(email.trim()))
+      err.email = "Adresse e-mail invalide.";
+    if (!motDePasse) err.motDePasse = "Saisissez votre mot de passe.";
+    setErreurs(err);
+    if (Object.keys(err).length) return;
+
+    setEnvoi(true);
+    const res = await signIn("credentials-user", {
+      username: email.trim(),
+      password: motDePasse,
       redirect: false,
     });
 
-    if (result?.error) {
-      toast.error("Identifiants incorrects");
+    if (!res || res.error) {
+      setErreurs({
+        general:
+          "Identifiants incorrects, ou compte désactivé. Contactez l’administrateur si le problème persiste.",
+      });
+      setEnvoi(false);
+
       return;
     }
-
-    toast.success("Connexion reussie !");
-    router.push("/dashboard");
+    router.replace(destination);
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-cover bg-center p-4"
-      style={{
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/bg-auth.png')`,
-      }}
-    >
-      <div className="w-full max-w-md">
-        {/* HEADER */}
-        <div className="bg-primary rounded-t-2xl px-6 py-3 lg:px-8 lg:py-4 text-center">
-          <div className="w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-3 lg:mb-4 bg-white rounded-full flex items-center justify-center overflow-hidden">
-            <Image
-              src="/logo-paroisse.png"
-              alt="Logo Paroisse"
-              width={80}
-              height={80}
-              className="w-full h-full object-cover"
+    <div className="flex min-h-screen flex-col bg-fond-admin font-body text-encre">
+      <div aria-hidden className="filet-marque h-1" />
+      <main className="flex grow items-center justify-center p-4">
+        <div className="w-full max-w-[420px] rounded-admin border border-bord-admin border-t-4 border-t-marine bg-white p-8">
+          <div className="mb-7 flex flex-col items-center gap-3 text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt="Logo de la paroisse Saint Sauveur Miséricordieux"
+              className="size-[88px] rounded-full object-cover"
+              src={LOGO_PAR_DEFAUT}
             />
+            <div className="flex flex-col gap-1">
+              <h1 className="m-0 font-heading text-lg font-extrabold uppercase leading-tight text-marine">
+                Saint Sauveur
+                <br />
+                Miséricordieux
+              </h1>
+              <span className="text-sm text-gris">
+                Back-office de la paroisse
+              </span>
+            </div>
           </div>
-          <h1 className="text-xl font-bold text-white">
-            Paroisse Saint Sauveur Misericordieux
-          </h1>
-          <p className="text-white/80 text-sm">Portail d&apos;administration</p>
-        </div>
 
-        {/* FORM */}
-        <form
-          className="bg-white rounded-b-2xl p-6 lg:p-8"
-          onSubmit={handleSubmit(handleConnexion)}
-        >
-          <div className="space-y-5">
-            {/* EMAIL */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Adresse email
-              </label>
-              <Input
-                type="email"
-                placeholder="Votre Email"
-                {...register("email", {
-                  required: "Email requis",
-                })}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-
-            {/* PASSWORD */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Mot de passe
-              </label>
-              <Input
-                type="password"
-                placeholder="Votre Mot de Passe"
-                {...register("password", {
-                  required: "Mot de passe requis",
-                })}
-              />
-              {errors.password && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            {/* OPTIONS */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox id="remember" />
-                <label
-                  htmlFor="remember"
-                  className="text-sm text-muted-foreground"
-                >
-                  Se souvenir de moi
-                </label>
-              </div>
-              <Link href="#" className="text-sm underline">
-                Mot de passe oublie ?
-              </Link>
-            </div>
-
-            {/* SUBMIT */}
-            <Button
+          <Form
+            className="flex flex-col gap-4"
+            validationBehavior="aria"
+            onSubmit={seConnecter}
+          >
+            <ChampTexteAdmin
+              autoComplete="username"
+              erreur={erreurs.email}
+              label="E-mail"
+              type="email"
+              value={email}
+              onChange={setEmail}
+            />
+            <ChampTexteAdmin
+              autoComplete="current-password"
+              erreur={erreurs.motDePasse}
+              label="Mot de passe"
+              type="password"
+              value={motDePasse}
+              onChange={setMotDePasse}
+            />
+            {erreurs.general && (
+              <p
+                className="m-0 bg-[#FBEAED] px-3 py-2.5 text-sm text-rouge"
+                role="alert"
+              >
+                {erreurs.general}
+              </p>
+            )}
+            <BoutonAdmin
+              className="mt-1 w-full"
+              isPending={envoi}
               type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-accent cursor-pointer hover:bg-accent/90 text-white py-5"
+              variante="primaire"
             >
-              {isSubmitting ? "Connexion..." : "Se connecter"}
-            </Button>
-          </div>
-        </form>
+              Se connecter
+            </BoutonAdmin>
+          </Form>
 
-        {/* FOOTER */}
-        <div className="bg-gray-100 rounded-b-2xl -mt-4 pt-8 pb-4 text-center px-4">
-          <p className="text-sm text-muted-foreground">
-            Besoin d&apos;aide ?{" "}
-            <Link href="#" className="underline text-foreground">
-              Contacter l&apos;administrateur
-            </Link>
+          <p className="m-0 mt-6 text-center text-[13px] text-gris">
+            Mot de passe oublié ? Demandez à l’administrateur de la paroisse de
+            le réinitialiser.
           </p>
         </div>
-      </div>
+      </main>
+      <footer className="pb-6 text-center text-[13px] text-gris">
+        <Link className="font-bold text-rouge hover:text-rouge-hover" href="/">
+          Retour au site de la paroisse
+        </Link>
+      </footer>
     </div>
+  );
+}
+
+export default function PageConnexion() {
+  return (
+    <Suspense>
+      <Connexion />
+    </Suspense>
   );
 }

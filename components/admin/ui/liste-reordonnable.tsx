@@ -84,14 +84,18 @@ export function ListeReordonnable<T>({
                 <GripVertical className="size-4" />
               </span>
             )}
-            <button
-              aria-current={choisi || undefined}
-              className="min-w-0 grow px-3 py-3 text-left hover:bg-entete-admin"
-              type="button"
-              onClick={onChoisir ? () => onChoisir(e) : undefined}
-            >
-              {rendu(e, i)}
-            </button>
+            {onChoisir ? (
+              <button
+                aria-current={choisi || undefined}
+                className="min-w-0 grow px-3 py-3 text-left hover:bg-entete-admin"
+                type="button"
+                onClick={() => onChoisir(e)}
+              >
+                {rendu(e, i)}
+              </button>
+            ) : (
+              <div className="min-w-0 grow px-3 py-3">{rendu(e, i)}</div>
+            )}
             {!isDisabled && (
               <span className="flex flex-col justify-center pr-1.5">
                 <button

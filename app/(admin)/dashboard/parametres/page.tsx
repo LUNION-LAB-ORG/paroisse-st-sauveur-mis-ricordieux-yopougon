@@ -1,200 +1,208 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useState } from "react"
-import { toast } from "sonner"
-import { Church, Clock, Globe, ImageIcon, Save, Loader2 } from "lucide-react"
-import { Header } from "@/components/admin/header"
-import { Card, Button, TextField, TextArea, Input, Label } from "@heroui/react"
-import { ImageUploadField } from "@/components/admin/image-upload-field"
-import { settingAPI } from "@/features/setting/apis/setting.api"
-import { invalidateSettingsCache } from "@/features/setting/hooks/useSettings"
-import type { ISettingsGrouped } from "@/features/setting/types/setting.type"
+import type { IValeurs } from "@/components/admin/parametres/types";
 
-const GROUPS_META: Record<
-  string,
-  { label: string; icon: React.ComponentType<{ className?: string }>; color: string }
-> = {
-  parish: { label: "Informations de la paroisse", icon: Church, color: "text-[#2d2d83]" },
-  social: { label: "Réseaux sociaux", icon: Globe, color: "text-[#98141f]" },
-  images: { label: "Identité visuelle", icon: ImageIcon, color: "text-amber-600" },
-  hours: { label: "Horaires", icon: Clock, color: "text-green-600" },
-}
+import { toast } from "@heroui/react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
-export default function ParametresPage() {
-  const [grouped, setGrouped] = useState<ISettingsGrouped>({})
-  const [values, setValues] = useState<Record<string, string>>({})
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [uploadingKey, setUploadingKey] = useState<string | null>(null)
+import { OngletAccueil } from "@/components/admin/parametres/onglet-accueil";
+import { OngletGeneral } from "@/components/admin/parametres/onglet-general";
+import { OngletIntegrations } from "@/components/admin/parametres/onglet-integrations";
+import { OngletUtilisateurs } from "@/components/admin/parametres/onglet-utilisateurs";
+import {
+  BoutonAdmin,
+  ContenuAdmin,
+  ErreurChargement,
+} from "@/components/admin/ui/kit";
+import { useDroits } from "@/features/admin/hooks/use-droits";
+import { settingAPI } from "@/features/setting/apis/setting.api";
+import { invalidateSettingsCache } from "@/features/setting/hooks/useSettings";
+import { cn } from "@/lib/utils";
 
-  const load = async () => {
-    try {
-      const res = await settingAPI.obtenirGroupes()
-      setGrouped(res.data ?? {})
-      const flat: Record<string, string> = {}
-      Object.values(res.data ?? {}).forEach((items) => {
-        items.forEach((s) => {
-          flat[s.key] = s.value ?? ""
-        })
-      })
-      setValues(flat)
-    } catch {
-      toast.error("Erreur lors du chargement des paramètres")
-    } finally {
-      setLoading(false)
-    }
-  }
+const ONGLETS = [
+  { id: "general", label: "Général" },
+  { id: "accueil", label: "Page d’accueil" },
+  { id: "integrations", label: "Paiements et intégrations" },
+  { id: "utilisateurs", label: "Utilisateurs et rôles" },
+] as const;
+
+type IOnglet = (typeof ONGLETS)[number]["id"];
+
+function Parametres() {
+  const recherche = useSearchParams();
+  const router = useRouter();
+  const client = useQueryClient();
+  const { peutModifier, estAdmin } = useDroits();
+  const onglet = (ONGLETS.find((o) => o.id === recherche.get("onglet"))?.id ??
+    "general") as IOnglet;
+
+  const reglages = useQuery({
+    queryKey: ["admin", "parametres"],
+    queryFn: () => settingAPI.obtenirGroupes(),
+  });
+  const [valeurs, setValeurs] = useState<IValeurs>({});
+  const [modifies, setModifies] = useState<Set<string>>(new Set());
+  const [envoi, setEnvoi] = useState(false);
+
+  // Valeurs initiales, types et secrets déjà renseignés
+  const { initiales, types, secretsDefinis } = useMemo(() => {
+    const initiales: IValeurs = {};
+    const types: Record<string, string> = {};
+    const secretsDefinis: Record<string, boolean> = {};
+
+    Object.values(reglages.data?.data ?? {})
+      .flat()
+      .forEach((s) => {
+        types[s.key] = s.type;
+        if (s.type === "secret") {
+          secretsDefinis[s.key] = !!(s as { is_set?: boolean }).is_set;
+          initiales[s.key] = "";
+        } else initiales[s.key] = s.value ?? "";
+      });
+
+    return { initiales, types, secretsDefinis };
+  }, [reglages.data]);
 
   useEffect(() => {
-    load()
-  }, [])
+    setValeurs(initiales);
+    setModifies(new Set());
+  }, [initiales]);
 
-  const orderedGroups = useMemo(
-    () => ["parish", "social", "images", "hours"].filter((g) => grouped[g]),
-    [grouped],
-  )
+  // Avertit avant de quitter la page avec des modifications non enregistrées
+  useEffect(() => {
+    if (!modifies.size) return;
+    const avertir = (e: BeforeUnloadEvent) => e.preventDefault();
 
-  const setValue = (key: string, v: string) => setValues((prev) => ({ ...prev, [key]: v }))
+    window.addEventListener("beforeunload", avertir);
 
-  const saveAll = async () => {
-    setSaving(true)
-    try {
-      const payload: { key: string; value: string | null }[] = []
-      Object.values(grouped).forEach((items) => {
-        items.forEach((s) => {
-          if (s.type !== "image") {
-            payload.push({ key: s.key, value: values[s.key] ?? "" })
-          }
-        })
-      })
-      await settingAPI.modifier(payload)
-      invalidateSettingsCache()
-      toast.success("Paramètres enregistrés")
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erreur lors de l'enregistrement")
-    } finally {
-      setSaving(false)
+    return () => window.removeEventListener("beforeunload", avertir);
+  }, [modifies]);
+
+  const changer = (cle: string, valeur: string) => {
+    setValeurs((v) => ({ ...v, [cle]: valeur }));
+    setModifies((m) => new Set(m).add(cle));
+  };
+
+  const recharger = () => {
+    invalidateSettingsCache();
+    void client.invalidateQueries({ queryKey: ["admin", "parametres"] });
+  };
+
+  const enregistrer = async () => {
+    // Un secret laissé vide n'écrase pas la valeur enregistrée
+    const liste = Array.from(modifies)
+      .filter((k) => !(types[k] === "secret" && !valeurs[k]))
+      .map((key) => ({ key, value: valeurs[key] ?? "" }));
+
+    if (!liste.length) {
+      toast.info("Aucune modification à enregistrer.");
+
+      return;
     }
-  }
-
-  const uploadImage = async (key: string, file: File | null) => {
-    if (!file) return
-    setUploadingKey(key)
+    setEnvoi(true);
     try {
-      const res = await settingAPI.uploadImage(key, file)
-      setValues((prev) => ({ ...prev, [key]: res.data.value }))
-      invalidateSettingsCache()
-      toast.success("Image mise à jour")
+      await settingAPI.modifier(liste);
+      toast.success(
+        "Paramètres enregistrés. Le site est mis à jour sous une minute.",
+      );
+      setModifies(new Set());
+      recharger();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erreur d'upload")
+      toast.danger(
+        e instanceof Error ? e.message : "L’enregistrement a échoué.",
+      );
     } finally {
-      setUploadingKey(null)
+      setEnvoi(false);
     }
-  }
+  };
 
-  if (loading) {
-    return (
-      <div>
-        <Header title="Paramètres" />
-        <div className="flex items-center justify-center py-24 text-gray-400">
-          <Loader2 className="w-6 h-6 animate-spin mr-2" /> Chargement...
-        </div>
-      </div>
-    )
-  }
+  const choisirOnglet = (id: IOnglet) =>
+    router.replace(`/dashboard/parametres?onglet=${id}`, { scroll: false });
+  const onglets = ONGLETS.filter((o) =>
+    o.id === "utilisateurs" || o.id === "integrations" ? estAdmin : true,
+  );
+  const props = {
+    valeurs,
+    changer,
+    types,
+    secretsDefinis,
+    peutModifier: peutModifier("parametres"),
+    recharger,
+  };
 
   return (
-    <div>
-      <Header title="Paramètres" />
-
-      <div className="flex justify-end mb-6">
-        <Button
-          variant="primary"
-          isDisabled={saving}
-          onPress={saveAll}
-          className="bg-[#98141f] rounded-xl"
+    <>
+      <header className="flex flex-col gap-2.5 border-b border-bord-admin bg-white px-4 pt-4 md:px-9">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="m-0 font-heading text-xl font-extrabold text-marine md:text-[22px]">
+            Paramètres et utilisateurs
+          </h1>
+          {onglet !== "utilisateurs" && peutModifier("parametres") && (
+            <BoutonAdmin
+              isDisabled={!modifies.size}
+              isPending={envoi}
+              variante="marine"
+              onPress={enregistrer}
+            >
+              Enregistrer{modifies.size ? ` (${modifies.size})` : ""}
+            </BoutonAdmin>
+          )}
+        </div>
+        <div
+          aria-label="Rubriques des paramètres"
+          className="-mb-px flex gap-7 overflow-x-auto"
+          role="tablist"
         >
-          <Save className="w-4 h-4" /> {saving ? "Enregistrement..." : "Enregistrer les modifications"}
-        </Button>
-      </div>
+          {onglets.map((o) => (
+            <button
+              key={o.id}
+              aria-selected={o.id === onglet}
+              className={cn(
+                "shrink-0 border-b-[3px] pb-3 pt-2 text-[15px]",
+                o.id === onglet
+                  ? "border-rouge font-bold text-marine"
+                  : "border-transparent text-gris hover:text-encre",
+              )}
+              role="tab"
+              type="button"
+              onClick={() => choisirOnglet(o.id)}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </header>
 
-      <div className="space-y-6">
-        {orderedGroups.map((g) => {
-          const items = grouped[g]
-          const meta = GROUPS_META[g] ?? { label: g, icon: Church, color: "text-gray-500" }
-          const Icon = meta.icon
-          return (
-            <Card key={g}>
-              <Card.Header className="px-6 pt-6 pb-3">
-                <Card.Title className={`text-base font-semibold flex items-center gap-2 ${meta.color}`}>
-                  <Icon className="w-5 h-5" /> {meta.label}
-                </Card.Title>
-              </Card.Header>
-              <Card.Content className="p-6 pt-0">
-                <div className="grid gap-5 sm:grid-cols-2">
-                  {items.map((s) => {
-                    if (s.type === "image") {
-                      return (
-                        <div key={s.key} className="space-y-1">
-                          <Label>{s.label ?? s.key}</Label>
-                          <ImageUploadField
-                            initialImageUrl={values[s.key] || null}
-                            onChange={(file) => uploadImage(s.key, file)}
-                            title={uploadingKey === s.key ? "Upload en cours..." : s.label ?? s.key}
-                          />
-                        </div>
-                      )
-                    }
-                    if (s.type === "textarea") {
-                      return (
-                        <div key={s.key} className="sm:col-span-2">
-                          <TextField
-                            value={values[s.key] ?? ""}
-                            onChange={(v) => setValue(s.key, v)}
-                          >
-                            <Label>{s.label ?? s.key}</Label>
-                            <TextArea rows={3} />
-                          </TextField>
-                        </div>
-                      )
-                    }
-                    const inputType =
-                      s.type === "email"
-                        ? "email"
-                        : s.type === "url"
-                          ? "url"
-                          : s.type === "phone"
-                            ? "tel"
-                            : "text"
-                    return (
-                      <TextField
-                        key={s.key}
-                        value={values[s.key] ?? ""}
-                        onChange={(v) => setValue(s.key, v)}
-                        type={inputType}
-                      >
-                        <Label>{s.label ?? s.key}</Label>
-                        <Input placeholder={s.label ?? ""} />
-                      </TextField>
-                    )
-                  })}
-                </div>
-              </Card.Content>
-            </Card>
-          )
-        })}
-      </div>
+      <ContenuAdmin>
+        {reglages.isError && (
+          <ErreurChargement
+            message="Les paramètres n’ont pas pu être chargés."
+            onReessayer={() => reglages.refetch()}
+          />
+        )}
+        {reglages.isLoading ? (
+          <p className="m-0 text-sm text-gris">Chargement…</p>
+        ) : (
+          <>
+            {onglet === "general" && <OngletGeneral {...props} />}
+            {onglet === "accueil" && <OngletAccueil {...props} />}
+            {onglet === "integrations" && estAdmin && (
+              <OngletIntegrations {...props} />
+            )}
+            {onglet === "utilisateurs" && <OngletUtilisateurs />}
+          </>
+        )}
+      </ContenuAdmin>
+    </>
+  );
+}
 
-      <div className="flex justify-end mt-6">
-        <Button
-          variant="primary"
-          isDisabled={saving}
-          onPress={saveAll}
-          className="bg-[#98141f] rounded-xl"
-        >
-          <Save className="w-4 h-4" /> {saving ? "Enregistrement..." : "Enregistrer les modifications"}
-        </Button>
-      </div>
-    </div>
-  )
+export default function PageParametres() {
+  return (
+    <Suspense>
+      <Parametres />
+    </Suspense>
+  );
 }
