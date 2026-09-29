@@ -26,7 +26,7 @@ export default function MouvementsPage() {
 
   useEffect(() => {
     serviceAPI
-      .obtenirTous()
+      .obtenirTousAdmin()
       .then((res) => setServices(res.data ?? []))
       .catch(() => toast.error("Erreur lors du chargement"))
       .finally(() => setLoading(false))

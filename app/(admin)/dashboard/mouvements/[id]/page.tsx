@@ -14,6 +14,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { ImageUploadField } from "@/components/admin/image-upload-field"
+import {
+  MOUVEMENT_ACCUEIL_VIDE,
+  MouvementAccueilFields,
+  ajouterChampsAccueil,
+  mouvementAccueilDepuis,
+} from "@/components/admin/mouvement-accueil-fields"
 import { serviceAPI } from "@/features/service/apis/service.api"
 import type { IService } from "@/features/service/types/service.type"
 
@@ -32,11 +38,12 @@ export default function MouvementDetailPage() {
   const [leader, setLeader] = useState("")
   const [schedule, setSchedule] = useState("")
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const [accueil, setAccueil] = useState(MOUVEMENT_ACCUEIL_VIDE)
 
   useEffect(() => {
     if (!id) return
     serviceAPI
-      .obtenirUn(id)
+      .obtenirUnAdmin(id)
       .then((res) => {
         const s = res.data
         setService(s)
@@ -45,6 +52,7 @@ export default function MouvementDetailPage() {
         setContent(s.content ?? "")
         setLeader(s.leader ?? "")
         setSchedule(s.schedule ?? "")
+        setAccueil(mouvementAccueilDepuis(s))
       })
       .catch(() => toast.error("Impossible de charger le mouvement"))
       .finally(() => setLoading(false))
@@ -65,6 +73,7 @@ export default function MouvementDetailPage() {
       fd.append("leader", leader)
       fd.append("schedule", schedule)
       if (imageFile) fd.append("image", imageFile)
+      ajouterChampsAccueil(fd, accueil)
 
       await serviceAPI.modifier(String(id), fd)
       toast.success("Mouvement mis à jour")
@@ -167,6 +176,8 @@ export default function MouvementDetailPage() {
               </TextField>
             </Card.Content>
           </Card>
+
+          <MouvementAccueilFields valeur={accueil} onChange={setAccueil} />
 
           <Card>
             <Card.Content className="p-6">

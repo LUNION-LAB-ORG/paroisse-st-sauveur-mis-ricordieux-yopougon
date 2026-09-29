@@ -4,7 +4,7 @@ import { Metadata, Viewport } from "next";
 
 import { Providers } from "./providers";
 
-import { fontSans } from "@/config/fonts";
+import { fontBody, fontHeading, fontSans, fontScripture } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
@@ -36,7 +36,10 @@ export default function RootLayout({
       <body
         className={clsx(
           "min-h-screen text-foreground bg-background font-sans antialiased",
-          fontSans.variable
+          fontSans.variable,
+          fontHeading.variable,
+          fontBody.variable,
+          fontScripture.variable
         )}
       >
         <Providers>{children}</Providers>

@@ -13,6 +13,7 @@ import {
   NumberField,
   Select,
   ListBox,
+  Checkbox,
 } from "@heroui/react";
 
 import { HeroCommon } from "@/components/common/hero-common";
@@ -24,6 +25,7 @@ const HERO_IMG = "/assets/images/hero-faire-don.jpg";
 const AMOUNTS_PRESET = [500, 1000, 1500, 2000, 5000, 10000] as const;
 
 const PROJECTS = [
+  { key: "Nouvelle église", label: "Construction de la nouvelle église" },
   { key: "Fonctionnement", label: "Fonctionnement général" },
   { key: "Construction", label: "Construction / Rénovation" },
   { key: "Actions caritatives", label: "Aide aux plus démunis" },
@@ -66,6 +68,14 @@ interface FormState {
   email: string;
   phone: string;
   description: string;
+  displayName: boolean;    // « Faire figurer mon nom parmi les bienfaiteurs »
+}
+
+/** Valeurs pré-remplies depuis le bloc « Faire un don » de l'accueil (?montant=&projet=&bienfaiteur=1) */
+export interface DonPrerempli {
+  montant?: number;
+  projet?: string;
+  bienfaiteur?: boolean;
 }
 
 const INITIAL: FormState = {
@@ -75,11 +85,17 @@ const INITIAL: FormState = {
   email: "",
   phone: "",
   description: "",
+  displayName: false,
 };
 
-export default function Content() {
+export default function Content({ prerempli }: { prerempli?: DonPrerempli }) {
   const [step, setStep] = useState<Step>(1);
-  const [form, setForm] = useState<FormState>(INITIAL);
+  const [form, setForm] = useState<FormState>(() => ({
+    ...INITIAL,
+    amount: prerempli?.montant && prerempli.montant >= 100 ? prerempli.montant : INITIAL.amount,
+    project: PROJECTS.some((p) => p.key === prerempli?.projet) ? prerempli!.projet! : INITIAL.project,
+    displayName: !!prerempli?.bienfaiteur,
+  }));
   const [customSelected, setCustomSelected] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -126,6 +142,7 @@ export default function Content() {
         email: form.email.trim() || undefined,
         phone: form.phone.trim() || undefined,
         project: form.project,
+        display_name: form.displayName,
         description:
           form.description.trim() || `Don de ${form.donator || "Anonyme"} via le site`,
       });
@@ -250,7 +267,7 @@ export default function Content() {
                         value={form.amount || NaN}
                         onChange={(v) => update("amount", isNaN(v) ? 0 : v)}
                         minValue={100}
-                        step={500}
+                        step={100}
                       >
                         <Label>Montant personnalisé</Label>
                         <NumberField.Group>
@@ -323,6 +340,15 @@ export default function Content() {
                     <Input placeholder="+225 07 00 00 00 00" />
                   </TextField>
                 </div>
+
+                <Checkbox isSelected={form.displayName} onChange={(v) => update("displayName", v)}>
+                  <Checkbox.Content>
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                    Faire figurer mon nom parmi les bienfaiteurs
+                  </Checkbox.Content>
+                </Checkbox>
 
                 <TextField value={form.description} onChange={(v) => update("description", v)}>
                   <Label>Message à la paroisse (optionnel)</Label>

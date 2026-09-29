@@ -7,6 +7,11 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { Card, Button, TextField, TextArea, Input, Label } from "@heroui/react"
 import { ImageUploadField } from "@/components/admin/image-upload-field"
+import {
+  MOUVEMENT_ACCUEIL_VIDE,
+  MouvementAccueilFields,
+  ajouterChampsAccueil,
+} from "@/components/admin/mouvement-accueil-fields"
 import { serviceAPI } from "@/features/service/apis/service.api"
 
 export default function NouveauMouvementPage() {
@@ -17,6 +22,7 @@ export default function NouveauMouvementPage() {
   const [leader, setLeader] = useState("")
   const [schedule, setSchedule] = useState("")
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const [accueil, setAccueil] = useState(MOUVEMENT_ACCUEIL_VIDE)
   const [saving, setSaving] = useState(false)
 
   const submit = async () => {
@@ -33,6 +39,7 @@ export default function NouveauMouvementPage() {
       if (leader.trim()) fd.append("leader", leader)
       if (schedule.trim()) fd.append("schedule", schedule)
       if (imageFile) fd.append("image", imageFile)
+      ajouterChampsAccueil(fd, accueil)
 
       await serviceAPI.ajouter(fd)
       toast.success("Mouvement créé")
@@ -103,6 +110,8 @@ export default function NouveauMouvementPage() {
               </TextField>
             </Card.Content>
           </Card>
+
+          <MouvementAccueilFields valeur={accueil} onChange={setAccueil} />
 
           <Card>
             <Card.Content className="p-6">

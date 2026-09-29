@@ -11,6 +11,26 @@ export const serviceAPI = {
     });
   },
 
+  /** Admin : tous les statuts (brouillons et masqués compris), requête authentifiée. */
+  obtenirTousAdmin(): Promise<{ data: IService[] }> {
+    return apiClient.request({
+      endpoint: "/services",
+      method: "GET",
+      searchParams: { all: "1", per_page: "100", sort_by: "sort_order", sort_dir: "asc" },
+      service: "private",
+    });
+  },
+
+  /** Admin : lecture d'un service quel que soit son statut. */
+  obtenirUnAdmin(id: number | string): Promise<{ data: IService }> {
+    return apiClient.request({
+      endpoint: `/services/${id}`,
+      method: "GET",
+      searchParams: { all: "1" },
+      service: "private",
+    });
+  },
+
   obtenirUn(id: number | string): Promise<{ data: IService }> {
     return apiClient.request({
       endpoint: `/services/${id}`,

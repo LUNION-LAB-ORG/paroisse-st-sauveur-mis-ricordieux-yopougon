@@ -7,6 +7,8 @@ export interface WaveCheckoutParams {
   donator?: string;
   project?: string;
   description?: string;
+  /** Don : afficher le nom parmi les bienfaiteurs */
+  display_name?: boolean;
   event_id?: number;
   // Champs messe
   mess_type?: string;

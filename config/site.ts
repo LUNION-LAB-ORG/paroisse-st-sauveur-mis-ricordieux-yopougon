@@ -2,7 +2,7 @@ export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
   name: "Paroisse Saint Sauveur Miséricordieux",
-  description: "Make beautiful websites regardless of your design experience.",
+  description: "Le Sanctuaire de la Miséricorde — paroisse catholique de Yopougon Millionnaire, archidiocèse d’Abidjan.",
   navItems: [
     {
       href: "/",

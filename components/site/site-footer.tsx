@@ -1,0 +1,119 @@
+import type { IIdentiteParoisse } from "@/features/setting/utils/identite";
+
+import Link from "next/link";
+
+import { CONTENEUR } from "@/lib/charte";
+import { cn } from "@/lib/utils";
+
+const COLONNES = [
+  {
+    titre: "La paroisse",
+    liens: [
+      { label: "Histoire", href: "/historique" },
+      { label: "Le mot du curé", href: "/#cure" },
+      { label: "Horaires", href: "/#horaires" },
+      { label: "Équipe pastorale", href: "/equipes" },
+    ],
+  },
+  {
+    titre: "Participer",
+    liens: [
+      { label: "Mouvements", href: "/#vie" },
+      { label: "Nouvelle église", href: "/#eglise" },
+      { label: "Demander une messe", href: "/demande-messe" },
+      { label: "Faire un don", href: "/#eglise" },
+    ],
+  },
+] as const;
+
+export function SiteFooter({ identite }: { identite: IIdentiteParoisse }) {
+  const { nom, devise, diocese, adresse, telephone, email, logo } = identite;
+
+  return (
+    <>
+      <div
+        aria-hidden
+        className="filet-marque mt-8 h-[3px] lg:mt-[100px] lg:h-1"
+      />
+      <footer
+        className="bg-marine-deep text-sm text-pied lg:text-[15px]"
+        id="contact"
+      >
+        <div
+          className={cn(
+            CONTENEUR,
+            "flex flex-col gap-10 py-[30px] lg:gap-[50px] lg:pb-10 lg:pt-[70px]",
+          )}
+        >
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-x-6">
+            <div className="flex flex-col gap-2.5 lg:col-span-4 lg:gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                alt={`Logo de la ${nom}`}
+                className="size-[84px] rounded-full border-[3px] border-white object-cover lg:size-[110px]"
+                src={logo}
+              />
+              <span className="font-heading text-sm font-extrabold uppercase leading-[1.3] text-white lg:text-lg">
+                {nom}
+              </span>
+              <span className="leading-[1.6]">
+                {devise} · {diocese}
+              </span>
+            </div>
+
+            {COLONNES.map((col, i) => (
+              <div
+                key={col.titre}
+                className={cn(
+                  "hidden flex-col gap-2.5 lg:col-span-2 lg:flex",
+                  i === 0 && "lg:col-start-6",
+                )}
+              >
+                <span className="font-bold text-white">{col.titre}</span>
+                {col.liens.map((l) => (
+                  <Link
+                    key={l.label}
+                    className="text-pied hover:text-white"
+                    href={l.href}
+                  >
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
+            ))}
+
+            <div className="flex flex-col gap-2.5 lg:col-span-3">
+              <span className="hidden font-bold text-white lg:block">
+                Contact
+              </span>
+              {adresse && <span>{adresse}</span>}
+              {telephone && (
+                <a
+                  className="text-pied hover:text-white"
+                  href={`tel:${telephone.replace(/\s/g, "")}`}
+                >
+                  {telephone}
+                </a>
+              )}
+              {email && (
+                <a
+                  className="break-all text-pied hover:text-white"
+                  href={`mailto:${email}`}
+                >
+                  {email}
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 border-t border-marine-soft pt-[22px] text-xs text-pied-note sm:flex-row sm:justify-between lg:text-[13px]">
+            <span>
+              © {new Date().getFullYear()} {nom}
+            </span>
+            <span>Textes liturgiques : AELF</span>
+          </div>
+        </div>
+      </footer>
+    </>
+  );
+}

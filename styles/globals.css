@@ -116,6 +116,49 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Charte du site public (tirée du logo) */
+  --font-heading: var(--font-montserrat), "Montserrat", sans-serif;
+  --font-body: var(--font-source-sans), "Source Sans 3", system-ui, sans-serif;
+  --font-scripture: var(--font-eb-garamond), "EB Garamond", serif;
+  --color-marine: #2b337e;
+  --color-marine-deep: #1e2462;
+  --color-marine-soft: #3a4290;
+  --color-marine-line: #4a529c;
+  --color-rouge: #b71c3a;
+  --color-rouge-hover: #8f1530;
+  --color-ciel: #6cc0f5;
+  --color-azur: #0c71b9;
+  --color-parchemin: #f6f3ed;
+  --color-lin: #e6e1d6;
+  --color-ligne: #ddd6c9;
+  --color-champ: #c9c2b4;
+  --color-encre: #1b1b22;
+  --color-encre-douce: #3a3a46;
+  --color-gris: #5a5a66;
+  --color-gris-clair: #6b6a7a;
+  --color-lavande: #aeb4de;
+  --color-brume: #dcdff0;
+  --color-brume-clair: #e6e8f4;
+  --color-pied: #d2d5ea;
+  --color-pied-note: #a3a8d0;
+  --radius-charte: 2px;
+  /* Largeur de la maquette (1440 px) et grands écrans */
+  --breakpoint-maquette: 90rem;
+  --breakpoint-large: 100rem;
+}
+
+/* Filet de marque : liseré sous l'en-tête et au-dessus du pied de page */
+.filet-marque {
+  background: linear-gradient(90deg, #c8203a, #9c2658 55%, #49277b);
+}
+
+/* Texte liturgique AELF (HTML nettoyé côté serveur : p, br, strong, em) */
+.texte-liturgique p {
+  margin: 0 0 1em;
+}
+.texte-liturgique p:last-child {
+  margin-bottom: 0;
 }
 
 @layer base {
@@ -148,4 +191,58 @@
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Onglets HeroUI (variant="secondary") aux couleurs de la charte */
+@layer components {
+  .tabs-charte {
+    gap: 0;
+  }
+  .tabs-charte .tabs__list[data-orientation="horizontal"] {
+    border-color: var(--color-ligne);
+  }
+  .tabs-charte .tabs__tab {
+    height: auto;
+    min-height: 44px;
+    padding: 0;
+    font-size: inherit;
+    font-weight: 400;
+    color: var(--color-gris);
+  }
+  .tabs-charte .tabs__tab[data-selected="true"] {
+    color: var(--color-marine);
+    font-weight: 700;
+  }
+  .tabs-charte.tabs--secondary .tabs__indicator {
+    background: var(--color-rouge);
+  }
+  .tabs-charte.tabs--secondary[data-orientation="horizontal"] .tabs__indicator {
+    height: 3px;
+  }
+  .tabs-charte .tabs__panel {
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Liste verticale (Parole du jour) : lignes séparées, onglet actif en rouge */
+  .tabs-charte--liste .tabs__list[data-orientation="vertical"] {
+    border-left: 0;
+    border-top: 1px solid var(--color-ligne);
+    gap: 0;
+  }
+  .tabs-charte--liste .tabs__tab {
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--color-ligne);
+    font-size: 18px;
+    color: var(--color-encre);
+    text-align: left;
+  }
+  .tabs-charte--liste .tabs__tab[data-selected="true"] {
+    color: var(--color-rouge);
+  }
+  .tabs-charte--liste .tabs__indicator {
+    display: none;
+  }
 }
