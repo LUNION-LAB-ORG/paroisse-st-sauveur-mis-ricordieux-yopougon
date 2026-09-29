@@ -76,6 +76,63 @@ function creneauxDuType(semaine: IJourHoraire[], type: string): string[] {
   return Array.from(vus);
 }
 
+const NOMS_JOURS = [
+  "dimanche",
+  "lundi",
+  "mardi",
+  "mercredi",
+  "jeudi",
+  "vendredi",
+  "samedi",
+];
+
+/** « 06:30 et 18:30 » */
+const listeHeures = (h: string[]) =>
+  h.length > 1
+    ? `${h.slice(0, -1).join(", ")} et ${h[h.length - 1]}`
+    : (h[0] ?? "");
+
+/**
+ * Messes en semaine, calculées depuis les horaires réels : jours consécutifs
+ * ayant les mêmes heures regroupés (« Du lundi au jeudi : 06:30 et 18:30 »).
+ */
+function messesEnSemaine(semaine: IJourHoraire[]): string[] {
+  const parJour = [1, 2, 3, 4, 5, 6].map((wd) => {
+    const jour = semaine.find((j) => j.weekday === wd);
+
+    return {
+      wd,
+      heures: (jour?.items ?? [])
+        .filter((i) => i.type === "messe" && !i.cancelled)
+        .map((i) => i.time),
+    };
+  });
+  const groupes: { debut: number; fin: number; heures: string[] }[] = [];
+
+  parJour.forEach((j) => {
+    const dernier = groupes[groupes.length - 1];
+
+    if (
+      dernier &&
+      dernier.heures.join() === j.heures.join() &&
+      dernier.fin === j.wd - 1
+    )
+      dernier.fin = j.wd;
+    else groupes.push({ debut: j.wd, fin: j.wd, heures: j.heures });
+  });
+
+  return groupes
+    .filter((g) => g.heures.length > 0)
+    .map((g) => {
+      const jours =
+        g.debut === g.fin
+          ? NOMS_JOURS[g.debut].replace(/^./, (c) => c.toUpperCase())
+          : `Du ${NOMS_JOURS[g.debut]} au ${NOMS_JOURS[g.fin]}`;
+
+      return `${jours} : ${listeHeures(g.heures)}`;
+    });
+}
+
 function libelleSemaine(lundi: string) {
   const dimanche = ajouterJours(lundi, 6);
 
@@ -191,31 +248,21 @@ export default async function PageHoraires({ searchParams }: Props) {
   ]);
   const identite = identiteParoisse(settings);
 
-  const reglages = (cle: string) => (settings[cle] ?? "").trim();
+  // Résumé calculé depuis les horaires saisis dans le back-office (source unique)
+  const dimanche = semaine.find((j) => j.weekday === 0);
+  const messesDimanche = (dimanche?.items ?? [])
+    .filter((i) => i.type === "messe" && !i.cancelled)
+    .map((i) => i.time);
   const rappels = [
     {
       titre: "Messes du dimanche",
-      valeurs: reglages("hours.mass_sunday")
-        ? [reglages("hours.mass_sunday")]
-        : [],
+      valeurs: messesDimanche.length ? [listeHeures(messesDimanche)] : [],
     },
-    {
-      titre: "Messes en semaine",
-      valeurs: reglages("hours.mass_weekday")
-        ? [reglages("hours.mass_weekday")]
-        : [],
-    },
-    {
-      titre: "Confessions",
-      valeurs: reglages("hours.confession")
-        ? [reglages("hours.confession")]
-        : creneauxDuType(semaine, "confession"),
-    },
+    { titre: "Messes en semaine", valeurs: messesEnSemaine(semaine) },
+    { titre: "Confessions", valeurs: creneauxDuType(semaine, "confession") },
     {
       titre: "Adoration du Saint-Sacrement",
-      valeurs: reglages("hours.adoration")
-        ? [reglages("hours.adoration")]
-        : creneauxDuType(semaine, "adoration"),
+      valeurs: creneauxDuType(semaine, "adoration"),
     },
   ].filter((r) => r.valeurs.length > 0);
 
