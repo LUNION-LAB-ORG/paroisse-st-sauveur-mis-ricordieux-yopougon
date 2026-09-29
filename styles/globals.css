@@ -143,6 +143,22 @@
   --color-pied: #d2d5ea;
   --color-pied-note: #a3a8d0;
   --radius-charte: 2px;
+  /* Back-office (maquette « Back-office — Paroisse Saint Sauveur Miséricordieux ») */
+  --color-fond-admin: #f4f2ee;
+  --color-bord-admin: #e3ded4;
+  --color-ligne-admin: #f0ece4;
+  --color-entete-admin: #faf8f4;
+  --color-encart-admin: #eee8dd;
+  --color-menu-survol: #27307a;
+  --color-menu-groupe: #8e94c6;
+  --color-succes: #1f7a45;
+  --color-succes-fond: #e4f3ea;
+  --color-attention: #9a5b00;
+  --color-attention-fond: #fff4db;
+  --color-info-fond: #eceef8;
+  --color-neutre-fond: #eeece7;
+  --color-selection-admin: #eef1fa;
+  --radius-admin: 4px;
   /* Largeur de la maquette (1440 px) */
   --breakpoint-maquette: 90rem;
 }

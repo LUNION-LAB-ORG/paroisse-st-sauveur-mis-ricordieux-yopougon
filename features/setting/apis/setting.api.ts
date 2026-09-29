@@ -41,4 +41,18 @@ export const settingAPI = {
       config: { headers: { "Content-Type": "multipart/form-data" } },
     });
   },
+
+  /** Dépôt d'un fichier (paramètre de type « file », ex. feuille d'annonces PDF). */
+  async uploadFichier(key: string, file: File): Promise<{ status: string; data: { key: string; value: string } }> {
+    const fd = new FormData();
+    fd.append("key", key);
+    fd.append("file", file);
+    return apiClient.request({
+      endpoint: "/settings/upload-file",
+      method: "POST",
+      data: fd,
+      service: "private",
+      config: { headers: { "Content-Type": "multipart/form-data" } },
+    });
+  },
 };
