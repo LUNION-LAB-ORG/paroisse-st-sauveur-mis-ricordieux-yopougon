@@ -14,6 +14,7 @@ export default function robots(): MetadataRoute.Robots {
         "/login",
         "/demande-messe/confirmation",
         "/demande-messe/recu",
+        "/faire-don/paiement",
       ],
     },
     sitemap: `${URL_SITE}/sitemap.xml`,

@@ -6,6 +6,7 @@ import { Button } from "@heroui/react";
 import { useState } from "react";
 
 import { ChampChoix, ChampTexte } from "@/components/site/champs";
+import { MentionDonnees } from "@/components/site/mention-donnees";
 import { evenementAPI } from "@/features/evenement/apis/evenement.api";
 import { formatMontant } from "@/lib/charte";
 
@@ -150,6 +151,7 @@ export function InscriptionEvenement({ evenement }: { evenement: IEvenement }) {
           >
             {evenement.is_paid ? "Je m’inscris et je paie" : "Je m’inscris"}
           </Button>
+          <MentionDonnees finalite="servent uniquement à gérer votre inscription et à vous envoyer un rappel sur WhatsApp" />
         </div>
       )}
     </div>

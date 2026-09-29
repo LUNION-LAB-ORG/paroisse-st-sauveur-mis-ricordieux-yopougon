@@ -6,6 +6,7 @@ import { Button } from "@heroui/react";
 import { useEffect, useState } from "react";
 
 import { ChampChoix, ChampTexte, ChampZone } from "@/components/site/champs";
+import { MentionDonnees } from "@/components/site/mention-donnees";
 import { ecouteAPI } from "@/features/ecoute/apis/ecoute.api";
 
 const MOTIFS = [
@@ -154,6 +155,10 @@ export function FormulaireRendezVous({ pretres }: { pretres: IPretre[] }) {
       >
         Envoyer la demande
       </Button>
+      <MentionDonnees
+        className="md:col-span-2"
+        finalite="servent uniquement à organiser votre rendez-vous ; le contenu de votre message reste confidentiel entre vous et le prêtre"
+      />
     </div>
   );
 }

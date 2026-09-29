@@ -3,6 +3,7 @@
 import { Button, Checkbox } from "@heroui/react";
 import { useState } from "react";
 
+import { MentionDonnees } from "@/components/site/mention-donnees";
 import { ChampTexte } from "@/components/site/champs";
 import { useAbonnerWhatsappMutation } from "@/features/abonnement/queries/abonnement-add.mutation";
 import { abonnementSchema } from "@/features/abonnement/schemas/abonnement.schema";
@@ -69,6 +70,7 @@ export function AbonnementCompact() {
       >
         S’abonner
       </Button>
+      <MentionDonnees finalite="servent uniquement à l’envoi des annonces paroissiales sur WhatsApp ; désabonnement à tout moment en répondant « STOP »" />
     </div>
   );
 }

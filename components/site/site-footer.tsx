@@ -2,6 +2,8 @@ import type { IIdentiteParoisse } from "@/features/setting/utils/identite";
 
 import Link from "next/link";
 
+import { LIEN_DON } from "./navigation";
+
 import { CONTENEUR } from "@/lib/charte";
 import { cn } from "@/lib/utils";
 
@@ -9,22 +11,26 @@ const COLONNES = [
   {
     titre: "La paroisse",
     liens: [
-      { label: "Histoire", href: "/historique" },
-      { label: "Le mot du curé", href: "/#cure" },
-      { label: "Horaires", href: "/#horaires" },
+      { label: "Histoire", href: "/histoire" },
+      { label: "Le mot du curé", href: "/histoire#cure" },
+      { label: "Horaires", href: "/horaires" },
       { label: "Annonces", href: "/annonces" },
       { label: "Équipe pastorale", href: "/equipe" },
+      { label: "Méditations", href: "/meditations" },
+      { label: "Contact", href: "/contact" },
     ],
   },
   {
     titre: "Participer",
     liens: [
-      { label: "Mouvements", href: "/#vie" },
+      { label: "Mouvements", href: "/vie-paroissiale" },
+      { label: "Parole du jour", href: "/parole-du-jour" },
       { label: "Agenda", href: "/agenda" },
       { label: "Communauté", href: "/communaute" },
-      { label: "Nouvelle église", href: "/#eglise" },
+      { label: "Actualités", href: "/actualites" },
+      { label: "Nouvelle église", href: "/nouvelle-eglise" },
       { label: "Demander une messe", href: "/demande-messe" },
-      { label: "Faire un don", href: "/#eglise" },
+      { label: "Faire un don", href: LIEN_DON },
     ],
   },
 ] as const;
@@ -113,7 +119,15 @@ export function SiteFooter({ identite }: { identite: IIdentiteParoisse }) {
             <span>
               © {new Date().getFullYear()} {nom}
             </span>
-            <span>Textes liturgiques : AELF</span>
+            <span className="flex flex-wrap items-center gap-x-5 gap-y-1">
+              <Link
+                className="inline-flex min-h-11 items-center text-pied-note underline underline-offset-2 hover:text-white sm:min-h-0"
+                href="/confidentialite"
+              >
+                Confidentialité et données personnelles
+              </Link>
+              <span>Textes liturgiques : AELF</span>
+            </span>
           </div>
         </div>
       </footer>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { IJourHoraire } from "@/features/horaire/types/horaire.type";
 
+import { Fragment } from "react";
+
 import { AbonnementWhatsapp } from "@/components/accueil/abonnement-whatsapp";
 import { Actualites } from "@/components/accueil/actualites";
 import { BandeInfos } from "@/components/accueil/bande-infos";
@@ -22,15 +24,20 @@ import { publicationServerAPI } from "@/features/publication/apis/publication.se
 import { pretreServerAPI } from "@/features/pretre/apis/pretre.server";
 import { projetEgliseServerAPI } from "@/features/projet-eglise/apis/projet-eglise.server";
 import { settingServerAPI } from "@/features/setting/apis/setting.server";
+import {
+  montantsSuggeres,
+  projetDonParDefaut,
+} from "@/features/setting/utils/don";
 import { identiteParoisse } from "@/features/setting/utils/identite";
-import { dateDuJour } from "@/lib/charte";
+import { DonneesStructurees } from "@/components/site/donnees-structurees";
+import {
+  sectionsAccueil,
+  type ICleSectionAccueil,
+} from "@/features/setting/utils/accueil";
+import { dateDuJour, lundiDe, URL_SITE } from "@/lib/charte";
 
 export const revalidate = 60;
 
-const URL_SITE =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  "https://paroisse-st-sauveur-mis-ricordieux.vercel.app";
-const MONTANTS_PAR_DEFAUT = [5000, 10000, 25000, 50000, 100000, 250000];
 const JOURS = [
   "Dimanche",
   "Lundi",
@@ -56,15 +63,6 @@ export const metadata: Metadata = {
   },
 };
 
-/** Lundi de la semaine en cours (AAAA-MM-JJ). */
-function lundiDe(iso: string): string {
-  const d = new Date(`${iso}T00:00:00Z`);
-
-  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
-
-  return d.toISOString().slice(0, 10);
-}
-
 /** Prochaine messe non annulée à partir de maintenant (Abidjan = UTC). */
 function prochaineCelebration(
   semaine: IJourHoraire[],
@@ -89,15 +87,6 @@ function prochaineCelebration(
   }
 
   return null;
-}
-
-function montantsSuggeres(valeur: string | undefined): number[] {
-  const liste = (valeur ?? "")
-    .split(",")
-    .map((v) => Number(v.replace(/[^\d]/g, "")))
-    .filter((n) => Number.isFinite(n) && n >= 100);
-
-  return liste.length > 0 ? liste : MONTANTS_PAR_DEFAUT;
 }
 
 export default async function Accueil() {
@@ -157,48 +146,52 @@ export default async function Accueil() {
     },
   };
 
-  return (
-    <div className="flex flex-col">
-      <script
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(donneesStructurees).replace(/</g, "\\u003c"),
-        }}
-        type="application/ld+json"
-      />
-      <HeroAccueil identite={identite} vueEglise={identite.vueEglise} />
+  const texteHero =
+    (settings["hero.text"] ?? "").trim() || identite.description;
+  const libellePrincipal =
+    (settings["hero.primary_label"] ?? "").trim() || "Soutenir la construction";
+  const libelleSecondaire =
+    (settings["hero.secondary_label"] ?? "").trim() || "Horaires des messes";
+
+  const blocs: Record<ICleSectionAccueil, React.ReactNode> = {
+    infos: (
       <BandeInfos
         jourCourt={jourCourt}
         liturgie={liturgie}
         prochaineCelebration={prochaineCelebration(semaine, maintenant)}
       />
-
-      {/* Mobile : Parole du jour avant les horaires ; desktop : l'inverse (maquette) */}
-      <div className="flex flex-col">
-        <div className="order-2 lg:order-1">
-          <HorairesSemaine
-            annonce={annonce}
-            aujourdhui={aujourdhui}
-            semaine={semaine}
-          />
-        </div>
-        <div className="order-1 lg:order-2">
-          <ParoleDuJour liturgie={liturgie} urlPage={URL_SITE} />
-        </div>
-      </div>
-
+    ),
+    horaires: (
+      <HorairesSemaine
+        annonce={annonce}
+        aujourdhui={aujourdhui}
+        semaine={semaine}
+      />
+    ),
+    parole: (
+      <ParoleDuJour
+        lienPartage={`${URL_SITE}/parole-du-jour`}
+        liturgie={liturgie}
+      />
+    ),
+    eglise: (
       <NouvelleEglise
         logo={identite.logo}
-        montants={montantsSuggeres(settings["donation.amounts"])}
+        montants={montantsSuggeres(settings)}
         projet={projet}
-        projetDon={settings["donation.project_label"] || "Nouvelle église"}
+        projetDon={projetDonParDefaut(settings)}
         vueEglise={identite.vueEglise}
       />
-      <Mouvements mouvements={mouvements} />
+    ),
+    mouvements: <Mouvements mouvements={mouvements} />,
+    actualites: (
       <Actualites
         actualites={actualites}
         evenement={evenement}
         publications={publications.data}
       />
+    ),
+    histoire: (
       <HistoireCure
         jalons={jalons}
         motDuCure={{
@@ -207,8 +200,43 @@ export default async function Accueil() {
           photo: settings["pastor_word.photo"] || null,
         }}
       />
-      <EquipePresbyterale pretres={pretres} />
-      <AbonnementWhatsapp logo={identite.logo} />
+    ),
+    equipe: <EquipePresbyterale pretres={pretres} />,
+    whatsapp: <AbonnementWhatsapp logo={identite.logo} />,
+  };
+
+  // Ordre et visibilité choisis dans le back-office. Sur mobile, la Parole du
+  // jour passe avant les horaires quand les deux blocs se suivent (maquette).
+  const ordre = sectionsAccueil(settings);
+  const rendu: React.ReactNode[] = [];
+
+  for (let i = 0; i < ordre.length; i++) {
+    const cle = ordre[i];
+
+    if (cle === "horaires" && ordre[i + 1] === "parole") {
+      rendu.push(
+        <div key="horaires-parole" className="flex flex-col">
+          <div className="order-2 lg:order-1">{blocs.horaires}</div>
+          <div className="order-1 lg:order-2">{blocs.parole}</div>
+        </div>,
+      );
+      i++;
+      continue;
+    }
+    rendu.push(<Fragment key={cle}>{blocs[cle]}</Fragment>);
+  }
+
+  return (
+    <div className="flex flex-col">
+      <DonneesStructurees donnees={donneesStructurees} />
+      <HeroAccueil
+        identite={identite}
+        libellePrincipal={libellePrincipal}
+        libelleSecondaire={libelleSecondaire}
+        texte={texteHero}
+        vueEglise={identite.vueEglise}
+      />
+      {rendu}
     </div>
   );
 }

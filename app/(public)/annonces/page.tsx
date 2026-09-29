@@ -101,7 +101,7 @@ export default async function PageAnnonces() {
               ) && (
                 <Link
                   className="self-start text-[15px] font-bold text-rouge hover:text-rouge-hover"
-                  href="/#eglise"
+                  href="/don"
                 >
                   Contribuer en ligne
                 </Link>

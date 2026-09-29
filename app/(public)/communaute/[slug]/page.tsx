@@ -188,7 +188,7 @@ export default async function PagePublication({ params }: Props) {
           {concerneLeChantier(p) && (
             <Link
               className="mt-2.5 self-start rounded-charte bg-rouge px-[26px] py-4 text-base font-bold leading-[1.2] text-white hover:bg-rouge-hover hover:text-white hover:no-underline"
-              href="/#eglise"
+              href="/nouvelle-eglise"
             >
               Soutenir la construction
             </Link>

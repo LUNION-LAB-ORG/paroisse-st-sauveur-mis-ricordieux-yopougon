@@ -1,23 +1,18 @@
-/**
- * Liens de navigation du site public.
- * Les sous-pages de la maquette (Annonces, Communauté, Équipe, Agenda) arrivent
- * dans les lots suivants : en attendant, on pointe vers les blocs de l'accueil
- * ou vers les pages existantes équivalentes.
- */
+/** Liens de navigation du site public (en-tête, tiroir mobile). */
 export const LIENS_PRINCIPAUX = [
-  { label: "Vie paroissiale", href: "/#vie" },
-  { label: "Parole du jour", href: "/#parole" },
-  { label: "Nouvelle église", href: "/#eglise" },
+  { label: "Vie paroissiale", href: "/vie-paroissiale" },
+  { label: "Parole du jour", href: "/parole-du-jour" },
+  { label: "Nouvelle église", href: "/nouvelle-eglise" },
   { label: "Communauté", href: "/communaute" },
   { label: "Annonces", href: "/annonces" },
-  { label: "Contact", href: "#contact" },
+  { label: "Contact", href: "/contact" },
 ] as const;
 
 export const MENU_PAROISSE = [
   {
     titre: "Notre histoire",
     description: "Des origines à aujourd’hui",
-    href: "/historique",
+    href: "/histoire",
   },
   {
     titre: "Équipe pastorale",
@@ -27,7 +22,7 @@ export const MENU_PAROISSE = [
   {
     titre: "Horaires et sacrements",
     description: "Messes, confessions, baptêmes",
-    href: "/#horaires",
+    href: "/horaires",
   },
   {
     titre: "Agenda",
@@ -42,6 +37,9 @@ export const MENU_PAROISSE = [
   {
     titre: "Nous trouver",
     description: "Plan d’accès et contact",
-    href: "#contact",
+    href: "/contact",
   },
 ] as const;
+
+/** Page de don (le bloc de don rapide y envoie ses choix en paramètres). */
+export const LIEN_DON = "/don";

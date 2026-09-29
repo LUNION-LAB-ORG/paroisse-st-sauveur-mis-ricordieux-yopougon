@@ -66,7 +66,7 @@ export function BandeInfos({
           </span>
           <Link
             className="text-sm font-bold text-rouge hover:text-rouge-hover"
-            href="#parole"
+            href="/parole-du-jour"
           >
             Lire les textes du jour
           </Link>
@@ -80,7 +80,7 @@ export function BandeInfos({
           </span>
           <Link
             className="text-sm font-bold text-rouge hover:text-rouge-hover"
-            href="#horaires"
+            href="/horaires"
           >
             Tous les horaires
           </Link>

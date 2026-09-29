@@ -6,6 +6,7 @@ import { Button } from "@heroui/react";
 import { useState } from "react";
 
 import { ChampTexte, ChampZone } from "@/components/site/champs";
+import { MentionDonnees } from "@/components/site/mention-donnees";
 import { publicationAPI } from "@/features/publication/apis/publication.api";
 import { ilYa } from "@/features/publication/utils/publication.utils";
 import { identifiantAppareil } from "@/lib/appareil";
@@ -124,6 +125,7 @@ export function Commentaires({
             Publier
           </Button>
         </div>
+        <MentionDonnees finalite="servent uniquement à publier votre commentaire après modération ; seul votre prénom est affiché" />
       </div>
 
       <ul className="m-0 flex list-none flex-col gap-5 p-0">

@@ -7,7 +7,7 @@ import type {
   IMoyenPaiement,
 } from "@/features/demande-messe/types/demande-messe.type";
 
-import { Button, Checkbox } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -15,8 +15,9 @@ import { useEffect, useMemo, useState } from "react";
 import { EtapesDemande } from "./etapes-demande";
 import { Recapitulatif, type ILigneRecap } from "./recapitulatif";
 
-import { ChampTexte, ChampZone } from "@/components/site/champs";
+import { CaseACocher, ChampTexte, ChampZone } from "@/components/site/champs";
 import { FilAriane } from "@/components/site/fil-ariane";
+import { MentionDonnees } from "@/components/site/mention-donnees";
 import { demandeMesseAPI } from "@/features/demande-messe/apis/demande-messe.api";
 import { CONTENEUR, dateDuJour, formatMontant } from "@/lib/charte";
 import { cn } from "@/lib/utils";
@@ -638,6 +639,7 @@ export function ParcoursDemandeMesse({ telephone }: ParcoursProps) {
               <CaseACocher valeur={rappel} onChange={setRappel}>
                 Recevoir un rappel WhatsApp la veille de la messe.
               </CaseACocher>
+              <MentionDonnees finalite="servent uniquement à confirmer la messe, à vous envoyer le reçu et, si vous le souhaitez, un rappel ; une intention confidentielle n’est jamais lue à voix haute" />
             </div>
           )}
 
@@ -791,26 +793,5 @@ function EnTeteEtape({ n, titre }: { n: number; titre: string }) {
         {titre}
       </h2>
     </div>
-  );
-}
-
-function CaseACocher({
-  valeur,
-  onChange,
-  children,
-}: {
-  valeur: boolean;
-  onChange: (v: boolean) => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <Checkbox className="group" isSelected={valeur} onChange={onChange}>
-      <Checkbox.Content className="flex flex-row items-start gap-3 text-[15px] leading-[1.45] text-encre-douce">
-        <Checkbox.Control className="mt-0.5 size-5 shrink-0 rounded-[2px] border border-champ bg-white group-data-[selected=true]:border-marine group-data-[selected=true]:bg-marine group-data-[selected=true]:text-white">
-          <Checkbox.Indicator />
-        </Checkbox.Control>
-        {children}
-      </Checkbox.Content>
-    </Checkbox>
   );
 }

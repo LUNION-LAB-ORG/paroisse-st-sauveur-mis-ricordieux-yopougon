@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { LIENS_PRINCIPAUX, MENU_PAROISSE } from "./navigation";
+import { LIEN_DON, LIENS_PRINCIPAUX, MENU_PAROISSE } from "./navigation";
 
 import { CONTENEUR } from "@/lib/charte";
 import { cn } from "@/lib/utils";
@@ -123,7 +123,8 @@ export function SiteHeader(props: SiteHeaderProps) {
             {LIENS_PRINCIPAUX.map((l) => (
               <Link
                 key={l.href}
-                className="flex min-h-11 items-center text-encre hover:text-rouge hover:no-underline"
+                aria-current={pathname?.startsWith(l.href) ? "page" : undefined}
+                className="flex min-h-11 items-center text-encre hover:text-rouge hover:no-underline aria-[current=page]:text-rouge"
                 href={l.href}
                 onClick={fermerMenus}
               >
@@ -134,7 +135,7 @@ export function SiteHeader(props: SiteHeaderProps) {
 
           <Link
             className="hidden shrink-0 whitespace-nowrap rounded-charte bg-rouge px-[22px] py-3.5 text-[15px] font-bold text-white hover:bg-rouge-hover hover:text-white hover:no-underline xl:inline-flex"
-            href="/#eglise"
+            href={LIEN_DON}
           >
             Faire un don
           </Link>
@@ -218,7 +219,7 @@ export function SiteHeader(props: SiteHeaderProps) {
               ))}
               <Link
                 className="mt-6 rounded-charte bg-rouge py-[15px] text-center text-[15px] font-bold text-white hover:text-white"
-                href="/#eglise"
+                href={LIEN_DON}
                 onClick={fermerMenus}
               >
                 Faire un don

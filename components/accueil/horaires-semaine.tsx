@@ -23,7 +23,8 @@ interface HorairesSemaineProps {
   annonce: IAnnonce | null;
 }
 
-function Programme({
+/** Liste des célébrations d'un jour (compacte : programme du jour sur mobile). */
+export function Programme({
   items,
   compact = false,
 }: {
@@ -47,20 +48,20 @@ function Programme({
             "grid items-baseline border-b border-ligne",
             compact
               ? "grid-cols-[80px_minmax(0,1fr)] py-3.5"
-              : "grid-cols-[120px_minmax(0,1fr)_160px] py-[18px]",
+              : "grid-cols-[72px_minmax(0,1fr)] gap-y-1 py-4 sm:grid-cols-[120px_minmax(0,1fr)_160px] sm:py-[18px]",
             p.cancelled && "text-gris",
           )}
         >
           <span
             className={cn(
               "font-bold text-marine",
-              compact ? "text-base" : "text-lg",
+              compact ? "text-base" : "text-base sm:text-lg",
               p.cancelled && "line-through",
             )}
           >
             {p.time}
           </span>
-          <span className={compact ? "text-base" : "text-lg"}>
+          <span className={compact ? "text-base" : "text-base sm:text-lg"}>
             <span className={cn(p.cancelled && "line-through")}>{p.label}</span>
             {p.cancelled && (
               <span className="ml-2 text-sm font-bold text-rouge no-underline">
@@ -68,8 +69,8 @@ function Programme({
               </span>
             )}
           </span>
-          {!compact && (
-            <span className="text-right text-[15px] text-gris">
+          {!compact && p.location && (
+            <span className="col-start-2 text-sm text-gris sm:col-start-auto sm:text-right sm:text-[15px]">
               {p.location}
             </span>
           )}
@@ -79,17 +80,81 @@ function Programme({
   );
 }
 
-export function HorairesSemaine({
+/** Onglets des 7 jours de la semaine + programme du jour choisi. */
+export function SemaineOnglets({
   semaine,
   aujourdhui,
-  annonce,
-}: HorairesSemaineProps) {
+}: {
+  semaine: IJourHoraire[];
+  aujourdhui: string;
+}) {
   const [jour, setJour] = useState(
     () =>
       semaine.find((j) => j.date === aujourdhui)?.date ??
       semaine[0]?.date ??
       "",
   );
+
+  if (semaine.length === 0) {
+    return (
+      <p className="m-0 border-y border-ligne py-10 text-base text-gris">
+        Les horaires seront bientôt publiés.
+      </p>
+    );
+  }
+
+  return (
+    <Tabs
+      className="tabs-charte min-w-0"
+      selectedKey={jour}
+      variant="secondary"
+      onSelectionChange={(k) => setJour(String(k))}
+    >
+      <Tabs.ListContainer>
+        <Tabs.List
+          aria-label="Jours de la semaine"
+          className="grid grid-cols-7"
+        >
+          {semaine.map((j) => (
+            <Tabs.Tab
+              key={j.date}
+              aria-label={`${dateSansAnnee(j.date)}${j.date === aujourdhui ? " (aujourd’hui)" : ""}`}
+              className="min-w-0 flex-col gap-0 px-0 pb-3.5 pt-3"
+              id={j.date}
+            >
+              <span className="text-xs sm:text-[13px]">
+                {JOURS_COURTS[j.weekday]}
+              </span>
+              <span className="font-heading text-xl font-semibold sm:text-[26px]">
+                {Number(j.date.slice(8, 10))}
+              </span>
+              <Tabs.Indicator />
+            </Tabs.Tab>
+          ))}
+        </Tabs.List>
+      </Tabs.ListContainer>
+      {semaine.map((j) => (
+        <Tabs.Panel key={j.date} id={j.date}>
+          <div className="pb-2.5 pt-6 font-heading text-[22px] font-semibold text-marine sm:pt-7 sm:text-[26px]">
+            {dateSansAnnee(j.date)}
+            {j.date === aujourdhui && (
+              <span className="ml-3 align-middle text-sm font-bold text-rouge">
+                Aujourd’hui
+              </span>
+            )}
+          </div>
+          <Programme items={j.items} />
+        </Tabs.Panel>
+      ))}
+    </Tabs>
+  );
+}
+
+export function HorairesSemaine({
+  semaine,
+  aujourdhui,
+  annonce,
+}: HorairesSemaineProps) {
   const duJour = semaine.find((j) => j.date === aujourdhui);
 
   return (
@@ -118,6 +183,12 @@ export function HorairesSemaine({
           {/* Mobile : programme du jour uniquement */}
           <div className="lg:hidden">
             <Programme compact items={duJour?.items ?? []} />
+            <Link
+              className="mt-2 flex min-h-11 items-center text-[15px] font-bold text-rouge hover:text-rouge-hover"
+              href="/horaires"
+            >
+              Horaires de la semaine
+            </Link>
           </div>
 
           {annonce && (
@@ -146,49 +217,13 @@ export function HorairesSemaine({
         </div>
 
         <div className="hidden flex-col lg:col-span-7 lg:col-start-6 lg:flex">
-          {semaine.length > 0 ? (
-            <Tabs
-              className="tabs-charte"
-              selectedKey={jour}
-              variant="secondary"
-              onSelectionChange={(k) => setJour(String(k))}
-            >
-              <Tabs.ListContainer>
-                <Tabs.List
-                  aria-label="Jours de la semaine"
-                  className="grid grid-cols-7"
-                >
-                  {semaine.map((j) => (
-                    <Tabs.Tab
-                      key={j.date}
-                      className="flex-col gap-0 pb-3.5 pt-3"
-                      id={j.date}
-                    >
-                      <span className="text-[13px]">
-                        {JOURS_COURTS[j.weekday]}
-                      </span>
-                      <span className="font-heading text-[26px] font-semibold">
-                        {Number(j.date.slice(8, 10))}
-                      </span>
-                      <Tabs.Indicator />
-                    </Tabs.Tab>
-                  ))}
-                </Tabs.List>
-              </Tabs.ListContainer>
-              {semaine.map((j) => (
-                <Tabs.Panel key={j.date} id={j.date}>
-                  <div className="pb-2.5 pt-7 font-heading text-[26px] font-semibold text-marine">
-                    {dateSansAnnee(j.date)}
-                  </div>
-                  <Programme items={j.items} />
-                </Tabs.Panel>
-              ))}
-            </Tabs>
-          ) : (
-            <p className="m-0 border-y border-ligne py-10 text-base text-gris">
-              Les horaires seront bientôt publiés.
-            </p>
-          )}
+          <SemaineOnglets aujourdhui={aujourdhui} semaine={semaine} />
+          <Link
+            className="mt-6 flex min-h-11 items-center self-start text-[15px] font-bold text-rouge hover:text-rouge-hover"
+            href="/horaires"
+          >
+            Tous les horaires, confessions et adoration
+          </Link>
         </div>
       </div>
     </section>
