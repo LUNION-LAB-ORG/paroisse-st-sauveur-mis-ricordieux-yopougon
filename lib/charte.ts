@@ -2,7 +2,7 @@
 export const CONTENEUR =
   "mx-auto w-full max-w-[1440px] px-4 md:px-10 maquette:px-[120px]";
 
-/** Logo par défaut si aucun logo n'est téléversé dans les paramètres. */
+/** Logo officiel de la paroisse (charte graphique). */
 export const LOGO_PAR_DEFAUT = "/logo-paroisse.png";
 
 /** Fuseau de la paroisse (Abidjan, UTC+0 sans heure d'été). */

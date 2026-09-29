@@ -143,9 +143,8 @@
   --color-pied: #d2d5ea;
   --color-pied-note: #a3a8d0;
   --radius-charte: 2px;
-  /* Largeur de la maquette (1440 px) et grands écrans */
+  /* Largeur de la maquette (1440 px) */
   --breakpoint-maquette: 90rem;
-  --breakpoint-large: 100rem;
 }
 
 /* Filet de marque : liseré sous l'en-tête et au-dessus du pied de page */

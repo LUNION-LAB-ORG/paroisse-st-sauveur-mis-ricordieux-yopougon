@@ -101,7 +101,7 @@ export function SiteHeader(props: SiteHeaderProps) {
 
           <nav
             aria-label="Navigation principale"
-            className="hidden items-center gap-5 whitespace-nowrap text-[15px] font-semibold xl:flex large:gap-[34px] large:text-base"
+            className="hidden items-center gap-5 whitespace-nowrap text-[15px] font-semibold xl:flex"
           >
             <button
               aria-controls="menu-paroisse"

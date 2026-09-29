@@ -52,7 +52,7 @@ export function HeroAccueil({
           <span className="text-xs font-bold uppercase tracking-[.12em] text-ciel lg:text-sm">
             {identite.devise}
           </span>
-          <h1 className="m-0 font-heading text-[30px] font-extrabold uppercase leading-[1.1] lg:text-[clamp(36px,3.65vw,54px)] lg:leading-[1.05] lg:tracking-[-0.01em]">
+          <h1 className="m-0 font-heading text-[30px] font-extrabold uppercase leading-[1.1] lg:text-[clamp(36px,3.6vw,52px)] lg:leading-[1.05] lg:tracking-[-0.01em]">
             {identite.nom}
           </h1>
           <p className="m-0 text-base leading-[1.55] text-brume-clair lg:text-[19px] lg:leading-[1.6]">
