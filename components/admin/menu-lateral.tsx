@@ -3,7 +3,7 @@
 import type { IModule } from "@/features/admin/utils/roles";
 
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, LogOut, Menu, UserRound, X } from "lucide-react";
+import { LogOut, Menu, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -48,6 +48,13 @@ const GROUPES: { titre?: string; entrees: IEntree[] }[] = [
         href: "/dashboard/publications",
         module: "publications",
       },
+      { label: "Actualités", href: "/dashboard/actualites", module: "autres" },
+      { label: "Méditations", href: "/dashboard/mediation", module: "autres" },
+    ],
+  },
+  {
+    titre: "La paroisse",
+    entrees: [
       {
         label: "Mouvements et groupes",
         href: "/dashboard/mouvements",
@@ -66,6 +73,11 @@ const GROUPES: { titre?: string; entrees: IEntree[] }[] = [
       {
         label: "Histoire et mot du curé",
         href: "/dashboard/histoire",
+        module: "histoire",
+      },
+      {
+        label: "Curés successifs",
+        href: "/dashboard/cure",
         module: "histoire",
       },
     ],
@@ -102,6 +114,11 @@ const GROUPES: { titre?: string; entrees: IEntree[] }[] = [
     titre: "Administration",
     entrees: [
       {
+        label: "Notifications",
+        href: "/dashboard/notifications",
+        module: "autres",
+      },
+      {
         label: "Abonnés WhatsApp",
         href: "/dashboard/abonnes",
         module: "abonnes",
@@ -112,23 +129,6 @@ const GROUPES: { titre?: string; entrees: IEntree[] }[] = [
         module: "parametres",
       },
     ],
-  },
-];
-
-/** Modules de l'ancien back-office, conservés hors maquette. */
-const AUTRES: IEntree[] = [
-  { label: "Actualités", href: "/dashboard/actualites", module: "autres" },
-  { label: "Méditations", href: "/dashboard/mediation", module: "autres" },
-  {
-    label: "Demandes d’événements",
-    href: "/dashboard/organisations",
-    module: "autres",
-  },
-  { label: "Historique des curés", href: "/dashboard/cure", module: "autres" },
-  {
-    label: "Notifications",
-    href: "/dashboard/notifications",
-    module: "autres",
   },
 ];
 
@@ -171,9 +171,6 @@ function Lien({
 function ContenuMenu({ onNaviguer }: { onNaviguer: () => void }) {
   const pathname = usePathname();
   const { peutVoir, nom, libelleRole } = useDroits();
-  const [autresOuverts, setAutresOuverts] = useState(() =>
-    AUTRES.some((e) => actif(pathname, e.href)),
-  );
 
   // Compteurs du menu, rafraîchis chaque minute
   const { data } = useQuery({
@@ -244,35 +241,6 @@ function ContenuMenu({ onNaviguer }: { onNaviguer: () => void }) {
             </div>
           );
         })}
-
-        {peutVoir("autres") && (
-          <div className="flex flex-col gap-0.5">
-            <button
-              aria-expanded={autresOuverts}
-              className="flex items-center justify-between px-5 pb-1.5 pt-3.5 text-[11px] font-bold uppercase tracking-[.1em] text-menu-groupe hover:text-white"
-              type="button"
-              onClick={() => setAutresOuverts((v) => !v)}
-            >
-              Autres
-              <ChevronDown
-                aria-hidden
-                className={cn(
-                  "size-3.5 transition-transform",
-                  autresOuverts && "rotate-180",
-                )}
-              />
-            </button>
-            {autresOuverts &&
-              AUTRES.map((e) => (
-                <Lien
-                  key={e.href}
-                  e={e}
-                  pathname={pathname}
-                  onNaviguer={onNaviguer}
-                />
-              ))}
-          </div>
-        )}
       </nav>
 
       <div className="flex items-center justify-between gap-2 border-t border-marine-soft px-5 py-4 text-[13px]">

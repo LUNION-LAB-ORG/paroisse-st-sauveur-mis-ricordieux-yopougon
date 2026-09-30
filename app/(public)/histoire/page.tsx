@@ -5,6 +5,7 @@ import Link from "next/link";
 import { EmplacementImage } from "@/components/accueil/emplacement-image";
 import { BandeauPage } from "@/components/site/bandeau-page";
 import { DonneesStructurees } from "@/components/site/donnees-structurees";
+import { cureServerAPI } from "@/features/cure/apis/cure.server";
 import { histoireServerAPI } from "@/features/histoire/apis/histoire.server";
 import { pretreServerAPI } from "@/features/pretre/apis/pretre.server";
 import { settingServerAPI } from "@/features/setting/apis/setting.server";
@@ -15,7 +16,7 @@ import { cn } from "@/lib/utils";
 export const revalidate = 60;
 
 const DESCRIPTION =
-  "L’histoire de la paroisse Saint Sauveur Miséricordieux à Yopougon Millionnaire : ses grandes étapes, et le mot du curé à la communauté.";
+  "L’histoire de la paroisse Saint Sauveur Miséricordieux à Yopougon Millionnaire : ses grandes étapes, les curés qui l’ont conduite et le mot du curé à la communauté.";
 
 export const metadata: Metadata = {
   title: "Notre histoire et le mot du curé",
@@ -33,11 +34,23 @@ const SURTITRE = "text-sm font-bold text-rouge";
 const TITRE_H2 =
   "m-0 font-heading text-[26px] font-extrabold leading-[1.1] text-marine lg:text-[34px]";
 
+const annee = (d?: string | null) => (d ? d.slice(0, 4) : "");
+
+/** « 1998 – 2012 », « Depuis 2021 » (curé en fonction). */
+function periode(debut: string, fin: string | null) {
+  if (!fin) return `Depuis ${annee(debut)}`;
+
+  return annee(debut) === annee(fin)
+    ? annee(debut)
+    : `${annee(debut)} – ${annee(fin)}`;
+}
+
 export default async function PageHistoire() {
-  const [jalons, settings, pretres] = await Promise.all([
+  const [jalons, settings, pretres, cures] = await Promise.all([
     histoireServerAPI.obtenirJalons(),
     settingServerAPI.obtenirMap(),
     pretreServerAPI.obtenirTous(),
+    cureServerAPI.obtenirTous(),
   ]);
 
   const identite = identiteParoisse(settings);
@@ -133,6 +146,53 @@ export default async function PageHistoire() {
         </div>
       </section>
 
+      {cures.length > 0 && (
+        <section
+          className="scroll-mt-4 border-t border-ligne bg-parchemin"
+          id="cures"
+        >
+          <div
+            className={cn(
+              CONTENEUR,
+              "flex flex-col gap-8 py-14 lg:gap-10 lg:py-20",
+            )}
+          >
+            <div className="flex max-w-[720px] flex-col gap-4">
+              <span className={SURTITRE}>03 — Les curés de la paroisse</span>
+              <h2 className={TITRE_H2}>Ceux qui ont conduit la communauté</h2>
+            </div>
+            <ol className="m-0 grid list-none grid-cols-1 gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
+              {cures.map((c) => (
+                <li
+                  key={c.id}
+                  className="flex flex-col overflow-hidden border border-ligne bg-white"
+                >
+                  <EmplacementImage
+                    alt={`Portrait de ${c.fullname}`}
+                    className="h-[260px] w-full object-top"
+                    libelle="Portrait"
+                    src={c.photo || null}
+                  />
+                  <div className="flex flex-col gap-2 p-5">
+                    <span className="text-sm font-bold text-rouge">
+                      {periode(c.started_at, c.ended_at)}
+                    </span>
+                    <h3 className="m-0 font-heading text-lg font-bold leading-tight text-marine">
+                      {c.fullname}
+                    </h3>
+                    {c.description?.trim() && (
+                      <p className="m-0 whitespace-pre-line text-[15px] leading-[1.6] text-encre-douce">
+                        {c.description}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      )}
+
       {message.length > 0 && (
         <section
           className="scroll-mt-4 border-y border-ligne bg-white"
@@ -151,7 +211,9 @@ export default async function PageHistoire() {
               src={portrait}
             />
             <div className="flex min-w-0 flex-col gap-5 lg:col-span-7 lg:col-start-6">
-              <span className={SURTITRE}>03 — Le mot du curé</span>
+              <span className={SURTITRE}>
+                {cures.length > 0 ? "04" : "03"} — Le mot du curé
+              </span>
               <div className="flex flex-col gap-5 font-scripture text-xl leading-[1.55] text-marine lg:text-[23px]">
                 {message.map((p, i) => (
                   <p key={i} className="m-0 whitespace-pre-line">
