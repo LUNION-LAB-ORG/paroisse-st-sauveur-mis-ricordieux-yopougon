@@ -59,6 +59,11 @@ const GROUPES: { titre?: string; entrees: IEntree[] }[] = [
         module: "equipe",
       },
       {
+        label: "Conseils paroissiaux",
+        href: "/dashboard/conseils",
+        module: "equipe",
+      },
+      {
         label: "Histoire et mot du curé",
         href: "/dashboard/histoire",
         module: "histoire",

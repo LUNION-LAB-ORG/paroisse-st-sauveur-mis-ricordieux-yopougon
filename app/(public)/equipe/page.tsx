@@ -176,6 +176,35 @@ export default async function PageEquipe() {
                       </span>
                     </div>
                   )}
+                  {!!c.members?.length && (
+                    <details className="group md:col-span-2">
+                      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 text-[15px] font-bold text-rouge hover:text-rouge-hover [&::-webkit-details-marker]:hidden">
+                        <span className="group-open:hidden">
+                          Voir les {c.members.length} membres
+                        </span>
+                        <span className="hidden group-open:inline">
+                          Masquer les membres
+                        </span>
+                      </summary>
+                      <ul className="m-0 mt-2 grid list-none grid-cols-1 gap-x-6 p-0 sm:grid-cols-2">
+                        {c.members.map((m, i) => (
+                          <li
+                            key={i}
+                            className="flex flex-col border-b border-ligne py-2.5"
+                          >
+                            <span className="text-[15px] font-semibold text-encre">
+                              {m.name}
+                            </span>
+                            {m.function && (
+                              <span className="text-[13px] text-gris">
+                                {m.function}
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
                 </li>
               ))}
             </ul>
