@@ -87,6 +87,12 @@ export function EcranAnnonces() {
       );
   };
 
+  // « + Nouveau contenu › Annonce » du tableau de bord : /dashboard/annonces?nouvelle=1
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("nouvelle")) montrerFiche("nouvelle");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
       <EnTeteAdmin

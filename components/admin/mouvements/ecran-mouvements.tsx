@@ -110,6 +110,12 @@ export function EcranMouvements() {
     setChoisi(cible);
   };
 
+  // « + Nouveau contenu › Mouvement » du tableau de bord : /dashboard/mouvements?nouveau=1
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("nouveau")) void changer("nouveau");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
       {fenetre}

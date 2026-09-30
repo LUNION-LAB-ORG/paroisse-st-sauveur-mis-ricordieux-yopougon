@@ -30,12 +30,12 @@ const NOUVEAUX_CONTENUS = [
   },
   {
     label: "Événement",
-    href: "/dashboard/evenements?nouveau=1",
+    href: "/dashboard/evenements/new",
     module: "evenements",
   },
   {
     label: "Publication (photo, vidéo, texte)",
-    href: "/dashboard/publications?nouvelle=1",
+    href: "/dashboard/publications/nouvelle",
     module: "publications",
   },
   {
@@ -239,7 +239,7 @@ export default function TableauDeBord() {
           <Indicateur
             detail={d ? `${d.masses.to_pay} à régler au secrétariat` : "…"}
             detailRouge={!!d?.masses.to_pay}
-            href="/dashboard/messes"
+            href="/dashboard/messes?filtre=to_process"
             libelle="Demandes de messe à traiter"
             valeur={d?.masses.to_process ?? "—"}
           />
