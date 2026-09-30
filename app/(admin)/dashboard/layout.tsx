@@ -1,17 +1,21 @@
-import type React from "react"
-import { Sidebar } from "@/components/admin/sidebar"
+import type React from "react";
 
-export const dynamic = "force-dynamic"
+import { MenuLateral } from "@/components/admin/menu-lateral";
 
+export const dynamic = "force-dynamic";
+
+/** Gabarit du back-office : menu latéral marine (260 px) + contenu sur fond #F4F2EE. */
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <main className="p-4 pt-16 lg:pt-8 lg:ml-72 lg:p-8">{children}</main>
+    <div className="min-h-screen bg-fond-admin font-body text-encre">
+      <MenuLateral />
+      <main className="flex min-h-screen min-w-0 flex-col lg:pl-[260px]">
+        {children}
+      </main>
     </div>
-  )
+  );
 }

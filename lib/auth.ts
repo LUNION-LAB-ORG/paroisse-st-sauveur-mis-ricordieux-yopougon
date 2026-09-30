@@ -23,11 +23,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               password: credentials.password,
             }),
             headers: { "Content-Type": "application/json" },
-          }
+          },
         );
 
         if (res.ok) {
           const data = await res.json();
+
           // Backend returns: { "data": { id, fullname, email, role, ... }, "token": "..." }
           return {
             id: String(data?.data?.id ?? ""),
@@ -36,8 +37,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             image: data?.data?.photo ?? null,
             token: data?.token ?? "",
             role: data?.data?.role ?? "",
+            serviceId: data?.data?.service_id ?? null,
           };
         }
+
         return null;
       },
     }),
@@ -52,9 +55,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id as string;
         token.token = (user as any).token as string;
         token.role = (user as any).role as string;
+        token.serviceId = ((user as any).serviceId ?? null) as number | null;
         token.name = user.name as string;
         token.email = user.email as string;
       }
+
       return token;
     },
     async session({ session, token }) {
@@ -63,6 +68,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.name = token.name ?? "";
       session.user.email = token.email ?? "";
       session.user.role = token.role;
+      session.user.serviceId = token.serviceId ?? null;
+
       return session;
     },
   },
