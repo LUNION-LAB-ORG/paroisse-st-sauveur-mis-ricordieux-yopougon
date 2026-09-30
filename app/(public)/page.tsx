@@ -28,6 +28,7 @@ import {
   montantsSuggeres,
   projetDonParDefaut,
 } from "@/features/setting/utils/don";
+import { contenuHero } from "@/features/setting/utils/hero";
 import { identiteParoisse } from "@/features/setting/utils/identite";
 import { DonneesStructurees } from "@/components/site/donnees-structurees";
 import {
@@ -146,12 +147,7 @@ export default async function Accueil() {
     },
   };
 
-  const texteHero =
-    (settings["hero.text"] ?? "").trim() || identite.description;
-  const libellePrincipal =
-    (settings["hero.primary_label"] ?? "").trim() || "Soutenir la construction";
-  const libelleSecondaire =
-    (settings["hero.secondary_label"] ?? "").trim() || "Horaires des messes";
+  const hero = contenuHero(settings, identite);
 
   const blocs: Record<ICleSectionAccueil, React.ReactNode> = {
     infos: (
@@ -229,13 +225,7 @@ export default async function Accueil() {
   return (
     <div className="flex flex-col">
       <DonneesStructurees donnees={donneesStructurees} />
-      <HeroAccueil
-        identite={identite}
-        libellePrincipal={libellePrincipal}
-        libelleSecondaire={libelleSecondaire}
-        texte={texteHero}
-        vueEglise={identite.vueEglise}
-      />
+      <HeroAccueil hero={hero} logo={identite.logo} />
       {rendu}
     </div>
   );

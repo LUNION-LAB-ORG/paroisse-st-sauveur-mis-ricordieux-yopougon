@@ -14,8 +14,9 @@ import {
 import { ListeReordonnable } from "@/components/admin/ui/liste-reordonnable";
 import { ZoneDepot } from "@/components/admin/ui/zone-depot";
 import { settingAPI } from "@/features/setting/apis/setting.api";
+import { lienSur } from "@/features/setting/utils/hero";
 
-/** Onglet « Page d'accueil » : bannière, textes du héros, sections affichées et leur ordre. */
+/** Onglet « Page d'accueil » : bannière (image, textes, boutons et liens), sections affichées et leur ordre. */
 export function OngletAccueil({
   valeurs,
   changer,
@@ -28,6 +29,14 @@ export function OngletAccueil({
     SECTIONS_ACCUEIL.find((s) => s.key === k)?.label ?? k;
   const enregistrerSections = (liste: typeof sections) =>
     changer("home.sections", JSON.stringify(liste));
+
+  const erreurLien = (cle: string) => {
+    const lien = (valeurs[cle] ?? "").trim();
+
+    return lien && lienSur(lien, "") !== lien
+      ? "Indiquez une page du site (/…) ou une adresse https://…"
+      : undefined;
+  };
 
   const changerImage = async (fichiers: File[]) => {
     setEnvoi(true);
@@ -71,11 +80,34 @@ export function OngletAccueil({
             />
           )}
         </div>
+        <p className="m-0 text-[13px] text-gris">
+          Laissez un champ vide pour reprendre le texte par défaut. Liens : une
+          page du site (ex. /horaires) ou une adresse https://…
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <ChampTexteAdmin
+            isDisabled={!peutModifier}
+            label="Sur-titre"
+            maxLength={80}
+            placeholder="Le Sanctuaire de la Miséricorde"
+            value={valeurs["hero.eyebrow"] ?? ""}
+            onChange={(v) => changer("hero.eyebrow", v)}
+          />
+          <ChampTexteAdmin
+            isDisabled={!peutModifier}
+            label="Titre"
+            maxLength={90}
+            placeholder="Paroisse Saint Sauveur Miséricordieux"
+            value={valeurs["hero.title"] ?? ""}
+            onChange={(v) => changer("hero.title", v)}
+          />
+        </div>
         <ChampZoneAdmin
           compteur
           isDisabled={!peutModifier}
           label="Phrase d’accueil"
           maxLength={220}
+          placeholder="Une communauté vivante et accueillante à Yopougon Millionnaire."
           rows={2}
           value={valeurs["hero.text"] ?? ""}
           onChange={(v) => changer("hero.text", v)}
@@ -84,14 +116,58 @@ export function OngletAccueil({
           <ChampTexteAdmin
             isDisabled={!peutModifier}
             label="Bouton principal"
+            placeholder="Soutenir la construction"
             value={valeurs["hero.primary_label"] ?? ""}
             onChange={(v) => changer("hero.primary_label", v)}
           />
           <ChampTexteAdmin
+            erreur={erreurLien("hero.primary_url")}
+            isDisabled={!peutModifier}
+            label="Lien du bouton principal"
+            placeholder="/nouvelle-eglise"
+            value={valeurs["hero.primary_url"] ?? ""}
+            onChange={(v) => changer("hero.primary_url", v)}
+          />
+          <ChampTexteAdmin
             isDisabled={!peutModifier}
             label="Bouton secondaire"
+            placeholder="Horaires des messes"
             value={valeurs["hero.secondary_label"] ?? ""}
             onChange={(v) => changer("hero.secondary_label", v)}
+          />
+          <ChampTexteAdmin
+            erreur={erreurLien("hero.secondary_url")}
+            isDisabled={!peutModifier}
+            label="Lien du bouton secondaire"
+            placeholder="/horaires"
+            value={valeurs["hero.secondary_url"] ?? ""}
+            onChange={(v) => changer("hero.secondary_url", v)}
+          />
+        </div>
+        <ChampTexteAdmin
+          isDisabled={!peutModifier}
+          label="Légende de l’image"
+          maxLength={120}
+          placeholder="Vue d’architecte de la future église"
+          value={valeurs["hero.image_caption"] ?? ""}
+          onChange={(v) => changer("hero.image_caption", v)}
+        />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <ChampTexteAdmin
+            aide="Vide : aucun lien sous l’image."
+            isDisabled={!peutModifier}
+            label="Lien sous l’image"
+            maxLength={40}
+            value={valeurs["hero.link_label"] ?? ""}
+            onChange={(v) => changer("hero.link_label", v)}
+          />
+          <ChampTexteAdmin
+            erreur={erreurLien("hero.link_url")}
+            isDisabled={!peutModifier}
+            label="Destination du lien"
+            placeholder="/nouvelle-eglise"
+            value={valeurs["hero.link_url"] ?? ""}
+            onChange={(v) => changer("hero.link_url", v)}
           />
         </div>
       </div>

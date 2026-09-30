@@ -1,4 +1,4 @@
-import type { IIdentiteParoisse } from "@/features/setting/utils/identite";
+import type { IContenuHero } from "@/features/setting/utils/hero";
 
 import Link from "next/link";
 
@@ -7,48 +7,67 @@ import { EmplacementImage } from "./emplacement-image";
 import { CONTENEUR } from "@/lib/charte";
 import { cn } from "@/lib/utils";
 
-interface LibellesHero {
-  libellePrincipal: string;
-  libelleSecondaire: string;
+/** Lien interne (next/link) ou externe (nouvel onglet). */
+function LienHero({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  if (href.startsWith("/"))
+    return (
+      <Link className={className} href={href}>
+        {children}
+      </Link>
+    );
+
+  return (
+    <a
+      className={className}
+      href={href}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      {children}
+    </a>
+  );
 }
 
 function BoutonsHero({
   className,
-  libellePrincipal,
-  libelleSecondaire,
-}: LibellesHero & { className?: string }) {
+  hero,
+}: {
+  className?: string;
+  hero: IContenuHero;
+}) {
   return (
     <div className={cn("flex-col gap-2.5 lg:flex-row lg:gap-3", className)}>
-      <Link
+      <LienHero
         className="rounded-charte bg-rouge px-[26px] py-[15px] text-center text-[15px] font-bold text-white hover:bg-rouge-hover hover:text-white lg:py-4 lg:text-base"
-        href="/nouvelle-eglise"
+        href={hero.boutonPrincipal.lien}
       >
-        {libellePrincipal}
-      </Link>
-      <Link
+        {hero.boutonPrincipal.libelle}
+      </LienHero>
+      <LienHero
         className="rounded-charte border border-white px-[26px] py-[14px] text-center text-[15px] font-bold text-white hover:bg-white/10 hover:text-white lg:py-[15px] lg:text-base"
-        href="/horaires"
+        href={hero.boutonSecondaire.lien}
       >
-        {libelleSecondaire}
-      </Link>
+        {hero.boutonSecondaire.libelle}
+      </LienHero>
     </div>
   );
 }
 
 export function HeroAccueil({
-  identite,
-  vueEglise,
-  texte,
-  libellePrincipal,
-  libelleSecondaire,
-}: LibellesHero & {
-  identite: IIdentiteParoisse;
-  vueEglise: string | null;
-  /** Phrase d'accueil (paramètre hero.text, repli : description de la paroisse) */
-  texte: string;
+  logo,
+  hero,
+}: {
+  logo: string;
+  hero: IContenuHero;
 }) {
-  const libelles = { libellePrincipal, libelleSecondaire };
-
   return (
     <section className="relative overflow-hidden bg-marine text-white">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -56,7 +75,7 @@ export function HeroAccueil({
         aria-hidden
         alt=""
         className="pointer-events-none absolute -left-40 -top-[120px] hidden size-[620px] rounded-full opacity-5 lg:block"
-        src={identite.logo}
+        src={logo}
       />
       <div
         className={cn(
@@ -65,37 +84,41 @@ export function HeroAccueil({
         )}
       >
         <div className="flex flex-col gap-4 lg:col-span-5 lg:gap-[22px]">
-          <span className="text-xs font-bold uppercase tracking-[.12em] text-ciel lg:text-sm">
-            {identite.devise}
-          </span>
+          {hero.surTitre && (
+            <span className="text-xs font-bold uppercase tracking-[.12em] text-ciel lg:text-sm">
+              {hero.surTitre}
+            </span>
+          )}
           <h1 className="m-0 font-heading text-[30px] font-extrabold uppercase leading-[1.1] lg:text-[clamp(36px,3.6vw,52px)] lg:leading-[1.05] lg:tracking-[-0.01em]">
-            {identite.nom}
+            {hero.titre}
           </h1>
           <p className="m-0 text-base leading-[1.55] text-brume-clair lg:text-[19px] lg:leading-[1.6]">
-            {texte}
+            {hero.texte}
           </p>
-          <BoutonsHero {...libelles} className="hidden lg:mt-1.5 lg:flex" />
+          <BoutonsHero className="hidden lg:mt-1.5 lg:flex" hero={hero} />
         </div>
 
         <figure className="m-0 flex flex-col gap-3 lg:col-span-7 lg:col-start-6">
           <EmplacementImage
             surFondMarine
-            alt="Vue d’architecte de la future église Saint Sauveur Miséricordieux"
+            alt={hero.legende}
             className="h-[208px] w-full rounded-charte lg:h-[440px] lg:shadow-[0_30px_60px_rgba(10,12,40,.35)]"
-            libelle="Vue d’architecte de la future église"
-            src={vueEglise}
+            libelle={hero.legende}
+            src={hero.image}
           />
-          <figcaption className="flex justify-between text-[13px] text-brume lg:text-sm">
-            <span>Vue d’architecte de la future église</span>
-            <Link
-              className="hidden font-bold text-ciel hover:text-white lg:inline"
-              href="/nouvelle-eglise"
-            >
-              Suivre le projet
-            </Link>
+          <figcaption className="flex justify-between gap-4 text-[13px] text-brume lg:text-sm">
+            <span>{hero.legende}</span>
+            {hero.lienImage.libelle && (
+              <LienHero
+                className="hidden shrink-0 font-bold text-ciel hover:text-white lg:inline"
+                href={hero.lienImage.lien}
+              >
+                {hero.lienImage.libelle}
+              </LienHero>
+            )}
           </figcaption>
         </figure>
-        <BoutonsHero {...libelles} className="flex lg:hidden" />
+        <BoutonsHero className="flex lg:hidden" hero={hero} />
       </div>
     </section>
   );
