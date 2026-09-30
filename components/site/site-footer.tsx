@@ -127,6 +127,7 @@ export function SiteFooter({ identite }: { identite: IIdentiteParoisse }) {
                 Confidentialité et données personnelles
               </Link>
               <span>Textes liturgiques : AELF</span>
+              <span>Développé par Lunion-Lab</span>
             </span>
           </div>
         </div>

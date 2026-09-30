@@ -649,7 +649,7 @@ export function ParcoursDemandeMesse({ telephone }: ParcoursProps) {
               <p className="m-0 text-base leading-[1.6] text-encre-douce">
                 L’offrande de messe soutient la vie des prêtres et de la
                 paroisse. Son montant indicatif est fixé par la paroisse selon
-                les orientations de l’archidiocèse.
+                les orientations du diocèse.
               </p>
               <fieldset className="m-0 flex flex-col gap-2.5 border-0 p-0">
                 <legend className="mb-2.5 text-[15px] font-bold">

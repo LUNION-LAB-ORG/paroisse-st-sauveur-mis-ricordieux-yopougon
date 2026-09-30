@@ -31,7 +31,7 @@ export function identiteParoisse(s: ISettingsMap): IIdentiteParoisse {
       "parish.description",
       "Une communauté vivante et accueillante à Yopougon Millionnaire.",
     ),
-    diocese: v("parish.diocese", "Archidiocèse d’Abidjan"),
+    diocese: v("parish.diocese", "Diocèse de Yopougon"),
     adresse: v("parish.address"),
     telephone: v("parish.phone"),
     email: v("parish.email"),
