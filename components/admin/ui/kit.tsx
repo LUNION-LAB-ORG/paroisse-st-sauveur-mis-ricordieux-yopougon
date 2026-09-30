@@ -58,7 +58,10 @@ export function ContenuAdmin({
 }) {
   return (
     <div
-      className={cn("flex flex-col gap-[22px] px-4 py-6 md:px-9", className)}
+      className={cn(
+        "flex min-w-0 flex-col gap-[22px] px-4 py-6 md:px-9 [&>*]:min-w-0",
+        className,
+      )}
     >
       {children}
     </div>
@@ -351,7 +354,7 @@ export function TableauAdmin<T>({
   chargement,
 }: TableauAdminProps<T>) {
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="relative w-full overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="bg-entete-admin text-left text-[13px] text-gris">
